@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>拾作 · 收件箱</title>
+  <link rel="stylesheet" href="tokens.css" />
+  <style>
+    /* Hallmark · genre: modern-minimal · macrostructure: Workbench · design-system: design.md · designed-as-app */
+    /* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V4 · compact capture, 44px targets, quiet batch state */
+    :root { color-scheme: light; --bg: var(--color-paper); --panel: var(--color-surface); --line: var(--color-rule); --muted: var(--color-muted); --text: var(--color-ink); --accent: var(--color-accent); }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; overflow-x: clip; background: var(--bg); color: var(--text); font: 13px/1.45 var(--font-body); }
+    header { position: sticky; top: 0; z-index: 5; padding: 14px; border-bottom: 1px solid var(--line); background: var(--color-surface-translucent); backdrop-filter: blur(10px); }
+    .brand { display: flex; align-items: center; gap: 9px; }
+    .brand-copy { min-width: 0; flex: 1; }
+    .mark { width: 28px; height: 28px; display: block; border-radius: 8px; background: transparent; }
+    .brand strong { display: block; font-size: 14px; }
+    .brand span { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; }
+    .quick { display: flex; gap: 7px; margin-top: 12px; }
+    #quickText { min-width: 0; flex: 1; height: var(--control-height); padding: 0 10px; border: 1px solid var(--line); border-radius: 7px; outline: 0; background: var(--panel); color: var(--text); }
+    button { min-height: var(--control-height); padding: 0 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); color: var(--text); cursor: pointer; white-space: nowrap; }
+    button:hover { border-color: var(--color-rule-strong); background: var(--color-paper-2); }
+    button.primary { border-color: var(--color-accent); background: var(--color-accent); color: var(--color-accent-ink); }
+    button:disabled { opacity: .48; cursor: not-allowed; }
+    main { padding: 14px; }
+    .notice { margin: 0 0 10px; padding: 9px 10px; border: 1px solid var(--color-rule); border-radius: 7px; background: var(--color-surface); color: var(--color-neutral); line-height: 1.45; }
+    .notice:empty { display: none; }
+    .notice[data-state="error"] { border-color: var(--color-danger); background: var(--color-danger-soft); color: var(--color-danger); }
+    .section-title { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 6px 0 10px; }
+    .section-title h2 { margin: 0; font-size: 13px; }
+    .section-title span { color: var(--muted); font-size: 11px; }
+    .view-tabs { display: flex; gap: 4px; }
+    .view-tab { padding: 0 9px; font-size: 11px; }
+    .view-tab.active { border-color: var(--color-accent); background: var(--color-accent-soft); color: var(--color-accent-strong); }
+    .batch-bar { position: sticky; top: 112px; z-index: 4; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px; align-items: center; margin-bottom: 10px; padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--color-surface-translucent); }
+    .batch-bar.hidden { display: none; }
+    .batch-count { color: var(--color-neutral); font-size: 11px; white-space: nowrap; }
+    #targetBoard { min-width: 0; height: var(--control-height); padding: 0 7px; border: 1px solid var(--line); border-radius: 7px; background: var(--bg); color: var(--text); }
+    .batch-actions { grid-column: 1 / -1; display: flex; gap: 6px; }
+    .batch-actions button { flex: 1; }
+    button.danger { color: var(--color-danger); }
+    .list { display: grid; gap: 7px; margin-bottom: 22px; }
+    .item { padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); cursor: pointer; }
+    .item:hover { border-color: var(--color-rule-strong); background: var(--color-paper-2); }
+    .item { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 9px; align-items: start; }
+    .item.selected { border-color: var(--accent); background: var(--color-accent-soft); }
+    .item-check { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); cursor: pointer; }
+    .item-copy { min-width: 0; }
+    .item strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 550; }
+    .item span { display: block; margin-top: 5px; overflow: hidden; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+    .item-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 7px; }
+    .item-footer span { min-width: 0; margin: 0; }
+    .source-link { flex: none; color: var(--color-accent-strong); font-size: 11px; text-decoration: none; }
+    .source-link:hover { text-decoration: underline; }
+    .empty { padding: 22px 12px; border: 1px dashed var(--line); border-radius: 8px; color: var(--muted); text-align: center; }
+  </style>
+  <link rel="stylesheet" href="paper-theme.css" />
+</head>
+<body data-surface="sidepanel">
+  <header>
+    <div class="brand"><img class="mark" src="icons/icon32.png" alt="" /><div class="brand-copy"><strong>拾作 · 收件箱</strong><span id="versionMeta">边浏览，边收集</span></div><button id="openCodex" type="button">问 Codex</button></div>
+    <div class="quick"><input id="quickText" placeholder="快速记一条" /><button class="primary" id="quickAdd" type="button">保存</button></div>
+  </header>
+  <main>
+    <div class="notice" id="notice" role="status" aria-live="polite"></div>
+    <section>
+      <div class="section-title">
+        <h2>收件箱</h2>
+        <div class="view-tabs">
+          <button class="view-tab active" id="activeTab" type="button" aria-pressed="true">待整理</button>
+          <button class="view-tab" id="archivedTab" type="button" aria-pressed="false">已归档</button>
+        </div>
+      </div>
+      <div class="batch-bar hidden" id="batchBar">
+        <span class="batch-count" id="selectedCount">已选 0 项</span>
+        <select id="targetBoard" aria-label="目标白板"></select>
+        <button class="primary" id="moveSelected" type="button">移动</button>
+        <div class="batch-actions">
+          <button id="archiveSelected" type="button">归档</button>
+          <button id="restoreSelected" type="button">恢复</button>
+          <button class="danger" id="deleteSelected" type="button">永久删除</button>
+        </div>
+      </div>
+      <div class="section-title"><span id="inboxCount"></span><button id="selectAll" type="button">全选</button></div>
+      <div class="list" id="inboxList"></div>
+    </section>
+  </main>
+  <script src="card-protocol.js"></script>
+  <script src="pagedock-db.js"></script>
+  <script src="sidepanel.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+#!/bin/zsh
+
+set -u
+
+script_directory="${0:A:h}"
+compat_directory="$script_directory/python-compat"
+real_python="${PAGEDOCK_REAL_PYTHON:-}"
+
+if [[ -z "$real_python" || ! -x "$real_python" ]]; then
+  print -u2 "拾作 Kokoro Python 不可用，请重新安装本地桥接"
+  exit 1
+fi
+
+export PAGEDOCK_ESPEAK_LINK_COPY=1
+export PYTHONPATH="$compat_directory${PYTHONPATH:+:$PYTHONPATH}"
+
+exec "$real_python" "$@"

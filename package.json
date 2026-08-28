@@ -1,0 +1,42 @@
+{
+  "name": "shizuo",
+  "version": "2.23.0",
+  "description": "拾作：收集、理解、创作。",
+  "type": "module",
+  "keywords": [
+    "chrome-extension",
+    "edge-extension",
+    "manifest-v3",
+    "markdown",
+    "shizuo",
+    "pagedock",
+    "html-to-markdown",
+    "web-to-markdown",
+    "web-clipper",
+    "readability",
+    "turndown",
+    "marked",
+    "monaco-editor",
+    "dompurify",
+    "offline",
+    "privacy"
+  ],
+  "license": "MIT",
+  "author": "拾作 Contributors",
+  "homepage": "https://github.com/Amossse/shizuo#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Amossse/shizuo.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Amossse/shizuo/issues"
+  },
+  "scripts": {
+    "test": "node scripts/verify.mjs && node scripts/install-contract-test.mjs && node scripts/bridge-auth-test.mjs && node scripts/board-domain-test.mjs && node scripts/onboarding-contract.mjs && node scripts/page-chat-contract.mjs && node scripts/task-state-contract.mjs && node scripts/session-preview-contract.mjs && node scripts/native-process-stream-test.mjs && node scripts/terminal-output-stress.mjs && node scripts/external-bridge-test.mjs",
+    "pack": "zip -rq ../shizuo-$npm_package_version.zip . -x '*.zip' '*.pyc' '*/__pycache__/*' 'node_modules/*' '.git/*' '.hallmark/*'",
+    "update-vendor": "echo 'See CONTRIBUTING.md → Refreshing vendored dependencies'"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

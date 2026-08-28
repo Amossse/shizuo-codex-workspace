@@ -1,0 +1,823 @@
+/* Hallmark · genre: modern-minimal · macrostructure: Workbench · tone: soft-paper · anchor: coral · designed-as-app */
+/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V4 · contrast: pass (40–41) · slop: pass (42–49) · mobile: pass (34, 49–57) */
+/* Shared Coral paper theme. Existing DOM and event contracts remain unchanged. */
+html,
+body {
+  overflow-x: clip;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light;
+  background: var(--color-paper);
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: var(--font-body);
+}
+
+button,
+[role="button"] {
+  white-space: nowrap;
+}
+
+button,
+[role="button"],
+input,
+textarea,
+select,
+a,
+[tabindex="0"] {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+a:focus-visible,
+[tabindex="0"]:focus-visible {
+  outline-color: var(--color-paper);
+  box-shadow: 0 0 0 4px var(--color-focus);
+}
+
+/* Legacy controls used outline shorthands; the important focus contract restores a two-tone ring without layout shift. */
+body[data-surface] :is(button, input, textarea, select, a, [tabindex="0"]):focus-visible {
+  outline: 2px solid var(--color-paper) !important;
+  outline-offset: 1px !important;
+  box-shadow: 0 0 0 4px var(--color-focus) !important;
+}
+
+button:active,
+[role="button"]:active {
+  transform: translateY(1px);
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+body[data-surface="whiteboard"] .button:disabled,
+body[data-surface="whiteboard"] .codex-chat-action:disabled,
+body[data-surface="whiteboard"] .codex-chat-close:disabled,
+body[data-surface="whiteboard"] .codex-message-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+[data-state="loading"] {
+  cursor: progress;
+}
+
+[data-state="error"],
+[aria-invalid="true"] {
+  border-color: var(--color-danger) !important;
+}
+
+[data-state="success"] {
+  border-color: var(--color-success) !important;
+}
+
+/* Whiteboard workbench */
+body[data-surface="whiteboard"] {
+  --bg: var(--color-paper);
+  --surface: var(--color-surface);
+  --panel: var(--color-paper-2);
+  --panel-strong: var(--color-paper-3);
+  --line: var(--color-rule);
+  --muted: var(--color-muted);
+  --text: var(--color-ink);
+  --accent: var(--color-accent);
+  --accent-soft: var(--color-accent-soft);
+  --danger: var(--color-danger);
+  --shadow: var(--shadow-md);
+  color: var(--color-ink);
+  background: var(--color-paper);
+  font-family: var(--font-body);
+}
+
+body[data-surface="whiteboard"] #topbar {
+  background: var(--color-surface-translucent);
+  color: var(--color-ink);
+  border-color: var(--color-rule);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(12px);
+}
+
+body[data-surface="whiteboard"] .brand-mark,
+body[data-surface="sidepanel"] .mark {
+  background: transparent;
+  color: var(--color-accent-ink);
+  box-shadow: none;
+  font-family: var(--font-display);
+}
+
+body[data-surface="whiteboard"] .brand-copy strong,
+body[data-surface="whiteboard"] .hero h1,
+body[data-surface="whiteboard"] .section-heading h2,
+body[data-surface="whiteboard"] .board-card h3,
+body[data-surface="whiteboard"] .recent-copy strong,
+body[data-surface="whiteboard"] #emptyState strong {
+  color: var(--color-ink);
+  font-family: var(--font-display);
+}
+
+body[data-surface="whiteboard"] .hero h1 {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+body[data-surface="whiteboard"] .button,
+body[data-surface="whiteboard"] .codex-chat-action,
+body[data-surface="whiteboard"] .codex-chat-close {
+  min-height: 2.75rem;
+  border-color: var(--color-rule);
+  background: var(--color-surface);
+  color: var(--color-ink-2);
+  box-shadow: none;
+  transition: background-color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out), transform var(--dur-press) var(--ease-out);
+}
+
+body[data-surface="whiteboard"] .codex-message-action {
+  min-height: 1.5rem;
+  border: 0;
+  background: transparent;
+  color: var(--color-muted);
+  box-shadow: none;
+}
+
+body[data-surface="whiteboard"] .button.primary,
+body[data-surface="whiteboard"] .codex-chat-action.primary {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+
+body[data-surface="whiteboard"] .button.danger,
+body[data-surface="whiteboard"] #selectionAiCancel,
+body[data-surface="whiteboard"] #codexChatStop {
+  color: var(--color-danger);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  body[data-surface="whiteboard"] .button:hover,
+  body[data-surface="whiteboard"] .codex-chat-action:hover,
+  body[data-surface="whiteboard"] .codex-chat-close:hover {
+    border-color: var(--color-rule);
+    background: var(--color-paper-2);
+    color: var(--color-ink-2);
+  }
+
+  body[data-surface="whiteboard"] .codex-message-action:hover {
+    border-color: transparent;
+    background: transparent;
+    color: var(--color-accent-strong);
+  }
+
+  body[data-surface="whiteboard"] .button.primary:hover,
+  body[data-surface="whiteboard"] .codex-chat-action.primary:hover {
+    border-color: var(--color-accent);
+    background: var(--color-accent-strong);
+    color: var(--color-accent-ink);
+  }
+}
+
+body[data-surface="whiteboard"] #boardName,
+body[data-surface="whiteboard"] #homeSearch,
+body[data-surface="whiteboard"] #quickText,
+body[data-surface="whiteboard"] #codexChatInput,
+body[data-surface="whiteboard"] .dialog-form input {
+  background: var(--color-surface);
+  color: var(--color-ink);
+  border-color: var(--color-rule);
+}
+
+body[data-surface="whiteboard"] #boardName {
+  background: transparent;
+}
+
+body[data-surface="whiteboard"] #homeSearch:focus-visible,
+body[data-surface="whiteboard"] #quickText:focus-visible {
+  outline-color: transparent !important;
+  box-shadow: none !important;
+}
+
+body[data-surface="whiteboard"] #boardName::placeholder,
+body[data-surface="whiteboard"] #homeSearch::placeholder,
+body[data-surface="whiteboard"] #quickText::placeholder,
+body[data-surface="whiteboard"] #codexChatInput::placeholder,
+body[data-surface="whiteboard"] .dialog-form input::placeholder {
+  color: var(--color-muted);
+}
+
+body[data-surface="whiteboard"] .menu-panel,
+body[data-surface="whiteboard"] dialog {
+  background: var(--color-surface-raised);
+  color: var(--color-ink);
+  border-color: var(--color-rule);
+  box-shadow: var(--shadow-lg);
+}
+
+body[data-surface="whiteboard"] .menu-panel button {
+  color: var(--color-ink-2);
+  background: transparent;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  body[data-surface="whiteboard"] .menu-panel button:hover {
+    background: var(--color-accent-soft);
+  }
+}
+
+body[data-surface="whiteboard"] #homeView {
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+body[data-surface="whiteboard"] .home-shell {
+  max-width: 70rem;
+}
+
+body[data-surface="whiteboard"] .hero > div,
+body[data-surface="whiteboard"] .hero h1,
+body[data-surface="whiteboard"] .hero p {
+  min-width: 0;
+  max-width: 60ch;
+  overflow-wrap: anywhere;
+}
+
+body[data-surface="whiteboard"] .hero p,
+body[data-surface="whiteboard"] .board-card p,
+body[data-surface="whiteboard"] .board-meta,
+body[data-surface="whiteboard"] .recent-copy span,
+body[data-surface="whiteboard"] .recent-time,
+body[data-surface="whiteboard"] .empty-home,
+body[data-surface="whiteboard"] #status {
+  color: var(--color-muted);
+}
+
+body[data-surface="whiteboard"] .search-box,
+body[data-surface="whiteboard"] .quick-capture,
+body[data-surface="whiteboard"] .board-card,
+body[data-surface="whiteboard"] .recent-item {
+  background: var(--color-surface);
+  color: var(--color-ink);
+  border-color: var(--color-rule);
+  box-shadow: var(--shadow-sm);
+}
+
+body[data-surface="whiteboard"] .search-box:focus-within,
+body[data-surface="whiteboard"] .quick-capture:focus-within {
+  outline: 2px solid var(--color-paper);
+  outline-offset: 1px;
+  box-shadow: 0 0 0 4px var(--color-focus);
+}
+
+body[data-surface="whiteboard"] .board-card {
+  transition: transform var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out), background-color var(--dur-short) var(--ease-out);
+}
+
+body[data-surface="whiteboard"] .board-card-icon,
+body[data-surface="whiteboard"] .recent-kind {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-strong);
+}
+
+body[data-surface="whiteboard"] .board-delete,
+body[data-surface="whiteboard"] .delete-item {
+  color: var(--color-danger);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  body[data-surface="whiteboard"] .board-card:hover,
+  body[data-surface="whiteboard"] .recent-item:hover {
+    border-color: var(--color-rule);
+    background: var(--color-surface);
+    color: var(--color-ink);
+  }
+
+  body[data-surface="whiteboard"] .board-card:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
+
+  body[data-surface="whiteboard"] .recent-item:hover {
+    background: var(--color-paper-2);
+  }
+
+  body[data-surface="whiteboard"] .board-delete:hover,
+  body[data-surface="whiteboard"] .delete-item:hover {
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
+  }
+}
+
+body[data-surface="whiteboard"] .empty-home {
+  border-color: var(--color-rule-strong);
+  background: var(--color-paper-2);
+}
+
+body[data-surface="whiteboard"] #viewport {
+  background: var(--color-board);
+}
+
+body[data-surface="whiteboard"] #board {
+  background-color: var(--color-board);
+  background-image: radial-gradient(circle, var(--color-board-dot) 1px, transparent 1px);
+}
+
+body[data-surface="whiteboard"] #emptyState {
+  background: transparent;
+  color: var(--color-muted);
+  box-shadow: none;
+}
+
+body[data-surface="whiteboard"] .board-item {
+  border-color: var(--color-rule);
+  background: var(--color-surface-raised);
+  color: var(--color-ink);
+  box-shadow: var(--shadow-sm);
+}
+
+body[data-surface="whiteboard"] .board-item.selected {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent-soft), var(--shadow-md);
+}
+
+body[data-surface="whiteboard"] .board-item.grouped .item-kind::after,
+body[data-surface="whiteboard"] .video-download,
+body[data-surface="whiteboard"] .link-content,
+body[data-surface="whiteboard"] .page-address a,
+body[data-surface="whiteboard"] .source-line a {
+  color: var(--color-accent-strong);
+}
+
+body[data-surface="whiteboard"] .item-handle {
+  border-color: var(--color-rule);
+  background: var(--color-paper-2);
+  color: var(--color-neutral);
+}
+
+body[data-surface="whiteboard"] .grip,
+body[data-surface="whiteboard"] .source-line {
+  color: var(--color-muted);
+}
+
+body[data-surface="whiteboard"] .text-content {
+  color: var(--color-ink);
+  background: var(--color-surface-raised);
+}
+
+body[data-surface="whiteboard"] .text-content:empty::before {
+  color: var(--color-muted);
+}
+
+body[data-surface="whiteboard"] .text-content::-webkit-scrollbar-thumb {
+  background: var(--color-rule-strong);
+  background-clip: padding-box;
+}
+
+body[data-surface="whiteboard"] .image-content,
+body[data-surface="whiteboard"] .video-content,
+body[data-surface="whiteboard"] .page-content {
+  background: var(--color-paper-2);
+  color: var(--color-ink);
+}
+
+body[data-surface="whiteboard"] .page-address {
+  border-color: var(--color-rule);
+  background: var(--color-surface);
+}
+
+body[data-surface="whiteboard"] .video-content video {
+  background: var(--color-ink);
+}
+
+body[data-surface="whiteboard"] .source-line {
+  border-color: var(--color-rule);
+}
+
+body[data-surface="whiteboard"] #selectionMarquee {
+  border-color: var(--color-accent);
+  background: transparent;
+}
+
+body[data-surface="whiteboard"] #selectionActions,
+body[data-surface="whiteboard"] #minimap {
+  border-color: var(--color-rule-strong);
+  background: var(--color-surface-translucent);
+  color: var(--color-ink);
+  box-shadow: var(--shadow-md);
+}
+
+body[data-surface="whiteboard"] #selectionActionCount,
+body[data-surface="whiteboard"] #zoomLabel {
+  color: var(--color-neutral);
+}
+
+body[data-surface="whiteboard"] #selectionAiStatus {
+  background: transparent;
+  color: var(--color-neutral);
+}
+
+body[data-surface="whiteboard"] .minimap-item {
+  background: var(--color-accent);
+}
+
+body[data-surface="whiteboard"] #minimapViewport {
+  border-color: var(--color-ink);
+  background: var(--color-scrim);
+}
+
+body[data-surface="whiteboard"] dialog::backdrop {
+  background: var(--color-scrim);
+}
+
+body[data-surface="whiteboard"] .codex-chat-launcher,
+body[data-surface="whiteboard"] .codex-chat-panel {
+  background: var(--color-surface-raised);
+  color: var(--color-ink);
+  border-color: var(--color-rule-strong);
+  box-shadow: var(--shadow-lg);
+}
+
+body[data-surface="whiteboard"] .codex-chat-launcher {
+  border-radius: var(--radius-pill);
+  transition: background-color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out), transform var(--dur-press) var(--ease-out);
+}
+
+body[data-surface="whiteboard"] .codex-chat-mark {
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+
+body[data-surface="whiteboard"] .codex-chat-dot {
+  background: var(--color-muted);
+}
+
+body[data-surface="whiteboard"] .codex-chat-launcher[data-connected="true"] .codex-chat-dot {
+  background: var(--color-success);
+}
+
+body[data-surface="whiteboard"] .codex-chat-head,
+body[data-surface="whiteboard"] .codex-selection-context,
+body[data-surface="whiteboard"] .codex-chat-compose,
+body[data-surface="whiteboard"] .codex-message-body {
+  border-color: var(--color-rule);
+  background: var(--color-paper-2);
+  color: var(--color-ink);
+}
+
+body[data-surface="whiteboard"] .codex-message.user .codex-message-body {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+  color: var(--color-ink);
+}
+
+body[data-surface="whiteboard"] .codex-message.error .codex-message-body {
+  border-color: var(--color-danger);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+body[data-surface="whiteboard"] .codex-chat-heading span,
+body[data-surface="whiteboard"] .codex-chat-empty,
+body[data-surface="whiteboard"] .codex-message-label,
+body[data-surface="whiteboard"] #codexChatTarget {
+  color: var(--color-muted);
+}
+
+/* Side panel */
+body[data-surface="sidepanel"] {
+  --bg: var(--color-paper);
+  --panel: var(--color-surface);
+  --line: var(--color-rule);
+  --muted: var(--color-muted);
+  --text: var(--color-ink);
+  --accent: var(--color-accent);
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+body[data-surface="sidepanel"] header {
+  background: var(--color-surface-translucent);
+  color: var(--color-ink);
+  border-color: var(--color-rule);
+  backdrop-filter: blur(12px);
+}
+
+body[data-surface="sidepanel"] button,
+body[data-surface="sidepanel"] input,
+body[data-surface="sidepanel"] textarea,
+body[data-surface="sidepanel"] select {
+  border-color: var(--color-rule);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  transition: background-color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out), transform var(--dur-press) var(--ease-out);
+}
+
+body[data-surface="sidepanel"] button,
+body[data-surface="sidepanel"] #quickText,
+body[data-surface="sidepanel"] #targetBoard {
+  min-height: var(--control-height);
+  height: auto;
+}
+
+body[data-surface="sidepanel"] button.primary {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  body[data-surface="sidepanel"] button:hover {
+    border-color: var(--color-rule);
+    background: var(--color-paper-2);
+    color: var(--color-ink);
+  }
+
+  body[data-surface="sidepanel"] button.primary:hover {
+    border-color: var(--color-accent);
+    background: var(--color-accent-strong);
+    color: var(--color-accent-ink);
+  }
+
+  body[data-surface="sidepanel"] .item:hover {
+    border-color: var(--color-rule);
+    background: var(--color-paper-2);
+  }
+}
+
+body[data-surface="sidepanel"] .item,
+body[data-surface="sidepanel"] .batch-bar {
+  border-color: var(--color-rule);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  box-shadow: var(--shadow-sm);
+}
+
+body[data-surface="sidepanel"] .view-tab.active,
+body[data-surface="sidepanel"] .item.selected {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+  color: var(--color-accent-strong);
+}
+
+body[data-surface="sidepanel"] button.danger {
+  color: var(--color-danger);
+}
+
+body[data-surface="sidepanel"] .source-link {
+  color: var(--color-accent-strong);
+}
+
+body[data-surface="sidepanel"] .brand span,
+body[data-surface="sidepanel"] .section-title span,
+body[data-surface="sidepanel"] .item span,
+body[data-surface="sidepanel"] .empty {
+  color: var(--color-muted);
+}
+
+/* Extension popup */
+body[data-surface="popup"] {
+  width: 18rem;
+  margin: 0;
+  padding: var(--space-sm);
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font: var(--text-sm)/1.45 var(--font-body);
+}
+
+body[data-surface="popup"] h1 {
+  margin: 0 0 var(--space-xs);
+  color: var(--color-ink);
+  font: 650 var(--text-md)/1.3 var(--font-display);
+}
+
+body[data-surface="popup"] button {
+  display: block;
+  width: 100%;
+  min-height: 2.75rem;
+  margin-top: var(--space-2xs);
+  padding: var(--space-2xs) var(--space-xs);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink-2);
+  text-align: start;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out), transform var(--dur-press) var(--ease-out);
+}
+
+body[data-surface="popup"] .save-row button,
+body[data-surface="popup"] .format-menu button {
+  margin-top: 0;
+}
+
+body[data-surface="popup"] #savePage {
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+body[data-surface="popup"] .format-menu button {
+  min-height: 2.5rem;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: transparent;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  body[data-surface="popup"] button:hover {
+    border-color: var(--color-rule);
+    background: var(--color-accent-soft);
+    color: var(--color-ink-2);
+  }
+}
+
+body[data-surface="popup"] #status {
+  min-height: 1rem;
+  margin: var(--space-xs) var(--space-3xs) 0;
+  color: var(--color-muted);
+  line-height: 1.4;
+  font-size: var(--text-xs);
+}
+
+body[data-surface="popup"] #status.error {
+  color: var(--color-danger);
+}
+
+/* Markdown editor */
+body[data-surface="editor"] {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+body[data-surface="editor"] header,
+body[data-surface="editor"] .status {
+  background: var(--color-paper-2);
+  color: var(--color-ink);
+  border-color: var(--color-rule);
+}
+
+body[data-surface="editor"] header strong {
+  font-family: var(--font-display);
+}
+
+body[data-surface="editor"] header .meta,
+body[data-surface="editor"] .status {
+  color: var(--color-muted);
+}
+
+body[data-surface="editor"] .seg {
+  border-color: var(--color-rule);
+  background: var(--color-surface);
+}
+
+body[data-surface="editor"] .seg button {
+  min-height: 2rem;
+  background: transparent;
+  color: var(--color-neutral);
+  transition: background-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out), transform var(--dur-press) var(--ease-out);
+}
+
+body[data-surface="editor"] .seg button + button {
+  border-color: var(--color-rule);
+}
+
+body[data-surface="editor"] .seg button.active {
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+
+body[data-surface="editor"] #preview {
+  background: var(--color-surface-raised);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+body[data-surface="editor"] .monaco-editor,
+body[data-surface="editor"] .monaco-editor-background,
+body[data-surface="editor"] .monaco-editor .margin {
+  background: var(--color-surface) !important;
+}
+
+body[data-surface="editor"] #preview .preview-error {
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
+}
+
+body[data-surface="editor"] #splitter::before {
+  background: var(--color-rule);
+  transition: background-color var(--dur-short) var(--ease-out), box-shadow var(--dur-short) var(--ease-out);
+}
+
+body[data-surface="editor"] #splitter:hover::before,
+body[data-surface="editor"] #splitter:focus-visible::before,
+body[data-surface="editor"] #splitter.is-resizing::before {
+  background: var(--color-accent);
+  box-shadow: none;
+}
+
+body[data-surface="editor"] #preview h1,
+body[data-surface="editor"] #preview h2,
+body[data-surface="editor"] #preview h3 {
+  color: var(--color-ink);
+  border-color: var(--color-rule);
+  font-family: var(--font-display);
+}
+
+body[data-surface="editor"] #preview a {
+  color: var(--color-accent-strong);
+}
+
+body[data-surface="editor"] #preview code,
+body[data-surface="editor"] #preview pre,
+body[data-surface="editor"] #preview th {
+  background: var(--color-paper-2);
+  color: var(--color-ink);
+  font-family: var(--font-mono);
+}
+
+body[data-surface="editor"] #preview pre code {
+  background: transparent;
+}
+
+body[data-surface="editor"] #preview blockquote {
+  border-color: var(--color-accent);
+  color: var(--color-neutral);
+  background: var(--color-accent-soft);
+}
+
+body[data-surface="editor"] #preview th,
+body[data-surface="editor"] #preview td,
+body[data-surface="editor"] #preview hr {
+  border-color: var(--color-rule);
+}
+
+@media (pointer: coarse) {
+  button,
+  [role="button"],
+  input,
+  select {
+    min-height: var(--control-height);
+  }
+}
+
+@media (max-width: 40rem) {
+  body[data-surface="whiteboard"] #homeImport {
+    display: none;
+  }
+
+  body[data-surface="whiteboard"] #newBoard {
+    padding-inline: var(--space-2xs);
+  }
+
+  body[data-surface="whiteboard"] .section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--space-3xs);
+  }
+
+  body[data-surface="whiteboard"] .home-shell {
+    width: calc(100% - 2rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  button,
+  [role="button"],
+  .board-card,
+  .codex-chat-launcher {
+    transition-duration: 0.01ms !important;
+    transform: none !important;
+  }
+}

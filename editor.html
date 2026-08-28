@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>拾作</title>
+  <link rel="stylesheet" href="tokens.css" />
+  <link rel="stylesheet" href="vendor/monaco/min/vs/editor/editor.main.css" />
+  <style>
+    /* Hallmark · genre: modern-minimal · macrostructure: Long Document · design-system: design.md · designed-as-app */
+    html, body { height: 100%; margin: 0; font-family: var(--font-body); background: var(--color-paper); color: var(--color-ink); display: flex; flex-direction: column; }
+    header { padding: 8px 14px; background: var(--color-paper-2); border-bottom: 1px solid var(--color-rule); display: flex; gap: 10px; align-items: center; font-size: 13px; }
+    .editor-brand-mark { width: 24px; height: 24px; display: block; }
+    header .meta { margin-left: auto; color: var(--color-muted); max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .seg { display: inline-flex; border: 1px solid var(--color-rule); border-radius: 6px; overflow: hidden; }
+    .seg button { background: transparent; color: var(--color-neutral); border: 0; padding: 4px 10px; cursor: pointer; font-size: 12px; }
+    .seg button + button { border-left: 1px solid var(--color-rule); }
+    .seg button.active { background: var(--color-accent); color: var(--color-accent-ink); }
+
+    main { --editor-ratio: 50%; flex: 1; min-height: 0; display: flex; }
+    #editor { min-width: 0; }
+    #preview { min-width: 0; padding: 20px 28px; overflow: auto; background: var(--color-surface-raised); color: var(--color-ink); line-height: 1.7; font-size: 14px; }
+    #splitter { position: relative; flex: 0 0 7px; cursor: col-resize; touch-action: none; outline: 0; }
+    #splitter::before { content: ""; position: absolute; top: 0; bottom: 0; left: 3px; width: 1px; background: var(--color-rule); transition: background-color var(--dur-short) var(--ease-out), box-shadow var(--dur-short) var(--ease-out); }
+    #splitter:hover::before, #splitter:focus-visible::before, #splitter.is-resizing::before { background: var(--color-accent); box-shadow: 0 0 0 1px var(--color-accent); }
+    body.is-resizing { cursor: col-resize; user-select: none; }
+
+    /* 三种模式 */
+    body.mode-code    #preview, body.mode-code #splitter { display: none; }
+    body.mode-code    #editor  { flex: 1; }
+    body.mode-preview #editor, body.mode-preview #splitter { display: none; }
+    body.mode-preview #preview { flex: 1; }
+    body.mode-split   #editor  { flex: 0 0 var(--editor-ratio); }
+    body.mode-split   #preview { flex: 1; }
+
+    /* 预览样式 */
+    #preview h1, #preview h2, #preview h3 { color: var(--color-ink); border-bottom: 1px solid var(--color-rule); padding-bottom: 4px; margin-top: 1.4em; }
+    #preview h1 { font-size: 1.8em; }
+    #preview h2 { font-size: 1.4em; }
+    #preview h3 { font-size: 1.15em; }
+    #preview a { color: var(--color-accent-strong); text-decoration: none; }
+    #preview a:hover { text-decoration: underline; }
+    #preview code { background: var(--color-paper-2); padding: 1px 5px; border-radius: 3px; font-family: var(--font-mono); font-size: 0.9em; }
+    #preview pre { background: var(--color-paper-2); padding: 12px 14px; border-radius: 6px; overflow: auto; }
+    #preview pre code { background: transparent; padding: 0; }
+    #preview blockquote { margin: 1em 0; padding: 0 1em; border-left: 3px solid var(--color-accent); color: var(--color-neutral); }
+    #preview table { border-collapse: collapse; margin: 1em 0; }
+    #preview th, #preview td { border: 1px solid var(--color-rule); padding: 6px 10px; }
+    #preview th { background: var(--color-paper-2); }
+    #preview img { max-width: 100%; }
+    #preview hr { border: 0; border-top: 1px solid var(--color-rule); margin: 2em 0; }
+    #preview ul, #preview ol { padding-left: 1.5em; }
+
+    .status { font-size: 12px; color: var(--color-muted); padding: 4px 14px; background: var(--color-paper-2); border-top: 1px solid var(--color-rule); display: flex; justify-content: space-between; }
+  </style>
+  <link rel="stylesheet" href="paper-theme.css" />
+</head>
+<body class="mode-split" data-surface="editor">
+  <header>
+    <img class="editor-brand-mark" src="icons/icon32.png" alt="" />
+    <strong>拾作</strong>
+    <div class="seg" id="modeSwitch">
+      <button data-mode="code">源码</button>
+      <button data-mode="split" class="active">分屏</button>
+      <button data-mode="preview">预览</button>
+    </div>
+    <span class="meta" id="meta"></span>
+  </header>
+  <main>
+    <div id="editor"></div>
+    <div id="splitter" role="separator" aria-label="调整源码和预览宽度" aria-orientation="vertical" aria-controls="editor preview" aria-valuemin="20" aria-valuemax="80" aria-valuenow="50" tabindex="0"></div>
+    <div id="preview"></div>
+  </main>
+  <div class="status">
+    <span id="status">加载中…</span>
+    <span id="stat"></span>
+  </div>
+
+  <script src="vendor/turndown/turndown.js"></script>
+  <script src="vendor/turndown/turndown-plugin-gfm.js"></script>
+  <script src="vendor/markdown/marked.umd.js"></script>
+  <script src="vendor/markdown/purify.min.js"></script>
+  <script src="vendor/monaco/min/vs/loader.js"></script>
+  <script src="editor.js"></script>
+</body>
+</html>

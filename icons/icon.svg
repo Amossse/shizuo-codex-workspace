@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title description">
+  <title id="title">拾作</title>
+  <desc id="description">A collected page ready to become a new creation, with an AI spark.</desc>
+
+  <!-- Coral app tile: the same warm anchor used throughout the 拾作 workbench. -->
+  <rect x="4" y="4" width="120" height="120" rx="28" fill="#B6321F"/>
+  <rect x="5" y="5" width="118" height="118" rx="27" fill="none" stroke="#8F281A" stroke-width="2"/>
+
+  <!-- The paper holds two kinds of collected material: image and text. -->
+  <rect x="27" y="22" width="70" height="80" rx="14" fill="#FFF8EF"/>
+  <rect x="39" y="38" width="20" height="20" rx="6" fill="#F1B5A5"/>
+  <circle cx="49" cy="48" r="4" fill="#B6321F"/>
+  <rect x="66" y="39" width="19" height="6" rx="3" fill="#3A241C"/>
+  <rect x="66" y="50" width="14" height="5" rx="2.5" fill="#7B6259"/>
+  <rect x="39" y="68" width="46" height="6" rx="3" fill="#3A241C"/>
+  <rect x="39" y="80" width="34" height="5" rx="2.5" fill="#9A7D72"/>
+
+  <!-- The collection tray remains recognizable at Chrome's 16 px toolbar size. -->
+  <rect x="20" y="94" width="88" height="14" rx="7" fill="#3A241C"/>
+  <rect x="43" y="106" width="42" height="8" rx="4" fill="#3A241C"/>
+
+  <!-- Codex creation spark. -->
+  <path d="M101 20c1.4 7.2 4.8 10.6 12 12-7.2 1.4-10.6 4.8-12 12-1.4-7.2-4.8-10.6-12-12 7.2-1.4 10.6-4.8 12-12Z" fill="#FFF8EF"/>
+</svg>

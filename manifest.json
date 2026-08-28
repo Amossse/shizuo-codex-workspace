@@ -1,0 +1,50 @@
+{
+  "manifest_version": 3,
+  "name": "拾作",
+  "short_name": "拾作",
+  "version": "2.23.0",
+  "minimum_chrome_version": "116",
+  "description": "收集、理解、创作。把网页与本地素材放进白板，与 Codex 一起整理和创作。",
+  "author": "拾作 Contributors",
+  "permissions": ["activeTab", "scripting", "storage", "downloads", "offscreen", "contextMenus", "sidePanel", "nativeMessaging", "alarms"],
+  "optional_host_permissions": ["http://*/*", "https://*/*"],
+  "action": {
+    "default_title": "拾作 — 收集、理解、创作",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "chrome_url_overrides": {
+    "newtab": "whiteboard.html"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content-codex.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["vendor/monaco/min/*", "vendor/turndown/*", "vendor/readability/*", "vendor/markdown/*"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png",
+    "512": "icons/icon512.png"
+  }
+}
