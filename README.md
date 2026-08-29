@@ -1,31 +1,96 @@
-# 拾作
+# 拾作 · Shizuo
 
-> **把网页和本地资料放进画布，让本地 AI Agent 理解、执行并留下可追溯结果。** Core capture works offline with zero telemetry.
+> **The visual workspace for Codex.** Capture context, think on an infinite canvas, and let local agents act with visible, traceable results.
+
+把网页、选区、图片和本地文件放进同一块画布，让 Codex 理解关系、执行任务，并把结果留在上下文旁边。
 
 ![manifest](https://img.shields.io/badge/Manifest-V3-blue)
 ![license](https://img.shields.io/badge/License-MIT-green)
 ![browser](https://img.shields.io/badge/Chrome%20%7C%20Edge-supported-brightgreen)
-![version](https://img.shields.io/badge/version-2.23.0-orange)
+![version](https://img.shields.io/badge/version-2.24.0-orange)
 ![offline](https://img.shields.io/badge/offline-%E2%9C%93-success)
 ![telemetry](https://img.shields.io/badge/telemetry-none-success)
 
-**Keywords**: `chrome-extension` · `shizuo` · `pagedock` · `markdown` · `pdf` · `whiteboard` · `web-clipper` · `readability` · `turndown` · `monaco-editor` · `manifest-v3`
+[Download v2.24.0](https://github.com/Amossse/shizuo-codex-workspace/releases/download/v2.24.0/shizuo-2.24.0.zip) · [Quick start](#quick-start) · [How it works](#how-it-works) · [Contributing](CONTRIBUTING.md)
+
+![Shizuo product overview](docs/shizuo-overview.png)
 
 ---
 
-## ✨ What 拾作 does
+## Why Shizuo
 
-拾作不是另一个 AI 聊天框或独立白板。它把浏览器内容、本地资料、可操作的画布和本地 Agent 放进同一个工作流：
+Chat windows lose context. Web clippers stop at collection. Whiteboards still ask you to move everything by hand.
 
-1. **收集上下文** — 保存网页、选区、图片与本地文件，并保留来源。
-2. **在画布中组织** — 用卡片、连线、分组和搜索看清内容结构与关系。
-3. **让 Agent 直接操作** — Codex 等本地 Agent 通过 MCP 读取和更新同一块白板。
-4. **留下执行过程** — 任务计划、运行状态、结果和来源关系都沉淀在画布中。
+Shizuo keeps the material, its relationships, the agent's work, and the result in one local-first workspace:
 
-核心能力保持本地优先；视频、本地终端、定时执行、局域网协作和 AGY 适配目前作为实验能力提供，不进入首次使用主路径。
+- **Capture real context** — webpages, selections, images, links, and local files keep their source.
+- **See the structure** — arrange cards on an infinite canvas and connect inputs to outputs.
+- **Let Codex act** — run local tasks through MCP and watch status, progress, and results on the canvas.
+- **Reuse the outcome** — keep answers, images, knowledge cards, provenance, and workflows beside the source.
+
+Core capture and canvas data stay local with zero analytics. Codex runs only when you ask it to.
+
+## Quick start
+
+### 1. Install the extension
+
+1. Download [`shizuo-2.24.0.zip`](https://github.com/Amossse/shizuo-codex-workspace/releases/download/v2.24.0/shizuo-2.24.0.zip) and unzip it.
+2. Open `chrome://extensions` or `edge://extensions`.
+3. Enable **Developer mode**, choose **Load unpacked**, and select the unzipped folder.
+4. Pin 拾作. On any webpage, save the page or selected content; open a new tab to enter the canvas.
+
+You can now capture, edit, organize, search, and export locally. Connecting Codex is optional.
+
+### 2. Connect local Codex on macOS
+
+Copy the extension ID shown in `chrome://extensions`, then run:
+
+```bash
+PAGEDOCK_EXTENSION_ID=your_extension_id ./install.sh
+```
+
+Reload 拾作 once from `chrome://extensions`. A green **本地已连接** state confirms the local bridge is ready.
+
+```bash
+sh "$HOME/.codex/skills/shizuo/scripts/shizuo.sh" health
+```
+
+## How it works
+
+```text
+Webpages / selections / local files
+                ↓
+      source cards on the canvas
+                ↓
+    Codex reads, plans, and acts
+                ↓
+ answers / images / knowledge / workflows
+```
+
+On supported webpages, the compact assistant is injected automatically and reconnects to the local bridge in the background:
+
+<p align="center">
+  <img src="docs/page-assistant.png" alt="Shizuo in-page Codex assistant connected locally" width="520">
+</p>
+
+## Core capabilities
+
+- Smart webpage extraction to clean Markdown with source metadata
+- Local-first multi-board canvas with cards, links, grouping, search, and revision history
+- Context-aware Codex tasks with visible progress, cancellation, retry, and linked results
+- Page assistant for questions, translation, summarization, analysis, and pasted images
+- Portable board export, PNG/PDF output, full backup, and restore
+- MCP bridge and bundled `shizuo` Skill for local Agent operations
 
 <details>
-<summary><strong>查看完整能力列表</strong></summary>
+<summary><strong>Advanced and experimental capabilities</strong></summary>
+
+Local terminals, HyperFrames/Remotion video, Kokoro post-production, dynamic and scheduled workflows, trusted-LAN collaboration, session preview, and AGY runtime switching are available for advanced setups. They are intentionally outside the first-use path.
+
+</details>
+
+<details>
+<summary><strong>Full capability reference</strong></summary>
 
 Most web clippers ship raw HTML, dump unformatted text, or pipe your data through a cloud service. **拾作** keeps page capture, understanding, and visual creation together:
 
@@ -65,32 +130,12 @@ Most web clippers ship raw HTML, dump unformatted text, or pipe your data throug
 
 </details>
 
-## 📸 Screenshots
-
-> _Drop your real screenshots into `docs/` and replace these paths._
-
-| Capture | Split | Preview |
-| --- | --- | --- |
-| ![capture](docs/screenshot-capture.png) | ![split](docs/screenshot-split.png) | ![preview](docs/screenshot-preview.png) |
-
-## 🚀 Install
-
-### Load unpacked (developer mode)
-
-Clone or download this repository, then:
-
-1. Open `chrome://extensions` (or `edge://extensions`)
-2. Toggle **Developer mode** (top-right)
-3. Click **Load unpacked** → select the `shizuo/` folder
-4. Pin the icon and click it on any `http(s)` page
-5. Choose `保存当前页` or `打开拾作`; use the small format menu to switch between Markdown and PDF
-
-### Connect local Codex on macOS
+## Installation profiles
 
 拾作 uses Chrome Native Messaging and your existing Codex CLI login. It never sends Codex credentials to the extension. Video generation additionally requires the `hyperframes` CLI and FFmpeg in your shell `PATH`.
 
 ```bash
-PAGEDOCK_EXTENSION_ID=your_extension_id ./install.sh              # 核心：Codex + MCP
+PAGEDOCK_EXTENSION_ID=your_extension_id ./install.sh              # Core: Codex + MCP
 PAGEDOCK_EXTENSION_ID=your_extension_id ./install.sh --terminal   # 核心 + 本地终端
 PAGEDOCK_EXTENSION_ID=your_extension_id ./install.sh --video      # 核心 + 终端 + 视频依赖检查
 ```
@@ -100,12 +145,6 @@ The installer registers `com.pagedock.codex` for the unpacked extension ID shown
 ```bash
 PAGEDOCK_EXTENSION_ID=your_extension_id ./native-host/install-macos.sh
 PAGEDOCK_CODING_WORKSPACE=/absolute/path/to/code ./native-host/install-macos.sh
-```
-
-For higher-quality Mandarin narration, complete the optional one-time HyperFrames sign-in before generating a video:
-
-```bash
-npx hyperframes auth login
 ```
 
 ### Let Codex actively operate a whiteboard
@@ -143,10 +182,6 @@ LAN mode accepts only loopback/private source addresses and rate-limits authenti
 ```bash
 node "$HOME/Library/Application Support/PageDock/configure-bridge.mjs" --local --deny-delete
 ```
-
-### From a release zip
-
-Download the latest `shizuo-x.y.z.zip` from this repository's Releases page, unzip it, then load unpacked as above.
 
 ### Chrome Web Store / Edge Add-ons
 

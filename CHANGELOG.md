@@ -6,6 +6,14 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ## [Unreleased]
 
+## [2.24.0] - 2026-08-29
+
+### Release
+
+- Reframe the public project around one clear path: capture context, organize it on a visual canvas, and let Codex act with observable results
+- Add release-ready overview artwork, a real in-page assistant capture, a GitHub social preview, and a direct downloadable extension package
+- Move advanced and experimental capabilities behind progressive disclosure so first-time installation and use remain understandable
+
 ### Added
 
 - Add “提炼知识卡” for selected cards, producing an editable, searchable Markdown document linked to its source cards and provenance
