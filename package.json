@@ -23,13 +23,13 @@
   ],
   "license": "MIT",
   "author": "拾作 Contributors",
-  "homepage": "https://github.com/Amossse/shizuo#readme",
+  "homepage": "https://github.com/Amossse/shizuo-codex-workspace#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Amossse/shizuo.git"
+    "url": "git+https://github.com/Amossse/shizuo-codex-workspace.git"
   },
   "bugs": {
-    "url": "https://github.com/Amossse/shizuo/issues"
+    "url": "https://github.com/Amossse/shizuo-codex-workspace/issues"
   },
   "scripts": {
     "test": "node scripts/verify.mjs && node scripts/install-contract-test.mjs && node scripts/bridge-auth-test.mjs && node scripts/board-domain-test.mjs && node scripts/onboarding-contract.mjs && node scripts/page-chat-contract.mjs && node scripts/task-state-contract.mjs && node scripts/session-preview-contract.mjs && node scripts/native-process-stream-test.mjs && node scripts/terminal-output-stress.mjs && node scripts/external-bridge-test.mjs",
