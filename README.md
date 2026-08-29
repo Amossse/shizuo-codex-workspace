@@ -11,7 +11,7 @@
 ![offline](https://img.shields.io/badge/offline-%E2%9C%93-success)
 ![telemetry](https://img.shields.io/badge/telemetry-none-success)
 
-[Download v2.24.0](https://github.com/Amossse/shizuo-codex-workspace/releases/download/v2.24.0/shizuo-2.24.0.zip) · [Quick start](#quick-start) · [How it works](#how-it-works) · [Contributing](CONTRIBUTING.md)
+[Download v2.24.0](https://github.com/Amossse/shizuo-codex-workspace/archive/refs/tags/v2.24.0.zip) · [Quick start](#quick-start) · [How it works](#how-it-works) · [Contributing](CONTRIBUTING.md)
 
 ![Shizuo product overview](docs/shizuo-overview.png)
 
@@ -34,7 +34,7 @@ Core capture and canvas data stay local with zero analytics. Codex runs only whe
 
 ### 1. Install the extension
 
-1. Download [`shizuo-2.24.0.zip`](https://github.com/Amossse/shizuo-codex-workspace/releases/download/v2.24.0/shizuo-2.24.0.zip) and unzip it.
+1. Download [`shizuo-codex-workspace-2.24.0.zip`](https://github.com/Amossse/shizuo-codex-workspace/archive/refs/tags/v2.24.0.zip) and unzip it.
 2. Open `chrome://extensions` or `edge://extensions`.
 3. Enable **Developer mode**, choose **Load unpacked**, and select the unzipped folder.
 4. Pin 拾作. On any webpage, save the page or selected content; open a new tab to enter the canvas.

@@ -14,7 +14,7 @@ Shizuo is a local-first visual workspace for Codex: capture context from the bro
 
 ## Install
 
-1. Download `shizuo-2.24.0.zip` from this release and unzip it.
+1. Download the source ZIP from this release and unzip it. Shizuo has no build step, so the tagged source is the loadable extension package.
 2. Open `chrome://extensions`, enable Developer mode, and choose Load unpacked.
 3. Select the unzipped folder.
 4. Optional: connect local Codex by following the README quick start.
