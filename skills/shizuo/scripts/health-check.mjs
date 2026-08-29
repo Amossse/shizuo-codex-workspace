@@ -36,14 +36,22 @@ for (const [id, label, command, required] of [
   ["codex", "Codex CLI", "codex", true],
   ["agy", "AGY CLI", "agy", false],
   ["python", "Python 3", "python3", terminalRequired],
-  ["hyperframes", "HyperFrames", "hyperframes", videoRequired],
+  ["hyperframes", "HyperFrames", "hyperframes", false],
   ["ffmpeg", "FFmpeg", "ffmpeg", videoRequired]
 ]) {
   const executable = commandPath(command);
   add(id, label, executable ? "pass" : required ? "fail" : "warn", executable || "未安装", required);
 }
 const remotionPath = fs.existsSync(bundledRemotionPath) ? bundledRemotionPath : commandPath("remotion");
-add("remotion", "Remotion", remotionPath ? "pass" : videoRequired ? "fail" : "warn", remotionPath || "未安装", videoRequired);
+add("remotion", "Remotion", remotionPath ? "pass" : "warn", remotionPath || "未安装", false);
+const videoEngineAvailable = checks.some(check => ["hyperframes", "remotion"].includes(check.id) && check.status === "pass");
+add(
+  "video_engine",
+  "视频引擎",
+  videoEngineAvailable ? "pass" : videoRequired ? "fail" : "warn",
+  videoEngineAvailable ? "至少一个视频引擎已就绪" : "HyperFrames 与 Remotion 均未安装",
+  videoRequired
+);
 add("host", "Native Host", fs.existsSync(hostPath) ? "pass" : "fail", hostPath, true);
 add("manifest", "Chrome 注册", fs.existsSync(manifestPath) ? "pass" : "fail", manifestPath, true);
 add("mcp_adapter", "MCP Adapter", fs.existsSync(mcpPath) ? "pass" : "fail", mcpPath, true);

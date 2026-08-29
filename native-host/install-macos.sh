@@ -38,9 +38,13 @@ node_bin="$(command -v node || true)"
 codex_bin="$(command -v codex || true)"
 agy_bin="$(command -v agy || true)"
 hyperframes_bin="$(command -v hyperframes || true)"
-remotion_bin="${PAGEDOCK_REMOTION_BIN:-$(command -v remotion || true)}"
 npm_bin="$(command -v npm || true)"
 remotion_runtime="$install_root/remotion-runtime"
+bundled_remotion_bin="$remotion_runtime/node_modules/.bin/remotion"
+remotion_bin="${PAGEDOCK_REMOTION_BIN:-$(command -v remotion || true)}"
+if [[ -z "$remotion_bin" && -x "$bundled_remotion_bin" ]]; then
+  remotion_bin="$bundled_remotion_bin"
+fi
 ffmpeg_bin="$(command -v ffmpeg || true)"
 terminal_shell="${PAGEDOCK_TERMINAL_SHELL:-/bin/zsh}"
 python_bin="${PAGEDOCK_PYTHON_BIN:-$(command -v python3 || true)}"
@@ -73,10 +77,6 @@ if [[ "$profile" != "--core" && ( -z "$python_bin" || ! -x "$python_bin" ) ]]; t
 fi
 if [[ -z "$codex_bin" || ! -x "$codex_bin" ]]; then
   print -u2 "找不到可执行的 Codex CLI"
-  exit 1
-fi
-if [[ "$profile" == "--video" && ( -z "$hyperframes_bin" || ! -x "$hyperframes_bin" ) ]]; then
-  print -u2 "找不到可执行的 HyperFrames CLI"
   exit 1
 fi
 if [[ "$profile" == "--video" && ( -z "$ffmpeg_bin" || ! -x "$ffmpeg_bin" ) ]]; then
@@ -126,10 +126,14 @@ if [[ "$profile" == "--video" && ( -z "$remotion_bin" || ! -x "$remotion_bin" ) 
   fi
   mkdir -p "$remotion_runtime"
   "$npm_bin" install --prefix "$remotion_runtime" --no-audit --no-fund remotion@latest @remotion/cli@latest react@latest react-dom@latest
-  remotion_bin="$remotion_runtime/node_modules/.bin/remotion"
+  remotion_bin="$bundled_remotion_bin"
 fi
 if [[ "$profile" == "--video" && ! -x "$remotion_bin" ]]; then
   print -u2 "Remotion CLI 安装失败：$remotion_bin"
+  exit 1
+fi
+if [[ "$profile" == "--video" && ( -z "$hyperframes_bin" || ! -x "$hyperframes_bin" ) && ! -x "$remotion_bin" ]]; then
+  print -u2 "HyperFrames 与 Remotion 均不可用，至少需要一个视频引擎"
   exit 1
 fi
 mkdir -p "$skill_install_root/scripts"
@@ -221,7 +225,7 @@ print "AGY CLI：${agy_bin:-未安装（可选）}"
 print "控制台 Shell：$terminal_shell"
 print "HyperFrames 浏览器：${hyperframes_browser_path:-未配置（可稍后运行 ./install.sh --video）}"
 if [[ "$profile" == "--video" ]]; then
-  print "视频引擎：HyperFrames + Remotion（纯画面）+ Kokoro 后置口播与字幕"
+  print "视频引擎：HyperFrames / Remotion（至少一个可用，纯画面）+ Kokoro 后置口播与字幕"
 else
   print "视频引擎：未启用（可稍后运行 ./install.sh --video）"
 fi

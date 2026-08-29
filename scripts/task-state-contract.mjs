@@ -76,7 +76,9 @@ assert.match(html, /id="selectionVideoEngine"[\s\S]{0,220}value="hyperframes"[\s
 assert.match(board, /className = "task-video-engine"[\s\S]{0,500}视频 · HyperFrames[\s\S]{0,180}视频 · Remotion/, "task cards must expose both video engines in settings");
 assert.match(board, /selectedVideoEngine === "remotion" \? "remotion-video" : "hyperframes-video"/, "manual video runs must route through the persisted engine");
 assert.match(background, /item\.taskVideoEngine === "remotion" \? "remotion-video" : "hyperframes-video"/, "scheduled workflow videos must route through the persisted engine");
+assert.match(background, /availableVideoMode[\s\S]{0,500}hyperframesAvailable[\s\S]{0,500}remotionAvailable/, "scheduled videos must fall back to an available engine");
 assert.match(background, /health:[\s\S]{0,500}hyperframes:[\s\S]{0,160}remotion:/, "connection health must report both installed video engines");
+assert.match(board, /videoEngines[\s\S]{0,600}视频创作/, "health UI must summarize every available video engine");
 assert.match(board, /composeMain\.hidden = active \|\| failed \|\| pending/, "pending workflow steps must not look manually executable");
 assert.match(html, /\.task-content\[data-state="pending"\]/, "pending workflow steps must have a distinct canvas treatment");
 assert.match(html, /\.task-content\[data-state="pending"\] \.task-compose\s*\{[^}]*background:\s*transparent/s, "pending workflow status must not inherit the normal white composer panel");
@@ -95,6 +97,8 @@ assert.match(board, /const events = compactTaskEvents\(item\.taskEvents\)/, "tas
 assert.match(host, /function codexActivity/, "Native Host must translate Codex JSON events into process events");
 assert.match(host, /const remotionBinary\s*=\s*process\.env\.PAGEDOCK_REMOTION_BIN/, "Native Host must resolve the Remotion CLI");
 assert.match(host, /remotionAvailable:\s*commandAvailable\(remotionBinary\)/, "Native Host capability discovery must expose Remotion readiness");
+assert.match(host, /video engine fallback[\s\S]{0,300}requestedMode[\s\S]{0,100}actualMode/, "Native Host must transparently fall back when the requested video engine is unavailable");
+assert.match(host, /profile === "video" && !hyperframesReady && !remotionReady/, "video self-test must require at least one engine instead of both engines");
 assert.match(host, /acceptOutput:\s*\/@remotion\\\/cli\\s\+\\d\+\\\.\\d\+\\\.\\d\+\//, "Remotion health checks must validate its version banner despite the CLI's non-zero --version exit");
 assert.match(host, /function buildHyperframesVideoPrompt[\s\S]{0,1800}纯画面输出[\s\S]{0,260}不生成配音、背景音乐或任何音频/, "HyperFrames authoring must explicitly produce silent video");
 assert.match(host, /function buildRemotionVideoPrompt[\s\S]{0,1200}composition id 必须是 Main[\s\S]{0,500}不要生成配音、背景音乐或任何音频/, "Remotion authoring must use one silent Main composition");

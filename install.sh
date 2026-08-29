@@ -11,7 +11,7 @@ usage() {
 用法：
   ./install.sh --core       安装白板、Codex 与 MCP（默认）
   ./install.sh --terminal   额外要求 Python 3，启用交互终端
-  ./install.sh --video      安装全部能力，并检查 HyperFrames、Remotion 和 FFmpeg
+  ./install.sh --video      安装全部能力，并确保 HyperFrames 或 Remotion 至少一个可用
   ./install.sh --help
 
 安装完成后运行：

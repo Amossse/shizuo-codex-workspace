@@ -1300,9 +1300,13 @@ function scheduledWorkflowStepRequest(board, item) {
     "image-gen": `${instruction}\n\n视觉要求：使用明亮温暖的纸张手稿风格，突出内容、结构和关系；禁止暗黑科技风、无用眉标、来源脚注和水印。`,
     video: `${instruction}\n\n制作解释型视频，只使用提供的内容作为事实依据，不要臆造。`
   };
+  const preferredVideoMode = item.taskVideoEngine === "remotion" ? "remotion-video" : "hyperframes-video";
+  const availableVideoMode = preferredVideoMode === "remotion-video"
+    ? remotionAvailable ? "remotion-video" : hyperframesAvailable ? "hyperframes-video" : preferredVideoMode
+    : hyperframesAvailable ? "hyperframes-video" : remotionAvailable ? "remotion-video" : preferredVideoMode;
   return {
     mode: item.taskWorkflowMode === "video"
-      ? item.taskVideoEngine === "remotion" ? "remotion-video" : "hyperframes-video"
+      ? availableVideoMode
       : item.taskWorkflowMode === "image-gen" ? "image-gen" : item.taskWorkflowMode === "text" ? "analysis" : "coding",
     prompt: prompts[item.taskWorkflowMode] || instruction,
     page: { title: `${board.name} · ${item.taskWorkflowTitle || "工作流步骤"}`, url: "", content: context || instruction },

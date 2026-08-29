@@ -213,6 +213,7 @@ const terminalSessions = new Map();
 const terminalSaveTimers = new Map();
 let codexChatTask;
 let codexChatReady = false;
+let videoEngineHealth = { loaded: false, hyperframes: false, remotion: false };
 let aiRuntime = "codex";
 let externalCodexConnected = false;
 let externalCodexScope = "disabled";
@@ -596,6 +597,13 @@ function renderCodexLauncherConnectionStatus() {
 }
 
 function updateExternalCodexStatus(snapshot = {}) {
+  if (snapshot.health && typeof snapshot.health === "object") {
+    videoEngineHealth = {
+      loaded: true,
+      hyperframes: Boolean(snapshot.health.hyperframes),
+      remotion: Boolean(snapshot.health.remotion)
+    };
+  }
   externalCodexConnected = Boolean(snapshot.externalCodexConnected ?? snapshot.connected);
   externalCodexScope = String(snapshot.externalCodexScope || snapshot.scope || externalCodexScope || "local");
   if (Array.isArray(snapshot.externalCodexClients)) externalCodexClients = snapshot.externalCodexClients;
@@ -1063,13 +1071,14 @@ async function runHealthCheck() {
   try {
     const snapshot = await chrome.runtime.sendMessage({ type: CODEX_STATUS_REQUEST, runtime: aiRuntime });
     const health = snapshot?.health || {};
+    const videoEngines = [health.hyperframes ? "HyperFrames" : "", health.remotion ? "Remotion" : ""].filter(Boolean);
     const checks = [
       ["扩展页面", true, "当前页面运行正常", true],
       ["Native Host", health.nativeHost, health.nativeHost ? `版本 ${health.nativeHostVersion || "unknown"}` : "未连接；请运行 ./install.sh --core", true],
       ["Codex CLI", health.codex, health.codex ? "已就绪" : "未找到或未登录", aiRuntime === "codex"],
       ["AGY CLI", health.agy, health.agy ? "已就绪" : "未找到或未登录", aiRuntime === "agy"],
       ["交互终端", health.terminal, health.terminal ? "已就绪" : "可选；运行 ./install.sh --terminal", false],
-      ["视频创作", health.hyperframes, health.hyperframes ? "HyperFrames 已就绪" : "可选；运行 ./install.sh --video", false],
+      ["视频创作", videoEngines.length > 0, videoEngines.length ? `${videoEngines.join("、")} 已就绪` : "可选；运行 ./install.sh --video", false],
       ["MCP 桥接", health.bridge, health.bridge ? `${health.bridgeScope || "local"} · ${health.bridgePort || ""}` : "未启用", false]
     ];
     healthCheckListEl.replaceChildren();
@@ -3318,7 +3327,10 @@ function taskWorkflowModeLabel(mode) {
 }
 
 function taskVideoEngine(value) {
-  return value === "remotion" ? "remotion" : "hyperframes";
+  const preferred = value === "remotion" ? "remotion" : "hyperframes";
+  if (!videoEngineHealth.loaded || videoEngineHealth[preferred]) return preferred;
+  const fallback = preferred === "remotion" ? "hyperframes" : "remotion";
+  return videoEngineHealth[fallback] ? fallback : preferred;
 }
 
 function taskCardLabel(item) {

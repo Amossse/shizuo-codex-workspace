@@ -3026,7 +3026,7 @@ async function runCodex(message) {
   const id = String(message.id || "").slice(0, 120);
   if (!id) throw new Error("任务缺少 id");
   if (activeJobs.has(id)) throw new Error("任务已经在运行");
-  const mode = message.mode === "hyperframes-video"
+  let mode = message.mode === "hyperframes-video"
     ? "hyperframes-video"
     : message.mode === "remotion-video"
       ? "remotion-video"
@@ -3034,7 +3034,20 @@ async function runCodex(message) {
       ? "image-gen"
       : message.mode === "coding"
         ? "coding"
-        : message.mode === "conversation" ? "conversation" : "analysis";
+      : message.mode === "conversation" ? "conversation" : "analysis";
+  const requestedVideoMode = mode;
+  if (["hyperframes-video", "remotion-video"].includes(mode)) {
+    const hyperframesReady = commandAvailable(hyperframesBinary);
+    const remotionReady = commandAvailable(remotionBinary);
+    if (mode === "hyperframes-video" && !hyperframesReady && remotionReady) mode = "remotion-video";
+    else if (mode === "remotion-video" && !remotionReady && hyperframesReady) mode = "hyperframes-video";
+    else if (!hyperframesReady && !remotionReady) {
+      throw new Error("本机未找到可用的视频引擎，请重新运行视频档本地桥接安装器");
+    }
+    if (mode !== requestedVideoMode) {
+      log("video engine fallback", { requestedMode: requestedVideoMode, actualMode: mode });
+    }
+  }
   const runtime = message.runtime === "agy" ? "agy" : "codex";
   if (runtime === "agy" && !["analysis", "conversation", "image-gen"].includes(mode)) {
     throw new Error("AGY 当前支持分析、对话和生图；编码和视频请切换到 Codex");
@@ -3150,6 +3163,7 @@ async function runCodex(message) {
     imageDirectory: imageBundle.directory,
     workDirectory,
     mode,
+    requestedVideoMode,
     runtime,
     runtimeError: "",
     agyConversationId: "",
@@ -3161,7 +3175,11 @@ async function runCodex(message) {
   };
   activeJobs.set(id, job);
   send({ type: "started", id, mode, runtime });
-  if (["hyperframes-video", "remotion-video"].includes(mode)) sendJobProgress(job, id, "building-video", { label: mode === "remotion-video" ? "Remotion 正在创建画面" : "HyperFrames 正在创建画面", status: "running", createdAt: Date.now() });
+  if (["hyperframes-video", "remotion-video"].includes(mode)) {
+    const engineLabel = mode === "remotion-video" ? "Remotion" : "HyperFrames";
+    const fallbackLabel = mode !== requestedVideoMode ? `（原引擎不可用，已自动切换）` : "";
+    sendJobProgress(job, id, "building-video", { label: `${engineLabel} 正在创建画面${fallbackLabel}`, status: "running", createdAt: Date.now() });
+  }
   if (mode === "image-gen") sendJobProgress(job, id, "generating-image", { label: `${runtime === "agy" ? "AGY" : "Codex"} 正在自由绘图`, status: "running", createdAt: Date.now() });
   log("job started", { id, mode, runtime, imageCount: imageBundle.paths.length });
 
@@ -3912,13 +3930,14 @@ async function selfTest() {
   if (!commandAvailable(codexBinary)) throw new Error(`Codex CLI 不可用：${codexBinary}`);
   if (profile !== "core" && !commandAvailable(terminalShell)) throw new Error(`控制台 Shell 不可用：${terminalShell}`);
   if (profile !== "core" && (!commandAvailable(pythonBinary) || !fs.existsSync(ptyHelper))) throw new Error("交互终端 PTY 组件不可用");
-  if (profile === "video" && !commandAvailable(hyperframesBinary)) throw new Error(`HyperFrames CLI 不可用：${hyperframesBinary}`);
-  if (profile === "video" && !commandAvailable(remotionBinary)) throw new Error(`Remotion CLI 不可用：${remotionBinary}`);
+  const hyperframesReady = commandAvailable(hyperframesBinary);
+  const remotionReady = commandAvailable(remotionBinary);
+  if (profile === "video" && !hyperframesReady && !remotionReady) throw new Error("HyperFrames 与 Remotion 均不可用");
   const [codex, hyperframes, remotion, terminal] = await Promise.all([
     commandVersion(codexBinary),
-    profile === "video" ? commandVersion(hyperframesBinary) : Promise.resolve("not-required"),
+    profile === "video" && hyperframesReady ? commandVersion(hyperframesBinary) : Promise.resolve(profile === "video" ? "not-installed" : "not-required"),
     // Remotion CLI 4 prints its version banner for --version but exits with 1; validate the banner instead of the exit code.
-    profile === "video" ? commandVersion(remotionBinary, { acceptOutput: /@remotion\/cli\s+\d+\.\d+\.\d+/ }) : Promise.resolve("not-required"),
+    profile === "video" && remotionReady ? commandVersion(remotionBinary, { acceptOutput: /@remotion\/cli\s+\d+\.\d+\.\d+/ }) : Promise.resolve(profile === "video" ? "not-installed" : "not-required"),
     profile === "core" ? Promise.resolve("not-required") : commandVersion(terminalShell)
   ]);
   const videoVisualValidator = profile === "video" ? videoVisualSelfTest() : "not-required";

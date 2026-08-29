@@ -35,11 +35,14 @@ assert.match(nativeInstaller, /mcp add shizuo/, "一键安装必须自动注册�
 assert.match(nativeInstaller, /PAGEDOCK_AGY_BIN/, "安装器必须把 AGY 的绝对路径交给 Chrome Native Host");
 assert.match(nativeInstaller, /PAGEDOCK_REMOTION_BIN/, "安装器必须把 Remotion runtime 的绝对路径交给 Chrome Native Host");
 assert.match(nativeInstaller, /@remotion\/cli@latest/, "视频档安装器必须自动准备 Remotion CLI");
+assert.match(nativeInstaller, /bundled_remotion_bin[\s\S]{0,300}-x "\$bundled_remotion_bin"[\s\S]{0,120}remotion_bin="\$bundled_remotion_bin"/, "安装器必须复用已有的 Remotion runtime，不能每次联网重装");
 assert.doesNotMatch(nativeInstaller, /PAGEDOCK_MEDIA_USE_AUDIO_SCRIPT/, "视频档安装器不能再依赖旁白生成脚本");
 assert.doesNotMatch(nativeInstaller, /PAGEDOCK_EXTENSION_ID:-[a-p]{32}/, "公开安装器不能内置维护者的本地扩展 ID");
 assert.match(nativeInstaller, /请先从 chrome:\/\/extensions 复制拾作扩展 ID/, "公开安装器必须说明如何提供当前扩展 ID");
 const healthSource = fs.readFileSync(path.join(root, "skills/shizuo/scripts/health-check.mjs"), "utf8");
 assert.match(healthSource, /bundledRemotionPath[\s\S]{0,900}add\("remotion", "Remotion"/, "健康检查必须验证安装器管理的 Remotion runtime");
+assert.match(healthSource, /videoEngineAvailable[\s\S]{0,500}"video_engine"/, "视频档健康检查必须接受任一可用视频引擎");
+assert.match(nativeInstaller, /HyperFrames 与 Remotion 均不可用，至少需要一个视频引擎/, "视频档安装器不能强制同时安装两个视频引擎");
 assert.match(nativeInstaller, /所有安装档位都记录一个[\s\S]{0,300}browser_candidates/, "核心更新不能清空已有的视频浏览器配置");
 assert.match(nativeInstaller, /Google Chrome[\s\S]{0,300}managed_browser_path/, "安装器应优先使用已验证的系统 Chrome，再回退到 HyperFrames 浏览器");
 const emptySupportRoot = fs.mkdtempSync(path.join(os.tmpdir(), "shizuo-health-contract-"));
