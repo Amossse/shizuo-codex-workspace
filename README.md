@@ -13,7 +13,9 @@
 
 [Download v2.24.0](https://github.com/Amossse/shizuo-codex-workspace/archive/refs/tags/v2.24.0.zip) · [Quick start](#quick-start) · [How it works](#how-it-works) · [Contributing](CONTRIBUTING.md)
 
-![Shizuo product overview](docs/shizuo-overview.png)
+![Shizuo real workflow canvas with linked Codex tasks, generated knowledge, images, and video](docs/product-canvas-real.jpg)
+
+<p align="center"><em>A real Shizuo canvas: source material flows into Codex tasks, then stays connected to reusable results.</em></p>
 
 ---
 
@@ -41,6 +43,10 @@ Core capture and canvas data stay local with zero analytics. Codex runs only whe
 
 You can now capture, edit, organize, search, and export locally. Connecting Codex is optional.
 
+![Shizuo home with boards, Inbox capture, search, and the local AI assistant](docs/product-home-real.jpg)
+
+<p align="center"><em>The actual first screen: collect something, open a board, or search what you already know.</em></p>
+
 ### 2. Connect local Codex on macOS
 
 Copy the extension ID shown in `chrome://extensions`, then run:
@@ -66,6 +72,8 @@ Webpages / selections / local files
                 ↓
  answers / images / knowledge / workflows
 ```
+
+![Shizuo product flow overview](docs/shizuo-overview.png)
 
 On supported webpages, the compact assistant is injected automatically and reconnects to the local bridge in the background:
 
