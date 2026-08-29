@@ -28,8 +28,7 @@ assert.match(installHelp.stdout, /--core/, "一键安装必须提供不依赖视
 assert.match(installHelp.stdout, /health/, "一键安装必须说明安装后的健康检查命令");
 const nativeInstaller = fs.readFileSync(path.join(root, "native-host/install-macos.sh"), "utf8");
 assert.match(nativeInstaller, /health-check\.mjs/, "安装器必须复制健康检查实现，不能只安装调用入口");
-assert.match(nativeInstaller, /bridge-config\.mjs/, "安装器必须复制共享桥接配置实现");
-assert.match(nativeInstaller, /collaboration-page\.mjs/, "安装器必须复制浏览器协作页实现");
+assert.match(nativeInstaller, /for module in "\$script_dir"\/\*\.mjs; do[\s\S]{0,160}install -m 644/, "安装器必须完整复制 Native Host 模块，不能维护易漂移的手工清单");
 assert.match(nativeInstaller, /install-profile/, "健康检查必须知道用户选择的安装档位");
 assert.match(nativeInstaller, /mcp add shizuo/, "一键安装必须自动注册本机 MCP");
 assert.match(nativeInstaller, /PAGEDOCK_AGY_BIN/, "安装器必须把 AGY 的绝对路径交给 Chrome Native Host");

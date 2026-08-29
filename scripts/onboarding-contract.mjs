@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { readWhiteboardSource, readWhiteboardStyles } from "./source-utils.mjs";
 
 const read = file => readFileSync(new URL(`../${file}`, import.meta.url), "utf8");
-const html = read("whiteboard.html");
-const board = read("whiteboard.js");
+const html = `${read("whiteboard.html")}\n${readWhiteboardStyles()}`;
+const board = readWhiteboardSource();
 
 assert.match(html, /id="homeMoreMenu"[\s\S]{0,900}AI 与连接[\s\S]{0,400}实验能力[\s\S]{0,300}协作与会话/, "主页高级能力必须渐进披露");
 assert.match(html, /id="homeJourney"[\s\S]{0,1800}先放入一条内容[\s\S]{0,500}整理到白板[\s\S]{0,500}journeyAiName/, "首次进入必须解释收集、整理和创作主路径");

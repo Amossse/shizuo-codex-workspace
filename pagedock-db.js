@@ -1,6 +1,5 @@
 (function initPageDockDatabase(global) {
   "use strict";
-
   const DB_NAME = "pagedock";
   const DB_VERSION = 6;
   const BOARD_STORE = "boards";
@@ -12,22 +11,18 @@
   const PAGE_CHAT_STORE = "pageChats";
   const INBOX_ID = "inbox";
   const PAGE_CHAT_LIMIT = 200;
-
   let databasePromise;
   let searchIndexReady = false;
-
   function makeId(prefix = "item") {
     return global.crypto?.randomUUID?.()
       || `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   }
-
   function requestResult(request) {
     return new Promise((resolve, reject) => {
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error || new Error("IndexedDB 请求失败"));
     });
   }
-
   function transactionDone(transaction) {
     return new Promise((resolve, reject) => {
       transaction.oncomplete = () => resolve();
@@ -35,7 +30,6 @@
       transaction.onabort = () => reject(transaction.error || new Error("IndexedDB 事务已取消"));
     });
   }
-
   function cursorResults(request, limit, predicate = () => true) {
     return new Promise((resolve, reject) => {
       const results = [];
@@ -51,7 +45,6 @@
       };
     });
   }
-
   function openDatabase() {
     if (databasePromise) return databasePromise;
     databasePromise = new Promise((resolve, reject) => {
@@ -100,7 +93,6 @@
     });
     return databasePromise;
   }
-
   function boardPreview(items) {
     const first = items.find(item => item.text || item.alt || item.source?.title);
     return String(first?.text || first?.alt || first?.source?.title || "暂无内容")
@@ -108,7 +100,6 @@
       .trim()
       .slice(0, 90);
   }
-
   function normalizePageChatUrl(rawUrl) {
     try {
       const url = new URL(String(rawUrl || ""));
@@ -127,7 +118,6 @@
       return String(rawUrl || "").trim().slice(0, 4_000);
     }
   }
-
   function normalizedPageChatMessages(messages) {
     return (Array.isArray(messages) ? messages : []).slice(-30).map(message => ({
       role: ["user", "assistant", "error"].includes(message?.role) ? message.role : "assistant",
@@ -136,7 +126,6 @@
       imageCount: Math.min(4, Math.max(0, Number(message?.imageCount) || 0))
     })).filter(message => message.text);
   }
-
   async function getPageChat(rawUrl) {
     const normalizedUrl = normalizePageChatUrl(rawUrl);
     if (!normalizedUrl) return null;
@@ -145,7 +134,6 @@
     const record = await requestResult(transaction.objectStore(PAGE_CHAT_STORE).index("normalizedUrl").get(normalizedUrl));
     return record ? structuredClone(record) : null;
   }
-
   async function savePageChat(input = {}) {
     const normalizedUrl = normalizePageChatUrl(input.url);
     if (!normalizedUrl) throw new Error("页面会话缺少 URL");
@@ -175,7 +163,6 @@
     await transactionDone(transaction);
     return structuredClone(record);
   }
-
   async function deletePageChat(rawUrl) {
     const normalizedUrl = normalizePageChatUrl(rawUrl);
     if (!normalizedUrl) return false;
@@ -187,7 +174,6 @@
     await transactionDone(transaction);
     return key !== undefined;
   }
-
   function normalizedBoard(board, items = board.items || []) {
     const now = Date.now();
     const activeItems = items.filter(item => !item.archivedAt);
@@ -208,7 +194,6 @@
       }
     };
   }
-
   function normalizeProvenance(item, boardId, now = Date.now()) {
     const existing = item?.provenance && typeof item.provenance === "object" ? item.provenance : {};
     const parents = Array.isArray(existing.parents)
@@ -249,7 +234,6 @@
       createdAt: Math.max(0, Number(existing.createdAt) || Number(item?.createdAt) || now)
     };
   }
-
   function normalizedItem(item, boardId) {
     const now = Date.now();
     const supportedTypes = ["text", "document", "code", "image", "link", "page", "file", "folder", "video", "task", "terminal"];
@@ -402,7 +386,6 @@
       } : null
     };
   }
-
   async function ensureInbox() {
     const database = await openDatabase();
     const readTransaction = database.transaction(BOARD_STORE, "readonly");
@@ -425,7 +408,6 @@
     await writeDone;
     return INBOX_ID;
   }
-
   async function listBoards() {
     await ensureInbox();
     const database = await openDatabase();
@@ -439,7 +421,6 @@
       return right.updatedAt - left.updatedAt;
     });
   }
-
   async function getBoard(boardId, options = {}) {
     const database = await openDatabase();
     const boardTransaction = database.transaction(BOARD_STORE, "readonly");
@@ -457,12 +438,10 @@
     visibleItems.sort((left, right) => left.z - right.z || left.createdAt - right.createdAt);
     return { ...board, items: visibleItems };
   }
-
   async function createBoard(name = "新白板") {
     const board = normalizedBoard({ id: makeId("board"), name }, []);
     return commitBoardSnapshot({ ...board, items: [] }, { force: true, reason: "创建白板" });
   }
-
   function comparableBoard(board) {
     if (!board) return null;
     const copy = { ...board };
@@ -477,7 +456,6 @@
     });
     return copy;
   }
-
   async function commitBoardSnapshot(board, options = {}) {
     if (!board?.id) throw new Error("白板缺少 id");
     const domain = global.PageDockBoardDomain;
@@ -559,7 +537,6 @@
     });
     return after;
   }
-
   async function deleteBoard(boardId) {
     if (boardId === INBOX_ID) throw new Error("收件箱不能删除");
     const database = await openDatabase();
@@ -585,7 +562,6 @@
     transaction.objectStore(BOARD_STORE).delete(boardId);
     await done;
   }
-
   async function addItem(boardId, item) {
     if (boardId === INBOX_ID) await ensureInbox();
     const board = await getBoard(boardId, { includeArchived: true });
@@ -602,7 +578,6 @@
     const saved = await commitBoardSnapshot({ ...board, id: boardId }, { baseBoard, reason: "添加卡片" });
     return saved.items.find(item => item.id === next.id) || next;
   }
-
   async function listBoardItems(boardId, options = {}) {
     const database = await openDatabase();
     const transaction = database.transaction(ITEM_STORE, "readonly");
@@ -620,7 +595,6 @@
       .sort((left, right) => right.createdAt - left.createdAt)
       .slice(0, limit);
   }
-
   // Inbox 批量操作通过完整白板快照保存，确保卡片和白板计数始终一致。
   async function setItemsArchived(itemIds, archived) {
     const ids = new Set(itemIds.map(String));
@@ -639,7 +613,6 @@
     console.info("[pagedock-db] inbox archive state updated", { changed, archived });
     return changed;
   }
-
   async function deleteItems(boardId, itemIds) {
     const ids = new Set(itemIds.map(String));
     if (!ids.size) return 0;
@@ -653,7 +626,6 @@
     console.info("[pagedock-db] items deleted", { boardId, changed });
     return changed;
   }
-
   async function moveItems(itemIds, targetBoardId) {
     if (targetBoardId === INBOX_ID) return 0;
     const ids = new Set(itemIds.map(String));
@@ -689,7 +661,6 @@
     });
     return moving.length;
   }
-
   async function recentItems(limit = 20) {
     const database = await openDatabase();
     const transaction = database.transaction(ITEM_STORE, "readonly");
@@ -702,7 +673,6 @@
     await done;
     return items;
   }
-
   async function saveLocalHandle(boardId, handle, kind = handle?.kind) {
     if (!handle || !["file", "directory"].includes(kind)) throw new Error("本地文件授权无效");
     const database = await openDatabase();
@@ -722,7 +692,6 @@
     console.info("[pagedock-db] local handle saved", { id: record.id, boardId: record.boardId, kind });
     return record;
   }
-
   async function getLocalHandle(id) {
     if (!id) return null;
     const database = await openDatabase();
@@ -732,7 +701,6 @@
     await done;
     return record || null;
   }
-
   async function replaceLocalHandle(id, boardId, handle, kind = handle?.kind) {
     if (!id) return saveLocalHandle(boardId, handle, kind);
     const database = await openDatabase();
@@ -754,7 +722,6 @@
     await done;
     return record;
   }
-
   async function rebuildSearchIndex() {
     const domain = global.PageDockBoardDomain;
     const database = await openDatabase();
@@ -776,7 +743,6 @@
     console.info("[pagedock-db] search index rebuilt", { boardCount: boards.length, cardCount: items.length });
     return items.length;
   }
-
   async function searchBoards(query, options = {}) {
     if (!String(query || "").trim()) return [];
     if (!searchIndexReady) await rebuildSearchIndex();
@@ -787,7 +753,6 @@
     await done;
     return global.PageDockBoardDomain.searchDocuments(documents, query, options);
   }
-
   async function listBoardRevisions(boardId, options = {}) {
     const database = await openDatabase();
     const transaction = database.transaction(REVISION_STORE, "readonly");
@@ -809,7 +774,6 @@
         changedCardCount: (revision.itemChanges || []).length
       }));
   }
-
   async function restoreBoardRevision(boardId, targetRevision, options = {}) {
     const current = await getBoard(String(boardId), { includeArchived: true });
     if (!current) throw new Error("白板不存在");
@@ -834,7 +798,6 @@
       reason: `恢复到版本 ${target}`
     });
   }
-
   async function saveTemplateFromBoard(boardId, options = {}) {
     const board = await getBoard(String(boardId), { includeArchived: false });
     if (!board) throw new Error("白板不存在");
@@ -847,7 +810,6 @@
     console.info("[pagedock-db] workflow template saved", { templateId: template.id, cardCount: template.cards.length });
     return template;
   }
-
   async function listTemplates() {
     const database = await openDatabase();
     const transaction = database.transaction(TEMPLATE_STORE, "readonly");
@@ -856,7 +818,6 @@
     await done;
     return templates.sort((left, right) => Number(right.updatedAt || right.createdAt) - Number(left.updatedAt || left.createdAt));
   }
-
   async function createBoardFromTemplate(templateId, options = {}) {
     const database = await openDatabase();
     const transaction = database.transaction(TEMPLATE_STORE, "readonly");
@@ -871,7 +832,6 @@
     });
     return commitBoardSnapshot(board, { reason: `从模板“${template.name}”创建` });
   }
-
   async function deleteTemplate(templateId) {
     const database = await openDatabase();
     const transaction = database.transaction(TEMPLATE_STORE, "readwrite");
@@ -879,7 +839,6 @@
     transaction.objectStore(TEMPLATE_STORE).delete(String(templateId));
     await done;
   }
-
   async function exportAll() {
     const boards = await listBoards();
     const fullBoards = [];
@@ -893,7 +852,6 @@
       boards: fullBoards
     };
   }
-
   function importedCard(item) {
     const card = global.PageDockCardProtocol?.normalizeMeta(item) || item.card || null;
     if (!card) return null;
@@ -906,7 +864,6 @@
       }
     };
   }
-
   async function importData(payload) {
     if (!payload || !["pagedock-board", "pagedock-backup"].includes(payload.kind)) {
       throw new Error("不是有效的拾作备份文件");
@@ -953,7 +910,6 @@
       }, { reason: `导入白板“${source.name || "未命名白板"}”` });
       return [imported];
     }
-
     const imported = [];
     for (const source of payload.boards || []) {
       if (!source?.id) continue;
@@ -980,7 +936,6 @@
     await ensureInbox();
     return imported;
   }
-
   global.PageDockDB = Object.freeze({
     INBOX_ID,
     makeId,

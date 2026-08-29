@@ -104,7 +104,7 @@ try {
     }, 20);
   });
   const imageMessages = messages.filter(message => message.id === "image-gen-test");
-  assert(!imageMessages.some(message => message.type === "error"), "image-gen artifact flow returned an error");
+  assert(!imageMessages.some(message => message.type === "error"), `image-gen artifact flow returned an error: ${JSON.stringify(imageMessages)}`);
   assert(imageMessages.some(message => message.type === "progress" && message.stage === "generating-image"), "missing image-gen progress");
   assert.equal(imageMessages.find(message => message.type === "artifact-start")?.artifactType, "image");
   assert(imageMessages.some(message => message.type === "artifact-chunk" && message.data), "missing image artifact chunk");

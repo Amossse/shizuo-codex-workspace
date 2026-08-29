@@ -17,9 +17,6 @@ install_root="${PAGEDOCK_INSTALL_DIR:-$HOME/Library/Application Support/PageDock
 host_manifest_dir="$HOME/Library/Application Support/Google/Chrome/NativeMessagingHosts"
 host_name="com.pagedock.codex"
 host_script="$install_root/pagedock-codex-host.mjs"
-collaboration_page="$install_root/collaboration-page.mjs"
-bridge_auth="$install_root/bridge-auth.mjs"
-bridge_config_module="$install_root/bridge-config.mjs"
 bridge_configurator="$install_root/configure-bridge.mjs"
 mcp_server="$install_root/shizuo-mcp-server.mjs"
 bridge_config="$install_root/codex-bridge.json"
@@ -141,12 +138,10 @@ if [[ ! -d "$coding_workspace_dir" ]]; then
   print -u2 "Codex 编码工作区不存在：$coding_workspace_dir"
   exit 1
 fi
-install -m 644 "$script_dir/pagedock-codex-host.mjs" "$host_script"
-install -m 644 "$script_dir/collaboration-page.mjs" "$collaboration_page"
-install -m 644 "$script_dir/bridge-auth.mjs" "$bridge_auth"
-install -m 644 "$script_dir/bridge-config.mjs" "$bridge_config_module"
-install -m 644 "$script_dir/configure-bridge.mjs" "$bridge_configurator"
-install -m 644 "$script_dir/shizuo-mcp-server.mjs" "$mcp_server"
+# Native Host modules are installed together so the executable entry and its adapters cannot drift.
+for module in "$script_dir"/*.mjs; do
+  install -m 644 "$module" "$install_root/${module:t}"
+done
 install -m 755 "$script_dir/pagedock-pty.py" "$pty_helper"
 install -m 755 "$script_dir/pagedock-hyperframes-python" "$hyperframes_python_launcher"
 install -m 644 "$script_dir/python-compat/sitecustomize.py" "$python_compat_dir/sitecustomize.py"

@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import { backgroundScriptFiles, nativeHostModuleFiles, readBackgroundSource, readWhiteboardSource, readWhiteboardStyles, whiteboardScriptFiles } from "./source-utils.mjs";
 
 const root = new URL("../", import.meta.url).pathname;
 const failures = [];
@@ -16,14 +17,8 @@ function read(file) {
 function verifyJavaScript() {
   const files = readdirSync(root)
     .filter(file => file.endsWith(".js"))
-    .concat([
-      "native-host/pagedock-codex-host.mjs",
-      "native-host/bridge-auth.mjs",
-      "native-host/bridge-config.mjs",
-      "native-host/configure-bridge.mjs",
-      "native-host/shizuo-mcp-server.mjs",
-      "native-host/runtime-utils.mjs"
-    ]);
+    .concat(whiteboardScriptFiles(), backgroundScriptFiles())
+    .concat(nativeHostModuleFiles());
   for (const file of files) {
     try {
       execFileSync(process.execPath, ["--check", join(root, file)], { stdio: "pipe" });
@@ -33,9 +28,27 @@ function verifyJavaScript() {
   }
 }
 
-function verifyHtmlContract(htmlFile, jsFile) {
+function verifySourceLineLimits() {
+  const extensions = new Set([".js", ".mjs", ".py", ".sh", ".html", ".css"]);
+  const excluded = new Set([".git", "artifacts", "node_modules", "vendor"]);
+  const visit = directory => {
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      if (excluded.has(entry.name)) continue;
+      const absolute = join(directory, entry.name);
+      if (entry.isDirectory()) visit(absolute);
+      else if (extensions.has(entry.name.slice(entry.name.lastIndexOf(".")))) {
+        const relative = absolute.slice(root.length);
+        const lineCount = readFileSync(absolute, "utf8").split("\n").length - 1;
+        check(lineCount <= 1000, `${relative} 有 ${lineCount} 行，首方源文件不得超过 1000 行`);
+      }
+    }
+  };
+  visit(root);
+}
+
+function verifyHtmlContract(htmlFile, jsFile, source = read(jsFile)) {
   const html = read(htmlFile);
-  const js = read(jsFile);
+  const js = source;
   const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
   const duplicates = [...new Set(ids.filter((id, index) => ids.indexOf(id) !== index))];
   check(!duplicates.length, `${htmlFile} 存在重复 id：${duplicates.join("、")}`);
@@ -71,6 +84,9 @@ check(manifest.optional_host_permissions?.includes("https://*/*"), "缺少 HTTPS
 
 [
   "whiteboard.html",
+  "whiteboard/bootstrap.js",
+  "whiteboard/whiteboard.css",
+  "background/runtime-context.js",
   "popup.html",
   "sidepanel.html",
   "content-codex.js",
@@ -99,11 +115,12 @@ check(/name:\s*shizuo/.test(read("skills/shizuo/SKILL.md")), "拾作 Skill 缺�
 check(/Use when/.test(read("skills/shizuo/SKILL.md")), "拾作 Skill 描述缺少触发条件");
 check(read("native-host/shizuo-mcp-server.mjs") === read("skills/shizuo/scripts/shizuo-mcp-server.mjs"), "Native Host 与 Skill 的 MCP 适配器已漂移");
 
-const backgroundSource = read("background.js");
+const backgroundSource = readBackgroundSource();
 const pageCodexSource = read("content-codex.js");
-const whiteboardSource = read("whiteboard.js");
+const whiteboardSource = readWhiteboardSource();
 const whiteboardHtml = read("whiteboard.html");
-check(/#topbar:has\(details\.menu\[open\]\)\s*\{[^}]*z-index:\s*95\b/.test(whiteboardHtml), "顶部菜单展开时必须高于协作面板");
+const whiteboardStyles = readWhiteboardStyles();
+check(/#topbar:has\(details\.menu\[open\]\)\s*\{[^}]*z-index:\s*95\b/.test(whiteboardStyles), "顶部菜单展开时必须高于协作面板");
 check(manifest.content_scripts?.some(entry => entry.matches?.includes("<all_urls>") && entry.js?.includes("content-codex.js")), "Codex 快捷入口没有注入全部受支持页面");
 check(/attachShadow\(\{ mode: "closed" \}\)/.test(pageCodexSource), "网页 Codex 快捷入口缺少 Shadow DOM 样式隔离");
 check(/chrome\.storage\.local\.set\(\{ \[POSITION_KEY\]: \{ \.\.\.position, collapsed \} \}/.test(pageCodexSource), "网页 Codex 快捷入口缺少跨页面位置保存");
@@ -168,19 +185,18 @@ check(/searchBoards/.test(read("pagedock-db.js")) && /listBoardRevisions/.test(r
 check(/provenance/.test(read("card-protocol.js")) && /id="provenanceDialog"/.test(whiteboardHtml), "卡片来源追踪链路不完整");
 
 verifyJavaScript();
-verifyHtmlContract("whiteboard.html", "whiteboard.js");
+verifySourceLineLimits();
+verifyHtmlContract("whiteboard.html", "whiteboard modules", whiteboardSource);
 verifyHtmlContract("popup.html", "popup.js");
 verifyHtmlContract("sidepanel.html", "sidepanel.js");
 
-for (const file of ["tokens.css", "paper-theme.css"]) verifyCssBraces(file, read(file));
+for (const file of ["tokens.css", "paper-theme.css", "whiteboard/whiteboard.css"]) verifyCssBraces(file, read(file));
 for (const file of ["whiteboard.html", "popup.html", "sidepanel.html", "editor.html"]) {
   const styles = [...read(file).matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)].map(match => match[1]).join("\n");
   verifyCssBraces(file, styles);
 }
 
-const appSources = ["whiteboard.js", "popup.js", "sidepanel.js", "background.js", "whiteboard.html", "popup.html", "sidepanel.html", "paper-theme.css"]
-  .map(read)
-  .join("\n");
+const appSources = [whiteboardSource, backgroundSource, whiteboardStyles, ...["popup.js", "sidepanel.js", "whiteboard.html", "popup.html", "sidepanel.html", "paper-theme.css"].map(read)].join("\n");
 check(!/transition\s*:\s*all\b/i.test(appSources), "发现 transition: all，会造成不可控动画");
 check(!/\balert\s*\(/.test(appSources), "发现阻塞式 alert，请改为原位错误反馈");
 check(!/chrome-extension:\/\/[a-p]{32}/.test(read("popup.js")), "弹出面板硬编码了扩展 ID");

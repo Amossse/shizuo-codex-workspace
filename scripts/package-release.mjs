@@ -48,10 +48,9 @@ const rootFiles = new Set([
   "sidepanel.html",
   "sidepanel.js",
   "tokens.css",
-  "whiteboard.html",
-  "whiteboard.js"
+  "whiteboard.html"
 ]);
-const runtimeDirectories = ["icons/", "native-host/", "skills/", "vendor/"];
+const runtimeDirectories = ["background/", "icons/", "native-host/", "skills/", "vendor/", "whiteboard/"];
 const trackedFiles = execFileSync("git", ["ls-files", "-z"], { cwd: root })
   .toString("utf8")
   .split("\0")
@@ -60,7 +59,7 @@ const releaseFiles = trackedFiles
   .filter(file => rootFiles.has(file) || runtimeDirectories.some(directory => file.startsWith(directory)))
   .sort();
 
-for (const required of ["manifest.json", "install.sh", "native-host/pagedock-codex-host.mjs", "skills/shizuo/SKILL.md", "vendor/markdown/purify.min.js"]) {
+for (const required of ["manifest.json", "install.sh", "background/runtime-context.js", "whiteboard/bootstrap.js", "whiteboard/whiteboard.css", "native-host/pagedock-codex-host.mjs", "skills/shizuo/SKILL.md", "vendor/markdown/purify.min.js"]) {
   if (!releaseFiles.includes(required)) throw new Error(`发布包缺少运行文件：${required}`);
 }
 
