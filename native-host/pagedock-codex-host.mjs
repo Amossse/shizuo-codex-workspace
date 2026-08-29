@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import { authorizeBridgeClient, isLoopbackAddress, normalizedRemoteAddress } from "./bridge-auth.mjs";
 import { readActiveBridgeConfig, registerBridgeClient, resolveBridgeConfigPath, revokeBridgeClient, startLanShare, stopLanShare } from "./bridge-config.mjs";
 import { collaborationBoardPage, collaborationLandingPage } from "./collaboration-page.mjs";
+import { appendBoundedOutput, commandAvailable, errorTail, executionEnvironment, truncate } from "./runtime-utils.mjs";
 
 const HOST_VERSION = "1.11.1";
 const MAX_INBOUND_BYTES = 70 * 1024 * 1024;
@@ -184,48 +185,15 @@ let observedCodexSessionStatus = Object.freeze({
 let observedCodexSessions = [];
 
 function codexEnvironment() {
-  const nodeDirectory = path.dirname(process.execPath);
-  const currentPath = process.env.PATH || "/usr/bin:/bin";
-  const toolDirectories = [codexBinary, agyBinary, hyperframesBinary, remotionBinary, ffmpegBinary]
-    .filter(tool => path.isAbsolute(tool))
-    .map(tool => path.dirname(tool));
-  const pathEntries = [nodeDirectory, ...toolDirectories, ...currentPath.split(path.delimiter)].filter(Boolean);
-  const environment = {
-    ...process.env,
-    PATH: [...new Set(pathEntries)].join(path.delimiter)
-  };
-  if (hyperframesBrowserPath) environment.HYPERFRAMES_BROWSER_PATH = hyperframesBrowserPath;
-  return environment;
-}
-
-function commandAvailable(command) {
-  if (path.isAbsolute(command)) return fs.existsSync(command);
-  return (process.env.PATH || "").split(path.delimiter)
-    .filter(Boolean)
-    .some(directory => fs.existsSync(path.join(directory, command)));
+  return executionEnvironment({
+    binaries: [codexBinary, agyBinary, hyperframesBinary, remotionBinary, ffmpegBinary],
+    extra: hyperframesBrowserPath ? { HYPERFRAMES_BROWSER_PATH: hyperframesBrowserPath } : {}
+  });
 }
 
 function log(message, details) {
   const suffix = details ? ` ${JSON.stringify(details)}` : "";
   process.stderr.write(`[pagedock-codex-host] ${message}${suffix}\n`);
-}
-
-function truncate(value, limit) {
-  const text = String(value || "");
-  return text.length > limit ? `${text.slice(0, limit)}\n\n[内容已截断]` : text;
-}
-
-function appendBoundedOutput(current, chunk, limit) {
-  const combined = current + String(chunk || "");
-  if (combined.length <= limit) return combined;
-  const marker = "\n\n[中间日志已截断，保留末尾错误]\n\n";
-  const headLength = Math.min(4_000, Math.floor((limit - marker.length) / 3));
-  return combined.slice(0, headLength) + marker + combined.slice(-(limit - headLength - marker.length));
-}
-
-function errorTail(value, limit) {
-  const text = String(value || "").replace(/\u001b\[[0-?]*[ -\/]*[@-~]/g, "").trim();
-  return text.length > limit ? `[前序渲染日志已省略]\n${text.slice(-limit)}` : text;
 }
 
 function readFileTail(filePath, limit = 64 * 1024) {

@@ -1,6 +1,6 @@
 {
   "name": "shizuo",
-  "version": "2.24.0",
+  "version": "2.24.1",
   "description": "Local-first visual workspace for Codex: capture context, organize it on an infinite canvas, and let local agents act with visible results.",
   "type": "module",
   "keywords": [
@@ -38,8 +38,8 @@
     "url": "https://github.com/Amossse/shizuo-codex-workspace/issues"
   },
   "scripts": {
-    "test": "node scripts/verify.mjs && node scripts/install-contract-test.mjs && node scripts/bridge-auth-test.mjs && node scripts/board-domain-test.mjs && node scripts/onboarding-contract.mjs && node scripts/page-chat-contract.mjs && node scripts/task-state-contract.mjs && node scripts/session-preview-contract.mjs && node scripts/native-process-stream-test.mjs && node scripts/terminal-output-stress.mjs && node scripts/external-bridge-test.mjs",
-    "pack": "zip -rq ../shizuo-$npm_package_version.zip . -x '*.zip' '*.pyc' '*/__pycache__/*' 'node_modules/*' '.git/*' '.hallmark/*'",
+    "test": "node scripts/verify.mjs && node scripts/release-contract-test.mjs && node scripts/runtime-utils-test.mjs && node scripts/install-contract-test.mjs && node scripts/bridge-auth-test.mjs && node scripts/board-domain-test.mjs && node scripts/onboarding-contract.mjs && node scripts/page-chat-contract.mjs && node scripts/task-state-contract.mjs && node scripts/session-preview-contract.mjs && node scripts/native-process-stream-test.mjs && node scripts/terminal-output-stress.mjs && node scripts/external-bridge-test.mjs",
+    "pack": "node scripts/package-release.mjs",
     "update-vendor": "echo 'See CONTRIBUTING.md → Refreshing vendored dependencies'"
   },
   "engines": {

@@ -1,0 +1,56 @@
+name: Installation or connection help
+description: Get help with unpacked installation, Native Messaging, Codex, or health checks.
+title: "[Setup]: "
+labels: [question]
+body:
+  - type: markdown
+    attributes:
+      value: Never paste bridge tokens, Codex credentials, or private filesystem contents.
+  - type: input
+    id: version
+    attributes:
+      label: Shizuo version
+      placeholder: 2.24.1
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Browser, macOS, Node.js, and Codex versions
+    validations:
+      required: true
+  - type: dropdown
+    id: stage
+    attributes:
+      label: Failing stage
+      options:
+        - Load unpacked extension
+        - Run install.sh
+        - Native Host connection
+        - MCP registration
+        - Health check
+        - LAN collaboration
+        - Optional terminal or video setup
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command or action
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Sanitized output
+      render: shell
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed tokens, credentials, usernames, private paths, and internal URLs.
+          required: true

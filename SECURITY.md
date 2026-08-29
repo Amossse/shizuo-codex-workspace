@@ -31,8 +31,8 @@ We aim to:
 
 | Version | Security updates |
 | --- | --- |
-| 2.23.x | ✅ |
-| 2.22.x | Critical fixes only |
-| < 2.22 | ❌ |
+| 2.24.x | ✅ |
+| 2.23.x | Critical fixes only |
+| < 2.23 | ❌ |
 
 Older versions may still receive backports for critical vulnerabilities on a case-by-case basis.

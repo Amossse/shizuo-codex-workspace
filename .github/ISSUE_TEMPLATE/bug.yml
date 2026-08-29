@@ -1,0 +1,69 @@
+name: Bug report
+description: Report a reproducible problem in capture, canvas, Codex, collaboration, or export.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Do not include bridge tokens, credentials, private board content, or internal URLs.
+  - type: input
+    id: version
+    attributes:
+      label: Shizuo version
+      placeholder: 2.24.1
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Installation or local bridge
+        - Web capture or page assistant
+        - Canvas or cards
+        - Codex task or session
+        - Collaboration
+        - Image or video
+        - Export, backup, or restore
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: Describe the smallest sequence that reproduces the issue.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Browser and operating system
+      placeholder: Chrome 128, macOS 15
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Sanitized diagnostics
+      description: Paste only redacted health-check output or public console errors.
+      render: shell
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed tokens, credentials, private content, local usernames, and internal URLs.
+          required: true

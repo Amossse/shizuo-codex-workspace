@@ -1,0 +1,41 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Package and publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify source
+        run: npm test
+      - name: Build deterministic extension archive
+        run: node scripts/package-release.mjs --require-tag
+      - name: Verify release archive
+        run: |
+          (cd artifacts && sha256sum --check SHA256SUMS.txt)
+          unzip -t artifacts/shizuo-codex-workspace-${GITHUB_REF_NAME#v}.zip
+          unzip -l artifacts/shizuo-codex-workspace-${GITHUB_REF_NAME#v}.zip | grep -q "shizuo-codex-workspace-${GITHUB_REF_NAME#v}/manifest.json"
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "$GITHUB_REF_NAME"
+          artifacts/shizuo-codex-workspace-${GITHUB_REF_NAME#v}.zip
+          artifacts/SHA256SUMS.txt
+          --verify-tag
+          --title "Shizuo ${GITHUB_REF_NAME#v}"
+          --notes-file "docs/release-${GITHUB_REF_NAME}.md"

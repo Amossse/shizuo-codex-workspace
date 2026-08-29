@@ -6,6 +6,24 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ## [Unreleased]
 
+## [2.24.1] - 2026-08-29
+
+### Added
+
+- Add continuous integration across supported Node.js versions, release packaging checks, issue forms, and a pull request checklist
+- Add a complete privacy and browser-permission reference for local storage, optional network actions, Native Messaging, and trusted-LAN collaboration
+- Add deterministic, allowlisted release archives with a SHA-256 checksum and an automated tagged-release workflow
+
+### Changed
+
+- Extract shared Native Host execution and bounded-output helpers behind a tested runtime utility module
+- Update the public release path, supported security version, and repository metadata for the 2.24.1 maintenance release
+
+### Fixed
+
+- Prevent release archives from accidentally including untracked files, development-only screenshots, tests, or local configuration
+- Keep package, manifest, README, changelog, release notes, and Git tags under an explicit version-consistency gate
+
 ## [2.24.0] - 2026-08-29
 
 ### Release

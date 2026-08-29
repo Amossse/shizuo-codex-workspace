@@ -20,6 +20,7 @@ yarn-error.log*
 *.pem
 dist/
 build/
+artifacts/
 .hallmark/
 
 # Vendor temp

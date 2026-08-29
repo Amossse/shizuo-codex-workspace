@@ -21,7 +21,8 @@ function verifyJavaScript() {
       "native-host/bridge-auth.mjs",
       "native-host/bridge-config.mjs",
       "native-host/configure-bridge.mjs",
-      "native-host/shizuo-mcp-server.mjs"
+      "native-host/shizuo-mcp-server.mjs",
+      "native-host/runtime-utils.mjs"
     ]);
   for (const file of files) {
     try {
@@ -83,6 +84,7 @@ check(manifest.optional_host_permissions?.includes("https://*/*"), "缺少 HTTPS
   "native-host/bridge-auth.mjs",
   "native-host/bridge-config.mjs",
   "native-host/shizuo-mcp-server.mjs",
+  "native-host/runtime-utils.mjs",
   "skills/shizuo/SKILL.md",
   "skills/shizuo/REFERENCE.md",
   "skills/shizuo/scripts/shizuo.sh",

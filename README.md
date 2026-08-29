@@ -7,11 +7,11 @@
 ![manifest](https://img.shields.io/badge/Manifest-V3-blue)
 ![license](https://img.shields.io/badge/License-MIT-green)
 ![browser](https://img.shields.io/badge/Chrome%20%7C%20Edge-supported-brightgreen)
-![version](https://img.shields.io/badge/version-2.24.0-orange)
+![version](https://img.shields.io/badge/version-2.24.1-orange)
 ![offline](https://img.shields.io/badge/offline-%E2%9C%93-success)
 ![telemetry](https://img.shields.io/badge/telemetry-none-success)
 
-[Download v2.24.0](https://github.com/Amossse/shizuo-codex-workspace/archive/refs/tags/v2.24.0.zip) · [Quick start](#quick-start) · [How it works](#how-it-works) · [Contributing](CONTRIBUTING.md)
+[Download v2.24.1](https://github.com/Amossse/shizuo-codex-workspace/releases/download/v2.24.1/shizuo-codex-workspace-2.24.1.zip) · [Quick start](#quick-start) · [Privacy](PRIVACY.md) · [Contributing](CONTRIBUTING.md)
 
 ![Shizuo real workflow canvas with linked Codex tasks, generated knowledge, images, and video](docs/product-canvas-real.jpg)
 
@@ -36,7 +36,7 @@ Core capture and canvas data stay local with zero analytics. Codex runs only whe
 
 ### 1. Install the extension
 
-1. Download [`shizuo-codex-workspace-2.24.0.zip`](https://github.com/Amossse/shizuo-codex-workspace/archive/refs/tags/v2.24.0.zip) and unzip it.
+1. Download [`shizuo-codex-workspace-2.24.1.zip`](https://github.com/Amossse/shizuo-codex-workspace/releases/download/v2.24.1/shizuo-codex-workspace-2.24.1.zip) and unzip it. Optionally verify it against [`SHA256SUMS.txt`](https://github.com/Amossse/shizuo-codex-workspace/releases/download/v2.24.1/SHA256SUMS.txt).
 2. Open `chrome://extensions` or `edge://extensions`.
 3. Enable **Developer mode**, choose **Load unpacked**, and select the unzipped folder.
 4. Pin 拾作. On any webpage, save the page or selected content; open a new tab to enter the canvas.
@@ -137,6 +137,12 @@ Most web clippers ship raw HTML, dump unformatted text, or pipe your data throug
 - 📦 **No build step** — pure JavaScript, all deps vendored; load unpacked and you're done
 
 </details>
+
+## Privacy and permissions
+
+拾作 has no analytics or advertising SDK. Core captures, boards, revisions, search indexes, and page-chat history remain in browser-local storage. Codex credentials stay with the local Codex CLI and are never copied into the extension.
+
+Some capabilities need broad-looking browser permissions because they operate on user-selected webpages or connect to a local Native Messaging host. The exact purpose, activation boundary, stored data, network behavior, and deletion path for every permission are documented in [PRIVACY.md](PRIVACY.md). Host access is optional and requested only when you explicitly ask 拾作 to read a page-card URL.
 
 ## Installation profiles
 
