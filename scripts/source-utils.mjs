@@ -1,7 +1,9 @@
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-export const projectRoot = path.resolve(import.meta.dirname, "..");
+// Node 18 does not expose import.meta.dirname; resolve from the module URL instead.
+export const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 export function readSource(file) {
   return readFileSync(path.join(projectRoot, file), "utf8");

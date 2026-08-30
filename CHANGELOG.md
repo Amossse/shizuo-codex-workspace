@@ -6,6 +6,17 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ## [Unreleased]
 
+## [2.24.2] - 2026-08-30
+
+### Changed
+
+- Split the whiteboard, background worker, and Native Host runtimes into ownership-based modules while preserving their existing composition roots and external interfaces
+- Add an automatic 1,000-line limit for first-party source files and include every runtime module in verification, installation, and release packaging
+
+### Fixed
+
+- Restore the documented Node.js 18 test compatibility by resolving module paths from `import.meta.url` instead of the Node.js 20-only `import.meta.dirname`
+
 ## [2.24.1] - 2026-08-29
 
 ### Added
