@@ -89,10 +89,10 @@ function renderCodexLauncherConnectionStatus() {
   }
   codexExternalStatusEl.textContent = externalCodexConnected
     ? (externalCodexScope === "lan" ? "MCP 内网已接入" : "MCP 已接入")
-    : (externalCodexScope === "lan" ? "MCP 内网待接入" : "正在连接本地 Codex");
+    : (externalCodexScope === "lan" ? "MCP 内网待接入" : (codexConnectionHint ? "需要重新加载拾作" : "正在连接本地 Codex"));
   codexExternalStatusEl.title = externalCodexConnected
     ? `外部 Codex 已通过${externalCodexScope === "lan" ? "内网" : "本机"} MCP 接入拾作`
-    : (externalCodexScope === "lan" ? "拾作已开启内网共享，正在等待同事的 Codex 接入" : "打开拾作后会自动连接本地 Codex");
+    : (externalCodexScope === "lan" ? "拾作已开启内网共享，正在等待同事的 Codex 接入" : (codexConnectionHint || "打开拾作后会自动连接本地 Codex"));
 }
 
 function updateExternalCodexStatus(snapshot = {}) {

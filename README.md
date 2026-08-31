@@ -7,11 +7,11 @@
 ![manifest](https://img.shields.io/badge/Manifest-V3-blue)
 ![license](https://img.shields.io/badge/License-MIT-green)
 ![browser](https://img.shields.io/badge/Chrome%20%7C%20Edge-supported-brightgreen)
-![version](https://img.shields.io/badge/version-2.24.2-orange)
+![version](https://img.shields.io/badge/version-2.24.3-orange)
 ![offline](https://img.shields.io/badge/offline-%E2%9C%93-success)
 ![telemetry](https://img.shields.io/badge/telemetry-none-success)
 
-[Download v2.24.2](https://github.com/Amossse/shizuo-codex-workspace/releases/download/v2.24.2/shizuo-codex-workspace-2.24.2.zip) · [Quick start](#quick-start) · [Privacy](PRIVACY.md) · [Contributing](CONTRIBUTING.md)
+[Download v2.24.3](https://github.com/Amossse/shizuo-codex-workspace/releases/download/v2.24.3/shizuo-codex-workspace-2.24.3.zip) · [Quick start](#quick-start) · [Privacy](PRIVACY.md) · [Contributing](CONTRIBUTING.md)
 
 ![Shizuo real workflow canvas with linked Codex tasks, generated knowledge, images, and video](docs/product-canvas-real.jpg)
 
@@ -36,10 +36,10 @@ Core capture and canvas data stay local with zero analytics. Codex runs only whe
 
 ### 1. Install the extension
 
-1. Download [`shizuo-codex-workspace-2.24.2.zip`](https://github.com/Amossse/shizuo-codex-workspace/releases/download/v2.24.2/shizuo-codex-workspace-2.24.2.zip) and unzip it. Optionally verify it against [`SHA256SUMS.txt`](https://github.com/Amossse/shizuo-codex-workspace/releases/download/v2.24.2/SHA256SUMS.txt).
-2. Open `chrome://extensions` or `edge://extensions`.
-3. Enable **Developer mode**, choose **Load unpacked**, and select the unzipped folder.
-4. Pin 拾作. On any webpage, save the page or selected content; open a new tab to enter the canvas.
+1. Download [`shizuo-codex-workspace-2.24.3.zip`](https://github.com/Amossse/shizuo-codex-workspace/releases/download/v2.24.3/shizuo-codex-workspace-2.24.3.zip) and unzip it. Optionally verify it against [`SHA256SUMS.txt`](https://github.com/Amossse/shizuo-codex-workspace/releases/download/v2.24.3/SHA256SUMS.txt).
+2. Open `chrome://extensions` or `edge://extensions`, enable **Developer mode**, choose **Load unpacked**, and select that folder.
+3. Copy the shown extension ID. Open a terminal in that folder and run `PAGEDOCK_EXTENSION_ID=your_extension_id ./install.sh --core`.
+4. Click **Reload** for 拾作, then pin it. On any webpage, save the page or selected content; open a new tab to enter the canvas.
 
 You can now capture, edit, organize, search, and export locally. Connecting Codex is optional.
 
@@ -49,17 +49,19 @@ You can now capture, edit, organize, search, and export locally. Connecting Code
 
 ### 2. Connect local Codex on macOS
 
-Copy the extension ID shown in `chrome://extensions`, then run:
+Native Messaging requires Chrome to whitelist the exact extension origin. Chrome assigns an unpacked extension ID locally, so load the extension first and copy that ID from `chrome://extensions`, then run:
 
 ```bash
-PAGEDOCK_EXTENSION_ID=your_extension_id ./install.sh
+PAGEDOCK_EXTENSION_ID=your_extension_id ./install.sh --core
 ```
 
-Reload 拾作 once from `chrome://extensions`. A green **本地已连接** state confirms the local bridge is ready.
+Reload 拾作 once from `chrome://extensions`. A green **本地已连接** state confirms the local bridge is ready. This preserves the existing extension ID and its local board data.
 
 ```bash
 sh "$HOME/.codex/skills/shizuo/scripts/shizuo.sh" health
 ```
+
+If a task says **"Codex 暂时不可用"** or **"Codex 未连接"**, do not retry the task first: rerun the same installer command with the ID currently shown in `chrome://extensions`, reload 拾作, then run `health`. The task card will keep the original task so it can be retried after the bridge is healthy.
 
 ## How it works
 

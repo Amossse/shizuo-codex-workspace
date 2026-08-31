@@ -37,7 +37,7 @@ assert.match(nativeInstaller, /@remotion\/cli@latest/, "视频档安装器必须
 assert.match(nativeInstaller, /bundled_remotion_bin[\s\S]{0,300}-x "\$bundled_remotion_bin"[\s\S]{0,120}remotion_bin="\$bundled_remotion_bin"/, "安装器必须复用已有的 Remotion runtime，不能每次联网重装");
 assert.doesNotMatch(nativeInstaller, /PAGEDOCK_MEDIA_USE_AUDIO_SCRIPT/, "视频档安装器不能再依赖旁白生成脚本");
 assert.doesNotMatch(nativeInstaller, /PAGEDOCK_EXTENSION_ID:-[a-p]{32}/, "公开安装器不能内置维护者的本地扩展 ID");
-assert.match(nativeInstaller, /请先从 chrome:\/\/extensions 复制拾作扩展 ID/, "公开安装器必须说明如何提供当前扩展 ID");
+assert.match(nativeInstaller, /请先在 chrome:\/\/extensions 加载拾作，复制其扩展 ID/, "公开安装器必须说明如何提供当前扩展 ID");
 const healthSource = fs.readFileSync(path.join(root, "skills/shizuo/scripts/health-check.mjs"), "utf8");
 assert.match(healthSource, /bundledRemotionPath[\s\S]{0,900}add\("remotion", "Remotion"/, "健康检查必须验证安装器管理的 Remotion runtime");
 assert.match(healthSource, /videoEngineAvailable[\s\S]{0,500}"video_engine"/, "视频档健康检查必须接受任一可用视频引擎");

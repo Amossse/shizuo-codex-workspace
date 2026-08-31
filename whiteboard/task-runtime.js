@@ -140,7 +140,7 @@ async function runBoardCardTask(item, sourceItems = null) {
   scheduleSave();
   try {
     if (!codexChatReady) await connectCodexChat();
-    if (!codexChatReady) throw new Error(`${aiRuntimeLabel()} 未连接`);
+    if (!codexChatReady) throw new Error(codexConnectionHint || `${aiRuntimeLabel()} 未连接`);
     item.taskProgress = initialProgress;
     updateTaskItemElement(item);
     const images = aiRuntime === "agy" ? [] : await Promise.all(imageItems.map(imageDataForCodex));
@@ -232,7 +232,7 @@ async function runDynamicWorkflow(item) {
   scheduleSave();
   try {
     if (!codexChatReady) await connectCodexChat();
-    if (!codexChatReady) throw new Error(`${aiRuntimeLabel()} 未连接`);
+    if (!codexChatReady) throw new Error(codexConnectionHint || `${aiRuntimeLabel()} 未连接`);
     const response = await chrome.runtime.sendMessage({
       type: CODEX_RUN_REQUEST,
       id: task.id,

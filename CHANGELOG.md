@@ -6,9 +6,16 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ## [Unreleased]
 
+## [2.24.3] - 2026-08-31
+
 ### Changed
 
 - Replace the README workflow visual with the polished social preview, document the modular canvas and background-worker layout accurately, and upgrade GitHub Actions to the Node 24-based v5 runtime
+
+### Fixed
+
+- Document the required Chrome-load → extension-ID → installer → reload sequence so the Native Messaging allowlist matches the local unpacked extension without replacing its local data
+- Explain an unavailable local bridge in the launcher and task card, including the exact reload and installer recovery path
 
 ## [2.24.2] - 2026-08-30
 

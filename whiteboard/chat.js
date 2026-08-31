@@ -470,17 +470,24 @@ async function connectCodexChat() {
     const response = await chrome.runtime.sendMessage({ type: CODEX_STATUS_REQUEST, runtime: aiRuntime });
     if (!response?.ok) throw new Error(response?.error || "无法连接本地桥接");
     codexChatReady = Boolean(response.ready);
+    codexConnectionHint = codexChatReady
+      ? ""
+      : (response.health?.nativeHost
+        ? `${aiRuntimeLabel()} CLI 不可用，请确认已在终端完成登录`
+        : "本地桥接未连接：请在 chrome://extensions 重新加载拾作；首次安装请先在扩展目录运行 ./install.sh --core");
     updateCodexTaskSnapshot(response);
     updateExternalCodexStatus(response);
     setCodexChatStatus(
       codexChatReady
         ? (codexRunningTaskIds().size ? `${codexRunningTaskIds().size} 个任务执行中` : "已连接")
-        : `${aiRuntimeLabel()} 未连接`,
+        : codexConnectionHint,
       codexChatReady ? (codexRunningTaskIds().size ? "loading" : "success") : "error"
     );
   } catch (error) {
     codexChatReady = false;
-    setCodexChatStatus(error?.message || "本地桥接未连接", "error");
+    codexConnectionHint = "本地桥接未连接：请在 chrome://extensions 重新加载拾作；首次安装请先在扩展目录运行 ./install.sh --core";
+    console.warn("[pagedock-codex-chat] local bridge unavailable", { reason: error?.message || String(error) });
+    setCodexChatStatus(codexConnectionHint, "error");
   }
   updateCodexChatControls();
 }

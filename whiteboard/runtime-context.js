@@ -214,6 +214,7 @@ const terminalSessions = new Map();
 const terminalSaveTimers = new Map();
 let codexChatTask;
 let codexChatReady = false;
+let codexConnectionHint = "";
 let videoEngineHealth = { loaded: false, hyperframes: false, remotion: false };
 let aiRuntime = "codex";
 let externalCodexConnected = false;

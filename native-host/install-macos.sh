@@ -56,14 +56,18 @@ if [[ -z "$coding_workspace_dir" ]]; then
   fi
 fi
 
+# Chrome Native Messaging 只允许明确列出的扩展来源。开发者模式的扩展 ID 由 Chrome 分配，
+# 因此必须先加载扩展，再把当前 ID 传给安装器；这样不会改变用户已经保存的本地白板数据。
 if [[ -z "$extension_id" ]]; then
-  print -u2 "请先从 chrome://extensions 复制拾作扩展 ID，再通过 PAGEDOCK_EXTENSION_ID 运行安装器"
+  print -u2 "请先在 chrome://extensions 加载拾作，复制其扩展 ID，再运行："
+  print -u2 "PAGEDOCK_EXTENSION_ID=你的扩展ID ./install.sh $profile"
   exit 1
 fi
 if [[ ! "$extension_id" =~ '^[a-p]{32}$' ]]; then
   print -u2 "无效的 Chrome 扩展 ID：$extension_id"
   exit 1
 fi
+
 if [[ -z "$node_bin" || ! -x "$node_bin" ]]; then
   print -u2 "找不到可执行的 Node.js"
   exit 1
@@ -227,5 +231,5 @@ fi
 print "终端 Python：${python_bin:-未配置（可稍后运行 ./install.sh --terminal）}"
 print "Codex MCP：$mcp_server"
 print "Codex Skill：$skill_install_root"
-print "请在 chrome://extensions 中重新加载拾作，然后运行："
+print "请在 chrome://extensions 重新加载拾作，然后运行："
 print "sh ${(q)skill_install_root}/scripts/shizuo.sh health"
