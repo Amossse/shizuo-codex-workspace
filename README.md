@@ -73,7 +73,7 @@ Webpages / selections / local files
  answers / images / knowledge / workflows
 ```
 
-![Shizuo product flow overview](docs/shizuo-overview.png)
+![Shizuo workflow: capture context, hand it to Codex, and keep reusable results](docs/social-preview-v2.png)
 
 On supported webpages, the compact assistant is injected automatically and reconnects to the local bridge in the background:
 
@@ -244,11 +244,13 @@ shizuo/
 ├── popup.html / popup.js        # Two-intent launcher with remembered Markdown / PDF format
 ├── pagedock-db.js               # IndexedDB boards and normalized item records
 ├── card-protocol.js              # Typed cards, data connections, and per-card capability permissions
-├── whiteboard.html / whiteboard.js # New-tab board list and board detail editor
+├── whiteboard.html                # New-tab board shell
+├── whiteboard/                    # Board list, canvas, cards, tasks, chat, and collaboration modules
 ├── sidepanel.html / sidepanel.js # Persistent Inbox beside the source page
 ├── native-host/                  # Restricted Codex/PTY host, tokenized whiteboard bridge, and MCP adapter
 ├── skills/shizuo/                # Installable Codex Skill for setup, connection, permissions, and board operations
-├── background.js                # Service worker: orchestrate extraction, screenshots, and downloads
+├── background.js                  # Service worker composition root
+├── background/                    # Capture, bridge, collaboration, scheduler, and routing modules
 ├── content-capture.js           # Find real scroll containers and collect virtualized page content
 ├── offscreen.html / offscreen.js # Stitch screenshot tiles into one lossless multi-page PDF
 ├── editor.html                  # Editor + preview UI

@@ -6,6 +6,10 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ## [Unreleased]
 
+### Changed
+
+- Replace the README workflow visual with the polished social preview, document the modular canvas and background-worker layout accurately, and upgrade GitHub Actions to the Node 24-based v5 runtime
+
 ## [2.24.2] - 2026-08-30
 
 ### Changed

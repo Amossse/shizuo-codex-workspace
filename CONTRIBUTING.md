@@ -20,7 +20,7 @@ Thanks for your interest in improving **拾作**! This document describes how to
 
 3. Iterate
 
-   - Edit `editor.js` / `editor.html` / `background.js`
+   - Edit the feature module you are changing: `whiteboard/` for the canvas, `background/` for service-worker behavior, or `editor.js` / `editor.html` for Markdown capture and preview. Keep `background.js` as the service-worker composition root.
    - Hit the **Reload** button on the extension card in `chrome://extensions`
    - Click the toolbar icon on a sample page to retest
 
