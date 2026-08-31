@@ -626,6 +626,14 @@
     console.info("[pagedock-db] items deleted", { boardId, changed });
     return changed;
   }
+  // 收件箱是系统根白板，保留它的身份和版本能力；“删除收件箱”实际只清空其中全部内容。
+  async function clearInbox() {
+    const inbox = await getBoard(INBOX_ID, { includeArchived: true });
+    if (!inbox) return 0;
+    const removed = await deleteItems(INBOX_ID, inbox.items.map(item => item.id));
+    console.info("[pagedock-db] inbox cleared", { removed });
+    return removed;
+  }
   async function moveItems(itemIds, targetBoardId) {
     if (targetBoardId === INBOX_ID) return 0;
     const ids = new Set(itemIds.map(String));
@@ -948,6 +956,7 @@
     listBoardItems,
     setItemsArchived,
     deleteItems,
+    clearInbox,
     moveItems,
     recentItems,
     saveLocalHandle,

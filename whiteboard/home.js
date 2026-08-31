@@ -15,21 +15,29 @@ function createBoardCard(board) {
   const title = document.createElement("h3");
   title.textContent = board.name;
   top.append(icon, title);
-  if (board.id !== db.INBOX_ID) {
-    const remove = document.createElement("button");
-    remove.className = "board-delete";
-    remove.type = "button";
-    remove.title = "删除白板";
-    remove.textContent = "×";
-    remove.addEventListener("click", async event => {
-      event.stopPropagation();
-      if (!confirm(`确定删除“${board.name}”吗？此操作无法撤销。`)) return;
-      await db.deleteBoard(board.id);
-      notifyDataChanged([board.id], "delete-board");
+  const remove = document.createElement("button");
+  const isInbox = board.id === db.INBOX_ID;
+  remove.className = "board-delete";
+  remove.type = "button";
+  remove.title = isInbox ? "清空收件箱" : "删除白板";
+  remove.setAttribute("aria-label", remove.title);
+  remove.textContent = "×";
+  remove.addEventListener("click", async event => {
+    event.stopPropagation();
+    if (isInbox) {
+      if (!confirm("确定清空收件箱吗？其中的内容会被删除。")) return;
+      const removed = await db.clearInbox();
+      notifyDataChanged([db.INBOX_ID], "clear-inbox");
       await renderHome();
-    });
-    top.appendChild(remove);
-  }
+      setStatus(removed ? `已清空收件箱（${removed} 项）` : "收件箱已经为空");
+      return;
+    }
+    if (!confirm(`确定删除“${board.name}”吗？此操作无法撤销。`)) return;
+    await db.deleteBoard(board.id);
+    notifyDataChanged([board.id], "delete-board");
+    await renderHome();
+  });
+  top.appendChild(remove);
 
   const preview = document.createElement("p");
   preview.textContent = board.preview || "暂无内容";

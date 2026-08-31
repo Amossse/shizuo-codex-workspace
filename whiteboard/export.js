@@ -290,8 +290,13 @@ async function importSelectedFile() {
 }
 
 async function deleteCurrentBoard() {
-  if (!currentBoard || currentBoard.id === db.INBOX_ID) {
-    setStatus("收件箱不能删除", true);
+  if (!currentBoard) return;
+  if (currentBoard.id === db.INBOX_ID) {
+    if (!confirm("收件箱会保留为默认入口。确定清空其中全部内容吗？")) return;
+    const removed = await db.clearInbox();
+    notifyDataChanged([db.INBOX_ID], "clear-inbox");
+    await openBoard(db.INBOX_ID, false);
+    setStatus(removed ? `已清空收件箱（${removed} 项）` : "收件箱已经为空");
     return;
   }
   if (!confirm(`确定删除“${currentBoard.name}”吗？此操作无法撤销。`)) return;

@@ -6,6 +6,18 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ## [Unreleased]
 
+## [2.24.4] - 2026-08-31
+
+### Changed
+
+- Merge the duplicate workflow-template menu entries into one management entry that also saves the current board
+- Give the collaboration invite's optional Codex section breathing room and make version history use one dedicated scroll area
+
+### Fixed
+
+- Let users clear the Inbox from both the home card and board menu without deleting the system Inbox itself
+- Keep ordinary boards independently deletable even when they contain material collected from the Inbox
+
 ## [2.24.3] - 2026-08-31
 
 ### Changed

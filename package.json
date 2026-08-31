@@ -1,6 +1,6 @@
 {
   "name": "shizuo",
-  "version": "2.24.3",
+  "version": "2.24.4",
   "description": "Local-first visual workspace for Codex: capture context, organize it on an infinite canvas, and let local agents act with visible results.",
   "type": "module",
   "keywords": [

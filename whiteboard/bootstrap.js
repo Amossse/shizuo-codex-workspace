@@ -413,7 +413,6 @@ function wireEvents() {
   document.getElementById("zoomReset").addEventListener("click", fitBoard);
   document.getElementById("exportBoard").addEventListener("click", exportCurrentBoard);
   document.getElementById("backupAll").addEventListener("click", backupAllBoards);
-  document.getElementById("saveWorkflowTemplate").addEventListener("click", openWorkflowTemplates);
   document.getElementById("openWorkflowTemplates").addEventListener("click", openWorkflowTemplates);
   document.getElementById("homeTemplates").addEventListener("click", () => {
     homeMoreMenuEl.open = false;
