@@ -208,6 +208,75 @@ function openHealthCheck() {
   runHealthCheck();
 }
 
+function connectionGuideStep(title, detail) {
+  const step = document.createElement("li");
+  const copy = document.createElement("div");
+  const heading = document.createElement("strong");
+  const description = document.createElement("span");
+  heading.textContent = title;
+  description.textContent = detail;
+  copy.append(heading, description);
+  step.append(copy);
+  return step;
+}
+
+function openConnectionGuide({ snapshot = lastCodexStatusSnapshot, resume } = {}) {
+  // 首次执行未就绪时在这里承接，避免先把用户的任务标成失败。
+  if (typeof resume === "function") pendingConnectionAction = resume;
+  const health = snapshot?.health || {};
+  const bridgeInstalled = Boolean(health.nativeHost);
+  const runtimeReady = Boolean(health[aiRuntime]);
+  const runtimeName = aiRuntimeLabel();
+  const extensionId = chrome.runtime.id;
+  const installCommand = `PAGEDOCK_EXTENSION_ID=${extensionId} ./install.sh --core`;
+  connectionGuideStepsEl.replaceChildren();
+  if (!bridgeInstalled) {
+    connectionGuideTitleEl.textContent = `先连接本地 ${runtimeName}`;
+    connectionGuideIntroEl.textContent = "只需完成一次设置。完成后会自动继续刚才的任务。";
+    connectionGuideStepsEl.append(
+      connectionGuideStep("加载拾作扩展", "打开 chrome://extensions，开启开发者模式并加载解压后的拾作文件夹。"),
+      connectionGuideStep("运行安装命令", "复制下方命令，在该文件夹的终端中运行。命令已包含当前扩展 ID。"),
+      connectionGuideStep("重新加载扩展", "回到 chrome://extensions 点击拾作的重新加载，再回来检查连接。")
+    );
+    connectionGuideCommandEl.hidden = false;
+    connectionGuideCommandTextEl.textContent = installCommand;
+  } else if (!runtimeReady) {
+    connectionGuideTitleEl.textContent = `完成 ${runtimeName} 登录`;
+    connectionGuideIntroEl.textContent = "本地桥接已就绪，只差命令行登录。完成后会自动继续刚才的任务。";
+    connectionGuideStepsEl.append(
+      connectionGuideStep(`打开 ${runtimeName} CLI`, `在终端运行 ${aiRuntime === "agy" ? "agy" : "codex"} 并按提示完成登录。`),
+      connectionGuideStep("回到拾作检查连接", "登录完成后无需重新创建任务。")
+    );
+    connectionGuideCommandEl.hidden = true;
+  } else {
+    connectionGuideTitleEl.textContent = `${runtimeName} 正在连接`;
+    connectionGuideIntroEl.textContent = "请稍候，然后检查连接。";
+    connectionGuideCommandEl.hidden = true;
+  }
+  connectionGuideStatusEl.textContent = "";
+  if (!connectionGuideDialogEl.open) connectionGuideDialogEl.showModal();
+}
+
+async function checkConnectionGuide() {
+  connectionGuideStatusEl.textContent = "正在检查本地连接…";
+  await connectCodexChat();
+  if (!codexChatReady) {
+    openConnectionGuide({ snapshot: lastCodexStatusSnapshot });
+    connectionGuideStatusEl.textContent = codexConnectionHint || "暂时还未连接，请完成上面的步骤后重试。";
+    return;
+  }
+  connectionGuideDialogEl.close();
+  connectionGuideStatusEl.textContent = "";
+  const resume = pendingConnectionAction;
+  pendingConnectionAction = null;
+  if (resume) {
+    setStatus("本地 Codex 已连接，正在继续刚才的任务。");
+    await resume();
+  } else {
+    setStatus("本地 Codex 已连接，可以开始执行任务。");
+  }
+}
+
 function openProvenance(item) {
   const provenance = item?.provenance || {};
   provenanceSummaryEl.textContent = `卡片版本 ${item?.revision || 1} · ${provenance.operation || "manual"}`;

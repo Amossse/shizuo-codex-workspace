@@ -18,6 +18,8 @@ assert.match(html, /id="exportMenu"[\s\S]{0,1800}画布[\s\S]{0,500}工作流[\s
 assert.doesNotMatch(html, /id="toggleCollaboration"/, "协作面板不能占用常驻顶栏入口");
 assert.match(html, /id="askSelectionWithCodex"[^>]*>交给 AI</, "画布主动作不应暴露底层运行时");
 assert.match(html, /id="quickAdd"[^>]*>开始整理</, "首次体验必须只有一个结果导向的主操作");
+assert.match(html, /id="connectionGuideDialog"[\s\S]{0,2600}id="checkConnectionGuide"/, "首次执行未连接时必须有可操作的连接向导");
+assert.match(board, /ensureCodexReadyForTask\(\(\) => runBoardCardTask/, "任务创建前必须先检查本地连接，避免产生可避免的失败卡");
 ["emptyAddTask", "emptyAddText", "emptyAddImage"].forEach(id => assert.match(html, new RegExp(`id="${id}"`), `空白画布必须提供 ${id} 起步动作`));
 assert.match(board, /emptyAddText[\s\S]{0,600}addTextItem[\s\S]{0,600}emptyAddTask[\s\S]{0,300}addTaskItem/, "空白画布入口必须真正创建对应卡片");
 assert.match(board, /quickTextEl\.addEventListener\("keydown", event => \{[\s\S]{0,300}event\.key !== "Enter" \|\| event\.shiftKey \|\| event\.isComposing/, "快速收集必须支持回车保存、Shift 回车换行和输入法保护");

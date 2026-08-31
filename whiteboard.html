@@ -386,6 +386,23 @@
       <div class="dialog-actions"><button class="button" id="rerunHealthCheck" type="button">重新检查</button><button class="button" id="closeHealthCheck" type="button">关闭</button></div>
     </div>
   </dialog>
+  <dialog id="connectionGuideDialog">
+    <div class="dialog-form connection-guide">
+      <h2 id="connectionGuideTitle">先连接本地 Codex</h2>
+      <p id="connectionGuideIntro">只需完成一次设置。拾作不会上传你的内容或 Codex 凭据。</p>
+      <ol class="connection-guide-steps" id="connectionGuideSteps"></ol>
+      <div class="connection-guide-command" id="connectionGuideCommand">
+        <span>在拾作扩展目录运行</span>
+        <code id="connectionGuideCommandText"></code>
+        <button class="button" id="copyConnectionGuideCommand" type="button">复制命令</button>
+      </div>
+      <p class="connection-guide-status" id="connectionGuideStatus" role="status" aria-live="polite"></p>
+      <div class="dialog-actions">
+        <button class="button" id="closeConnectionGuide" type="button">稍后再说</button>
+        <button class="button primary" id="checkConnectionGuide" type="button">我已完成，检查连接</button>
+      </div>
+    </div>
+  </dialog>
   <dialog id="taskScheduleDialog">
     <form class="dialog-form" id="taskScheduleForm">
       <h2>定时执行 · 实验能力</h2>

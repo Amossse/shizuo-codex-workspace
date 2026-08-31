@@ -732,6 +732,15 @@ dialog::backdrop { background: var(--color-scrim); backdrop-filter: blur(3px); }
 .health-row[data-state="pass"] .health-mark { color: var(--color-success); }
 .health-row[data-state="warn"] .health-mark { color: var(--color-warning); }
 .health-row[data-state="fail"] .health-mark { color: var(--color-danger); }
+.connection-guide { width: min(100%, 34rem); }
+.connection-guide-steps { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.connection-guide-steps li { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--color-surface); }
+.connection-guide-steps strong, .connection-guide-steps span { display: block; }
+.connection-guide-steps span { margin-top: 3px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.connection-guide-command { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; margin-top: 12px; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--color-surface); }
+.connection-guide-command > span { grid-column: 1 / -1; color: var(--muted); font-size: 12px; }
+.connection-guide-command code { min-width: 0; overflow-x: auto; white-space: nowrap; font-size: 12px; }
+.connection-guide-status { min-height: 20px; margin-top: 12px !important; color: var(--muted); font-size: 13px; }
 .provenance-chain { display: grid; gap: 8px; max-height: 50dvh; overflow: auto; }
 .item-source { min-width: 22px; height: 22px; padding: 0; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }

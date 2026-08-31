@@ -8,6 +8,14 @@ async function runBoardCardTask(item, sourceItems = null) {
     itemElement(item.id)?.querySelector(".task-prompt")?.focus();
     return { status: "skipped", reason: "任务卡缺少提示词" };
   }
+  if (!await ensureCodexReadyForTask(() => runBoardCardTask(item, sourceItems))) {
+    // 保留输入和上下文，连接完成后由引导自动恢复，不产生一张无法行动的错误卡。
+    item.taskStatus = "idle";
+    item.taskError = "";
+    item.taskProgress = "";
+    updateTaskItemElement(item);
+    return { status: "waiting", reason: "等待本地 Codex 连接" };
+  }
   item.taskLastMode = "coding";
   cardProtocol.grant(item, "codex-run");
   updatePermissionChip(item);
@@ -194,6 +202,13 @@ async function runDynamicWorkflow(item) {
   if (codexAtCapacity()) {
     item.taskStatus = "error";
     item.taskError = codexCapacityReason();
+    updateTaskItemElement(item);
+    return;
+  }
+  if (!await ensureCodexReadyForTask(() => runDynamicWorkflow(item))) {
+    item.taskStatus = "idle";
+    item.taskError = "";
+    item.taskProgress = "";
     updateTaskItemElement(item);
     return;
   }

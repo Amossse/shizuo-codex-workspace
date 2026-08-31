@@ -469,6 +469,7 @@ async function connectCodexChat() {
   try {
     const response = await chrome.runtime.sendMessage({ type: CODEX_STATUS_REQUEST, runtime: aiRuntime });
     if (!response?.ok) throw new Error(response?.error || "无法连接本地桥接");
+    lastCodexStatusSnapshot = response;
     codexChatReady = Boolean(response.ready);
     codexConnectionHint = codexChatReady
       ? ""
@@ -485,11 +486,20 @@ async function connectCodexChat() {
     );
   } catch (error) {
     codexChatReady = false;
+    lastCodexStatusSnapshot = null;
     codexConnectionHint = "本地桥接未连接：请在 chrome://extensions 重新加载拾作；首次安装请先在扩展目录运行 ./install.sh --core";
     console.warn("[pagedock-codex-chat] local bridge unavailable", { reason: error?.message || String(error) });
     setCodexChatStatus(codexConnectionHint, "error");
   }
   updateCodexChatControls();
+  return codexChatReady;
+}
+
+async function ensureCodexReadyForTask(resume) {
+  if (!codexChatReady) await connectCodexChat();
+  if (codexChatReady) return true;
+  openConnectionGuide({ snapshot: lastCodexStatusSnapshot, resume });
+  return false;
 }
 
 async function sendCodexChatMessage() {
@@ -497,7 +507,10 @@ async function sendCodexChatMessage() {
   if (!prompt || codexChatTask || codexAtCapacity()) return;
   if (!codexChatReady) {
     await connectCodexChat();
-    if (!codexChatReady) return;
+    if (!codexChatReady) {
+      openConnectionGuide();
+      return;
+    }
   }
   const userMessage = appendCodexChatMessage("user", prompt);
   const conversationContext = codexChatConversationContext(userMessage.id);

@@ -115,11 +115,22 @@ function wireEvents() {
   workflowTemplateDialogEl.addEventListener("click", closeDialogFromBackdrop);
   versionHistoryDialogEl.addEventListener("click", closeDialogFromBackdrop);
   healthCheckDialogEl.addEventListener("click", closeDialogFromBackdrop);
+  connectionGuideDialogEl.addEventListener("click", closeDialogFromBackdrop);
   taskScheduleDialogEl.addEventListener("click", closeDialogFromBackdrop);
   provenanceDialogEl.addEventListener("click", closeDialogFromBackdrop);
   document.getElementById("closeWorkflowTemplates").addEventListener("click", () => workflowTemplateDialogEl.close());
   document.getElementById("closeVersionHistory").addEventListener("click", () => versionHistoryDialogEl.close());
   document.getElementById("closeHealthCheck").addEventListener("click", () => healthCheckDialogEl.close());
+  document.getElementById("closeConnectionGuide").addEventListener("click", () => connectionGuideDialogEl.close());
+  document.getElementById("checkConnectionGuide").addEventListener("click", checkConnectionGuide);
+  document.getElementById("copyConnectionGuideCommand").addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(connectionGuideCommandTextEl.textContent);
+      connectionGuideStatusEl.textContent = "安装命令已复制。";
+    } catch (_error) {
+      connectionGuideStatusEl.textContent = "复制失败，请手动复制上面的命令。";
+    }
+  });
   document.getElementById("cancelTaskSchedule").addEventListener("click", () => taskScheduleDialogEl.close());
   document.getElementById("closeProvenance").addEventListener("click", () => provenanceDialogEl.close());
   document.getElementById("taskScheduleForm").addEventListener("submit", event => {
