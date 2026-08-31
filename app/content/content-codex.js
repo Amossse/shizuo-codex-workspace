@@ -9,6 +9,7 @@
   const PAGE_CHAT_GET_REQUEST = "pagedock-page-chat-get";
   const PAGE_CHAT_PUT_REQUEST = "pagedock-page-chat-put";
   const PAGE_CHAT_DELETE_REQUEST = "pagedock-page-chat-delete";
+  const SAVE_SELECTION_TO_INBOX_REQUEST = "pagedock-save-selection-to-inbox";
   const POSITION_KEY = "__pagedock_page_codex_entry_v1__";
   const MAX_CONTEXT_CHARS = 80_000;
   const MAX_SELECTION_CHARS = 20_000;
@@ -168,7 +169,8 @@
     <button data-action="translate" type="button">翻译中文</button>
     <button data-action="summary" type="button">内容总结</button>
     <button data-action="analysis" type="button">内容分析</button>
-    <button data-action="inspire" type="button">启发</button>`;
+    <button data-action="inspire" type="button">启发</button>
+    <button data-action="save" type="button">保存到收件箱</button>`;
 
   shadow.append(style, dock, panel, selectionMenu);
   (document.documentElement || document.body).appendChild(host);
@@ -586,6 +588,25 @@
     if (prompt) void sendPrompt(prompt, text);
   }
 
+  async function saveSelectionToInbox(selectionText, button) {
+    const text = String(selectionText || "").trim();
+    if (!text) return;
+    button.disabled = true;
+    button.textContent = "保存中…";
+    try {
+      const response = await chrome.runtime.sendMessage({ type: SAVE_SELECTION_TO_INBOX_REQUEST, text });
+      if (!response?.ok) throw new Error(response?.error || "保存失败");
+      button.textContent = "已保存";
+      setTimeout(hideSelectionMenu, 900);
+    } catch (error) {
+      button.textContent = "保存失败";
+      console.warn("[shizuo-page-codex] selection inbox save failed", {
+        reason: error?.message || String(error)
+      });
+      setTimeout(hideSelectionMenu, 1_600);
+    }
+  }
+
   function hideSelectionMenu() { selectionMenu.hidden = true; }
 
   function showSelectionMenu() {
@@ -682,6 +703,10 @@
   selectionMenu.querySelectorAll("button").forEach(button => {
     button.addEventListener("click", () => {
       const text = savedSelection?.text || "";
+      if (button.dataset.action === "save") {
+        void saveSelectionToInbox(text, button);
+        return;
+      }
       hideSelectionMenu();
       quickAction(button.dataset.action, text);
     });

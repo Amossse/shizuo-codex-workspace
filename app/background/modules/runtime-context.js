@@ -12,6 +12,7 @@ const CODEX_SESSION_PREVIEW_REQUEST = "pagedock-codex-session-preview";
 const PAGE_CHAT_GET_REQUEST = "pagedock-page-chat-get";
 const PAGE_CHAT_PUT_REQUEST = "pagedock-page-chat-put";
 const PAGE_CHAT_DELETE_REQUEST = "pagedock-page-chat-delete";
+const SAVE_SELECTION_TO_INBOX_REQUEST = "pagedock-save-selection-to-inbox";
 const TASK_SCHEDULE_SYNC_REQUEST = "pagedock-task-schedule-sync";
 const BRIDGE_SHARE_CREATE_REQUEST = "pagedock-bridge-share-create";
 const BRIDGE_SHARE_STOP_REQUEST = "pagedock-bridge-share-stop";

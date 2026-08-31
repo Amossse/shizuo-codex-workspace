@@ -156,6 +156,30 @@ async function collectContextMenuItem(info, tab) {
   });
 }
 
+// 页面快捷菜单只允许保存用户刚刚选中的文本，并始终以发送方标签页作为来源。
+async function saveSelectionToInbox(message, sender) {
+  const text = String(message?.text || "").trim().slice(0, 20_000);
+  if (!text) throw new Error("没有可保存的选中文字");
+  const source = {
+    url: sender?.tab?.url || "",
+    title: sender?.tab?.title || "当前页面",
+    capturedAt: Date.now()
+  };
+  const saved = await PageDockDB.addItem(PageDockDB.INBOX_ID, { type: "text", text, source });
+  chrome.runtime.sendMessage({
+    type: "pagedock-data-changed",
+    itemId: saved.id,
+    boardIds: [PageDockDB.INBOX_ID],
+    reason: "selection-quick-save"
+  }).catch(() => {});
+  console.info("[pagedock-selection-save] saved to inbox", {
+    itemId: saved.id,
+    textLength: text.length,
+    sourceUrl: source.url
+  });
+  return saved;
+}
+
 async function cacheImageSource(sourceUrl) {
   if (!sourceUrl || sourceUrl.startsWith("data:image/")) return sourceUrl || "";
   try {
@@ -201,6 +225,19 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         requiredOrigin: error?.requiredOrigin || "",
         requiredHost: error?.requiredHost || ""
       });
+    });
+  return true;
+});
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type !== SAVE_SELECTION_TO_INBOX_REQUEST) return;
+  saveSelectionToInbox(message, sender)
+    .then(item => sendResponse({ ok: true, item }))
+    .catch(error => {
+      console.warn("[pagedock-selection-save] inbox save failed", {
+        reason: error?.message || String(error)
+      });
+      sendResponse({ ok: false, error: error?.message || String(error) });
     });
   return true;
 });

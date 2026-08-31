@@ -34,5 +34,7 @@ assert.match(content, /className = "compose-image"[\s\S]{0,600}移除图片/, "�
 assert.match(source, /imageCount:\s*Math\.min\(4/, "页面会话必须持久化图片数量而不是图片数据");
 assert.match(content, /taskEvent/, "页面 Codex 必须能按任务 ID 找回错过的终态事件");
 assert.match(content, /reconcileActiveTask/, "页面 Codex 忙碌时必须主动对账，不能无限停留在处理中");
+assert.match(content, /SAVE_SELECTION_TO_INBOX_REQUEST/, "选区快捷菜单必须支持保存到收件箱");
+assert.match(content, /saveSelectionToInbox\(text, button\)/, "选区保存必须展示明确的成功或失败反馈");
 
 console.log("页面 Codex URL 会话索引契约验证通过");
