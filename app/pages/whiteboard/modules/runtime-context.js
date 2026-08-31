@@ -59,6 +59,7 @@ const boardToolsRightEl = document.getElementById("boardToolsRight");
 const inboxLibraryEl = document.getElementById("inboxLibrary");
 const inboxListEl = document.getElementById("inboxList");
 const inboxCountEl = document.getElementById("inboxCount");
+const boardLibraryEl = document.getElementById("boardLibrary");
 const boardListEl = document.getElementById("boardList");
 const recentListEl = document.getElementById("recentList");
 const recentHeadingEl = document.getElementById("recentHeading");

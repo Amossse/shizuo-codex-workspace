@@ -28,6 +28,8 @@ assert.match(board, /内容已保存到收件箱。下一步：点击上方“�
 assert.match(board, /function createRecentItem[\s\S]{0,1400}focusExternalActivity\(\{ boardId: item\.boardId, cardId: item\.id \}\)/, "最近收集必须定位到具体卡片，而不是只打开白板");
 assert.match(html, /id="inboxLibrary"[\s\S]{0,300}id="inboxList"[\s\S]{0,600}id="boardList"/, "收件箱必须与普通白板分区展示，避免把同一素材误解为重复保存");
 assert.match(board, /recentHintEl\.textContent = "快捷入口，点击在所属位置打开"/, "最近内容必须明确是入口而不是副本");
+assert.match(board, /boardLibraryEl\.hidden = !boards\.length/, "没有普通白板时必须隐藏重复的空白板模块");
+assert.doesNotMatch(board, /还没有白板，先新建一个吧/, "首页顶部已有新建入口，不能再展示重复的空白板提示");
 assert.match(board, /function captureHomeImages\(files\)[\s\S]{0,900}readFileAsDataUrl[\s\S]{0,500}finishHomeCapture/, "首次主入口必须让图片与文字进入同一条成功路径");
 assert.match(board, /quickTextEl\.addEventListener\("paste"[\s\S]{0,500}captureHomeImages/, "首次主入口必须支持直接粘贴图片");
 assert.match(board, /quickCaptureWrapEl\.addEventListener\("drop"[\s\S]{0,400}captureHomeImages/, "首次主入口必须支持拖入图片");

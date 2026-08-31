@@ -132,13 +132,8 @@ async function applyHomeFilter() {
   if (!query && inbox) inboxListEl.appendChild(createBoardCard(inbox));
   const boards = regularBoards.filter(board => !query
     || `${board.name} ${board.preview}`.toLocaleLowerCase().includes(query));
+  boardLibraryEl.hidden = !boards.length;
   boards.forEach(board => boardListEl.appendChild(createBoardCard(board)));
-  if (!boards.length) {
-    const empty = document.createElement("div");
-    empty.className = "empty-home";
-    empty.textContent = query ? "没有匹配的白板" : "还没有白板，先新建一个吧";
-    boardListEl.appendChild(empty);
-  }
   if (!query) {
     recentHeadingEl.textContent = "最近内容";
     recentHintEl.textContent = "快捷入口，点击在所属位置打开";
