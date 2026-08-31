@@ -135,13 +135,14 @@ body[data-onboarding="first-run"] .journey-outcome { display: none; }
 .board-card p { flex: 1; margin: 14px 0; color: var(--color-muted); line-height: 1.55; display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .board-meta { display: flex; justify-content: space-between; color: var(--color-muted); font-size: 11px; }
 .recent-list { display: grid; gap: 8px; }
-.recent-item { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 11px 13px; border: 1px solid var(--line); border-radius: 9px; background: var(--color-surface); cursor: pointer; }
+.recent-item { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: center; overflow: hidden; padding: 11px 13px; border: 1px solid var(--line); border-radius: 9px; background: var(--color-surface); cursor: pointer; }
 .recent-item:hover { border-color: var(--color-rule-strong); background: var(--color-paper-2); }
 .recent-item:active { transform: translateY(1px); }
 .recent-kind { color: var(--color-accent-strong); text-align: center; }
 .recent-copy { min-width: 0; }
 .recent-copy strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-ink-2); font-weight: 550; }
-.recent-copy span, .recent-time { color: var(--color-muted); font-size: 11px; }
+.recent-copy span { display: block; overflow: hidden; color: var(--color-muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.recent-time { min-width: 40px; color: var(--color-muted); font-size: 11px; text-align: right; white-space: nowrap; }
 .empty-home { padding: 34px; border: 1px dashed var(--color-rule-strong); border-radius: 12px; color: var(--color-muted); text-align: center; }
 .template-empty strong, .template-empty span { display: block; }
 .template-empty strong { color: var(--color-ink-2); }

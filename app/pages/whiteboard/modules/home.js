@@ -1,11 +1,12 @@
 // Module: home search, collection, boards, and sharing entry points.
 function createBoardCard(board) {
+  const isInbox = board.id === db.INBOX_ID;
   const card = document.createElement("article");
   card.className = "board-card";
   card.dataset.boardId = board.id;
   card.tabIndex = 0;
   card.setAttribute("role", "button");
-  card.setAttribute("aria-label", `打开白板 ${board.name}`);
+  card.setAttribute("aria-label", isInbox ? "打开收件箱" : `打开白板 ${board.name}`);
 
   const top = document.createElement("div");
   top.className = "board-card-top";
@@ -16,7 +17,6 @@ function createBoardCard(board) {
   title.textContent = board.name;
   top.append(icon, title);
   const remove = document.createElement("button");
-  const isInbox = board.id === db.INBOX_ID;
   remove.className = "board-delete";
   remove.type = "button";
   remove.title = isInbox ? "清空收件箱" : "删除白板";
@@ -123,9 +123,14 @@ function createSearchResult(result) {
 async function applyHomeFilter() {
   const query = homeSearchEl.value.trim().toLocaleLowerCase();
   const requestId = ++homeSearchRequest;
+  const inbox = homeBoards.find(board => board.id === db.INBOX_ID);
+  const regularBoards = homeBoards.filter(board => board.id !== db.INBOX_ID);
+  inboxListEl.replaceChildren();
   boardListEl.replaceChildren();
   recentListEl.replaceChildren();
-  const boards = homeBoards.filter(board => !query
+  inboxLibraryEl.hidden = Boolean(query);
+  if (!query && inbox) inboxListEl.appendChild(createBoardCard(inbox));
+  const boards = regularBoards.filter(board => !query
     || `${board.name} ${board.preview}`.toLocaleLowerCase().includes(query));
   boards.forEach(board => boardListEl.appendChild(createBoardCard(board)));
   if (!boards.length) {
@@ -135,8 +140,8 @@ async function applyHomeFilter() {
     boardListEl.appendChild(empty);
   }
   if (!query) {
-    recentHeadingEl.textContent = "最近收集";
-    recentHintEl.textContent = "右键网页内容可直接收进来";
+    recentHeadingEl.textContent = "最近内容";
+    recentHintEl.textContent = "快捷入口，点击在所属位置打开";
     homeRecent.forEach(item => recentListEl.appendChild(createRecentItem(item)));
   } else {
     recentHeadingEl.textContent = "跨白板结果";
@@ -202,7 +207,8 @@ async function renderHome(updateUrl = true) {
   document.body.dataset.onboarding = isFirstRun ? "first-run" : "established";
   document.getElementById("quickAdd").textContent = isFirstRun ? "开始整理" : "存入收件箱";
   quickTextEl.placeholder = isFirstRun ? "粘贴文字或链接…" : "快速收集文字或链接…";
-  boardCountEl.textContent = `${homeBoards.length} 个白板`;
+  boardCountEl.textContent = `${homeBoards.filter(board => board.id !== db.INBOX_ID).length} 个白板`;
+  inboxCountEl.textContent = `${inbox?.itemCount || 0} 项`;
   updateWorkflowTemplateEntry(templates.length);
   applyHomeFilter();
 }
@@ -212,7 +218,7 @@ async function finishHomeCapture(savedItems, firstRun, successMessage) {
   if (firstRun && savedItems[0]?.id) {
     console.info("[pagedock-onboarding] first content captured", { itemId: savedItems[0].id, count: savedItems.length });
     await focusExternalActivity({ boardId: db.INBOX_ID, cardId: savedItems[0].id });
-    setStatus("内容已放入白板。下一步：点击上方“交给 AI”", false, "success", 6500);
+    setStatus("内容已保存到收件箱。下一步：点击上方“交给 AI”", false, "success", 6500);
     return;
   }
   await renderHome(false);
