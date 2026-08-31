@@ -7,11 +7,11 @@
 ![manifest](https://img.shields.io/badge/Manifest-V3-blue)
 ![license](https://img.shields.io/badge/License-MIT-green)
 ![browser](https://img.shields.io/badge/Chrome%20%7C%20Edge-supported-brightgreen)
-![version](https://img.shields.io/badge/version-2.24.4-orange)
+![version](https://img.shields.io/badge/version-2.24.5-orange)
 ![offline](https://img.shields.io/badge/offline-%E2%9C%93-success)
 ![telemetry](https://img.shields.io/badge/telemetry-none-success)
 
-[Download v2.24.4](https://github.com/Amossse/shizuo-codex-workspace/releases/download/v2.24.4/shizuo-codex-workspace-2.24.4.zip) · [Quick start](#quick-start) · [Privacy](PRIVACY.md) · [Contributing](CONTRIBUTING.md)
+[Download v2.24.5](https://github.com/Amossse/shizuo-codex-workspace/releases/download/v2.24.5/shizuo-codex-workspace-2.24.5.zip) · [Quick start](#quick-start) · [Privacy](PRIVACY.md) · [Contributing](CONTRIBUTING.md)
 
 ![Shizuo real workflow canvas with linked Codex tasks, generated knowledge, images, and video](docs/product-canvas-real.jpg)
 
@@ -36,7 +36,7 @@ Core capture and canvas data stay local with zero analytics. Codex runs only whe
 
 ### 1. Install the extension
 
-1. Download [`shizuo-codex-workspace-2.24.4.zip`](https://github.com/Amossse/shizuo-codex-workspace/releases/download/v2.24.4/shizuo-codex-workspace-2.24.4.zip) and unzip it. Optionally verify it against [`SHA256SUMS.txt`](https://github.com/Amossse/shizuo-codex-workspace/releases/download/v2.24.4/SHA256SUMS.txt).
+1. Download [`shizuo-codex-workspace-2.24.5.zip`](https://github.com/Amossse/shizuo-codex-workspace/releases/download/v2.24.5/shizuo-codex-workspace-2.24.5.zip) and unzip it. Optionally verify it against [`SHA256SUMS.txt`](https://github.com/Amossse/shizuo-codex-workspace/releases/download/v2.24.5/SHA256SUMS.txt).
 2. Open `chrome://extensions` or `edge://extensions`, enable **Developer mode**, choose **Load unpacked**, and select that folder.
 3. Copy the shown extension ID. Open a terminal in that folder and run `PAGEDOCK_EXTENSION_ID=your_extension_id ./install.sh --core`.
 4. Click **Reload** for 拾作, then pin it. On any webpage, save the page or selected content; open a new tab to enter the canvas.

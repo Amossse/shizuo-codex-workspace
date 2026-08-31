@@ -6,6 +6,12 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ## [Unreleased]
 
+## [2.24.5] - 2026-08-31
+
+### Fixed
+
+- Widen the first-run path to match the established home layout, keep the desktop introduction on one line, and vertically center the first capture field's text
+
 ## [2.24.4] - 2026-08-31
 
 ### Changed
