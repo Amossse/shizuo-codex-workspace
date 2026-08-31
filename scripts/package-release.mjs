@@ -28,6 +28,7 @@ const rootFiles = new Set([
   "LICENSE",
   "PRIVACY.md",
   "README.md",
+  "README.zh-CN.md",
   "SECURITY.md",
   "THIRD_PARTY_NOTICES.md",
   "install.sh",
@@ -42,7 +43,7 @@ const releaseFiles = trackedFiles
   .filter(file => rootFiles.has(file) || runtimeDirectories.some(directory => file.startsWith(directory)))
   .sort();
 
-for (const required of ["manifest.json", "install.sh", "app/background/modules/runtime-context.js", "app/pages/whiteboard/modules/bootstrap.js", "app/pages/whiteboard/modules/whiteboard.css", "native-host/pagedock-codex-host.mjs", "skills/shizuo/SKILL.md", "vendor/markdown/purify.min.js"]) {
+for (const required of ["manifest.json", "install.sh", "README.md", "README.zh-CN.md", "app/background/modules/runtime-context.js", "app/pages/whiteboard/modules/bootstrap.js", "app/pages/whiteboard/modules/whiteboard.css", "native-host/pagedock-codex-host.mjs", "skills/shizuo/SKILL.md", "vendor/markdown/purify.min.js"]) {
   if (!releaseFiles.includes(required)) throw new Error(`发布包缺少运行文件：${required}`);
 }
 

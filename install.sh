@@ -17,7 +17,10 @@ usage() {
 安装完成后运行：
   sh "$HOME/.codex/skills/shizuo/scripts/shizuo.sh" health
 
-先在 chrome://extensions 加载拾作并复制扩展 ID，再运行：
+先在 chrome://extensions 加载拾作，再运行：
+  ./install.sh --core
+
+安装器会自动识别当前扩展 ID。只有自动识别失败时才需要手动运行：
   PAGEDOCK_EXTENSION_ID=你的扩展ID ./install.sh --core
 EOF
 }

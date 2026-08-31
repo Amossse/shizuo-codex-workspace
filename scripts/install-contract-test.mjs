@@ -31,13 +31,32 @@ assert.match(nativeInstaller, /health-check\.mjs/, "安装器必须复制健康�
 assert.match(nativeInstaller, /for module in "\$script_dir"\/\*\.mjs; do[\s\S]{0,160}install -m 644/, "安装器必须完整复制 Native Host 模块，不能维护易漂移的手工清单");
 assert.match(nativeInstaller, /install-profile/, "健康检查必须知道用户选择的安装档位");
 assert.match(nativeInstaller, /mcp add shizuo/, "一键安装必须自动注册本机 MCP");
+assert.match(nativeInstaller, /detect-extension-id\.mjs/, "一键安装必须自动识别当前解压目录对应的扩展 ID");
 assert.match(nativeInstaller, /PAGEDOCK_AGY_BIN/, "安装器必须把 AGY 的绝对路径交给 Chrome Native Host");
 assert.match(nativeInstaller, /PAGEDOCK_REMOTION_BIN/, "安装器必须把 Remotion runtime 的绝对路径交给 Chrome Native Host");
 assert.match(nativeInstaller, /@remotion\/cli@latest/, "视频档安装器必须自动准备 Remotion CLI");
 assert.match(nativeInstaller, /bundled_remotion_bin[\s\S]{0,300}-x "\$bundled_remotion_bin"[\s\S]{0,120}remotion_bin="\$bundled_remotion_bin"/, "安装器必须复用已有的 Remotion runtime，不能每次联网重装");
 assert.doesNotMatch(nativeInstaller, /PAGEDOCK_MEDIA_USE_AUDIO_SCRIPT/, "视频档安装器不能再依赖旁白生成脚本");
 assert.doesNotMatch(nativeInstaller, /PAGEDOCK_EXTENSION_ID:-[a-p]{32}/, "公开安装器不能内置维护者的本地扩展 ID");
-assert.match(nativeInstaller, /请先在 chrome:\/\/extensions 加载拾作，复制其扩展 ID/, "公开安装器必须说明如何提供当前扩展 ID");
+assert.match(nativeInstaller, /请先在 chrome:\/\/extensions 加载此文件夹/, "公开安装器必须说明自动识别失败时的恢复路径");
+
+const browserRoot = fs.mkdtempSync(path.join(os.tmpdir(), "shizuo-extension-detect-"));
+const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), "shizuo-extension-project-"));
+const profileRoot = path.join(browserRoot, "Profile 1");
+fs.mkdirSync(profileRoot, { recursive: true });
+const detectedId = "abcdefghijklmnopabcdefghijklmnop";
+fs.writeFileSync(path.join(profileRoot, "Preferences"), JSON.stringify({
+  extensions: { settings: { [detectedId]: { path: projectRoot } } }
+}));
+const detection = spawnSync(process.execPath, [path.join(root, "native-host/detect-extension-id.mjs"), projectRoot], {
+  cwd: root,
+  encoding: "utf8",
+  env: { ...process.env, SHIZUO_CHROMIUM_ROOTS: browserRoot }
+});
+assert.equal(detection.status, 0, detection.stderr);
+assert.equal(detection.stdout.trim(), detectedId, "安装器必须按解压目录找到对应的开发者模式扩展 ID");
+fs.rmSync(browserRoot, { recursive: true, force: true });
+fs.rmSync(projectRoot, { recursive: true, force: true });
 const healthSource = fs.readFileSync(path.join(root, "skills/shizuo/scripts/health-check.mjs"), "utf8");
 assert.match(healthSource, /bundledRemotionPath[\s\S]{0,900}add\("remotion", "Remotion"/, "健康检查必须验证安装器管理的 Remotion runtime");
 assert.match(healthSource, /videoEngineAvailable[\s\S]{0,500}"video_engine"/, "视频档健康检查必须接受任一可用视频引擎");

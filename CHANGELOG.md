@@ -10,6 +10,8 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 - Group extension runtime files under `app/` by responsibility, leaving the repository root for extension entrypoints, installation, and open-source governance
 - Reduce the README to the product promise, first-use path, daily actions, and documentation entrypoints; move setup and capability detail into focused docs
+- Make English the concise primary README, retain a complete Chinese README, and reduce local AI setup to loading the extension plus one installer command
+- Detect the unpacked Chrome or Edge extension ID automatically during macOS setup, with the explicit ID retained only as a recovery path
 
 ## [2.24.5] - 2026-08-31
 

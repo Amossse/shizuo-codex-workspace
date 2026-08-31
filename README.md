@@ -1,92 +1,68 @@
-# 拾作 · Shizuo
+# Shizuo · 拾作
 
-> **The visual workspace for Codex.** Capture context, think on an infinite canvas, and let local agents act with visible, traceable results.
+> **A local-first visual workspace for Codex.** Capture context from the web, organize it on an infinite canvas, and let local agents act with visible, traceable results.
 
-把网页、选区、图片和本地文件放进同一块画布。拾作帮助你看清关系，再让本地 Codex 在原始素材旁完成任务并留下结果。
+[简体中文](README.zh-CN.md) · [Download](https://github.com/Amossse/shizuo-codex-workspace/releases/latest) · [Setup](#quick-start) · [Privacy](PRIVACY.md)
 
-![Manifest V3](https://img.shields.io/badge/Manifest-V3-blue)
-![License MIT](https://img.shields.io/badge/License-MIT-green)
-![Chrome and Edge](https://img.shields.io/badge/Chrome%20%7C%20Edge-supported-brightgreen)
-![No telemetry](https://img.shields.io/badge/telemetry-none-success)
+![Shizuo canvas connecting source material, a Codex task, and a visible result](docs/product-canvas-real.jpg)
 
-[下载最新版本](https://github.com/Amossse/shizuo-codex-workspace/releases/latest) · [快速开始](#快速开始) · [隐私](PRIVACY.md) · [贡献](CONTRIBUTING.md)
+## Why Shizuo
 
-![拾作画布：素材、任务和结果保持连线](docs/product-canvas-real.jpg)
+AI work becomes hard to follow when source material, prompts, progress, and results live in separate windows. Shizuo keeps them together:
 
-## 你可以用它做什么
+- **Capture** selected text, pages, images, links, and local files with their sources.
+- **Organize** cards and relationships on an infinite canvas with search and version history.
+- **Act** on selected context with a local Codex CLI and see live status beside the source.
+- **Keep** answers, images, knowledge cards, and reusable workflows where the work happened.
 
-- **收集**：保存网页、选中文字、图片、链接和本地文件，并保留来源。
-- **组织**：在无限画布上摆放卡片、建立连接、搜索和回溯历史。
-- **执行**：把选中的上下文交给本地 Codex，看到状态、过程和结果。
-- **复用**：把结论、图片、知识卡和工作流留在素材旁边，随时继续。
+Board data stays in your browser by default. Content is sent to your local AI CLI only when you explicitly run a task.
 
-所有画布数据默认保存在本机；只有你点击执行时，内容才会通过本地 CLI 交给已登录的 AI。
+## Quick start
 
-## 快速开始
+### 1. Install the extension
 
-### 1. 安装扩展
+1. Download and unzip the [latest release](https://github.com/Amossse/shizuo-codex-workspace/releases/latest).
+2. Open `chrome://extensions` or `edge://extensions` and enable **Developer mode**.
+3. Choose **Load unpacked**, select the extracted folder, and pin Shizuo.
 
-1. 下载并解压 [最新发布包](https://github.com/Amossse/shizuo-codex-workspace/releases/latest)。
-2. 打开 chrome://extensions 或 edge://extensions，开启开发者模式。
-3. 点击 Load unpacked，选择解压后的文件夹，再固定拾作。
+You can now capture and organize content without Codex.
 
-现在就可以收集网页内容、创建白板、组织素材、搜索和导出；这些能力不依赖 Codex。
+### 2. Capture your first item
 
-### 2. 放入第一条内容
+Open a new tab, paste text, a link, or an image, then choose **Start organizing**. Shizuo places it on a board and shows the next action.
 
-打开一个新标签页，粘贴一段文字、链接或图片，然后点击 **开始整理**。拾作会把内容放入白板，并提示下一步。
+![Shizuo first-run screen](docs/product-home-real.jpg)
 
-![拾作首页：从一条内容开始](docs/product-home-real.jpg)
+### 3. Connect local Codex (optional)
 
-### 3. 可选：连接本地 Codex
+Install and sign in to the [Codex CLI](https://developers.openai.com/codex/cli), then run this once from the extracted Shizuo folder:
 
-第一次点击 **交给 AI** 时，拾作会检测连接状态并给出一步一步的引导。连接完成后会自动继续原任务，无需重新输入。
+```sh
+./install.sh --core
+```
 
-若希望提前配置，查看 [连接本地 Codex](docs/local-codex-setup.md)。
+Reload Shizuo in `chrome://extensions`. The installer detects the unpacked extension automatically, registers the local Native Host and MCP, and verifies the bridge. See [local Codex setup](docs/local-codex-setup.md) if detection fails.
 
-## 日常使用
+## Everyday actions
 
-| 想做什么 | 从哪里开始 |
+| Goal | Start here |
 | --- | --- |
-| 收集当前页面 | 点击扩展图标，或右键选中文字、图片、链接 |
-| 打开画布 | 新标签页，或点击扩展图标中的打开拾作 |
-| 让 AI 处理素材 | 圈选卡片后点击交给 AI |
-| 在网页直接提问 | 选中文字后使用问问 Codex，或打开右下角入口 |
-| 找回以前内容 | 在首页搜索白板、卡片和来源 |
+| Save a page or selection | Extension button or the selection menu |
+| Open the canvas | A new tab or **Open Shizuo** |
+| Ask Codex to work on context | Select cards, then choose **Send to AI** |
+| Ask from the current page | Select text and choose **Ask Codex** |
+| Find previous work | Search boards, cards, and sources from Home |
 
-## 工程结构
+## Develop
 
-    manifest.json       Chrome 扩展入口
-    app/
-      core/             数据库、领域模型和卡片协议
-      content/          网页采集与页面助手
-      background/       Service Worker、桥接和调度
-      pages/            白板、弹窗、侧栏、编辑器和离屏页面
-      styles/           全局设计令牌与主题
-    native-host/        受限的本地 Codex / MCP / PTY 桥接
-    docs/               使用、排障与架构文档
-    scripts/            验证与发布脚本
-    vendor/             固定版本的前端依赖
+There is no build step. Load the repository as an unpacked extension, edit the files, and reload it from `chrome://extensions`.
 
-没有构建步骤：加载目录后即可开发。
+```sh
+npm test
+```
 
-## 文档
-
-- [连接本地 Codex](docs/local-codex-setup.md)：安装、登录与常见连接问题
-- [能力说明](docs/capabilities.md)：画布、工作流、协作和实验能力
-- [架构](docs/architecture.md)：运行边界、数据与本地桥接
-- [隐私与权限](PRIVACY.md)
-- [安全策略](SECURITY.md)
-- [贡献指南](CONTRIBUTING.md)
-
-## 开发
-
-加载扩展后，修改代码并在 chrome://extensions 点击重新加载。提交前运行：
-
-    npm test
-
-欢迎提交 Issue 和 PR。安全问题请按 [安全策略](SECURITY.md) 私下报告。
+Runtime code lives under `app/`; the constrained local bridge lives under `native-host/`. See [architecture](docs/architecture.md), [capabilities](docs/capabilities.md), and [contributing](CONTRIBUTING.md).
 
 ## License
 
-[MIT](LICENSE) © 拾作 Contributors
+[MIT](LICENSE) © Shizuo Contributors

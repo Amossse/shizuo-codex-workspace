@@ -3,6 +3,7 @@
 set -euo pipefail
 
 script_dir="${0:A:h}"
+project_root="${script_dir:h}"
 profile="${1:---core}"
 if [[ "$profile" == "--help" || "$profile" == "-h" ]]; then
   print "用法：install-macos.sh {--core|--terminal|--video}"
@@ -56,10 +57,17 @@ if [[ -z "$coding_workspace_dir" ]]; then
   fi
 fi
 
-# Chrome Native Messaging 只允许明确列出的扩展来源。开发者模式的扩展 ID 由 Chrome 分配，
-# 因此必须先加载扩展，再把当前 ID 传给安装器；这样不会改变用户已经保存的本地白板数据。
+# Chrome Native Messaging 只允许明确列出的扩展来源。优先按当前解压目录从 Chrome / Edge
+# 配置中识别开发者模式扩展 ID，避免用户手工复制；多份安装或识别失败时仍保留显式参数兜底。
 if [[ -z "$extension_id" ]]; then
-  print -u2 "请先在 chrome://extensions 加载拾作，复制其扩展 ID，再运行："
+  if [[ -n "$node_bin" && -x "$node_bin" ]]; then
+    extension_id="$("$node_bin" "$script_dir/detect-extension-id.mjs" "$project_root" 2>/dev/null || true)"
+  fi
+fi
+if [[ -z "$extension_id" ]]; then
+  print -u2 "没有检测到当前目录对应的拾作扩展。"
+  print -u2 "请先在 chrome://extensions 加载此文件夹，再重新运行 ./install.sh $profile。"
+  print -u2 "仍无法识别时，可复制扩展 ID 后运行："
   print -u2 "PAGEDOCK_EXTENSION_ID=你的扩展ID ./install.sh $profile"
   exit 1
 fi

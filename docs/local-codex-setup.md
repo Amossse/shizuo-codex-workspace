@@ -1,33 +1,43 @@
-# 连接本地 Codex
+# Connect local Codex
 
-拾作的收集和画布默认离线可用。只有执行 AI 任务时，才需要连接本机已登录的 Codex CLI。
+Capture and canvas features work offline. You only need this setup when Shizuo should run a task through your signed-in local Codex CLI.
 
-## 一次配置
+## One-time setup
 
-1. 先在 chrome://extensions 加载拾作，并复制它显示的扩展 ID。
-2. 在解压后的拾作目录打开终端，运行：
+1. Load the extracted Shizuo folder from `chrome://extensions`.
+2. Open a terminal in that same folder and run:
 
-    PAGEDOCK_EXTENSION_ID=你的扩展ID ./install.sh --core
+```sh
+./install.sh --core
+```
 
-3. 回到 chrome://extensions，点击拾作的重新加载。
-4. 打开拾作，点击交给 AI；绿色的本地已连接表示准备完成。
+3. Reload Shizuo from `chrome://extensions`.
+4. Open Shizuo and choose **Send to AI**. A green local connection state means it is ready.
 
-安装器只注册本机 Native Messaging Host 和本机 MCP，不会把 Codex 凭据交给扩展。
+The installer identifies the extension ID from the loaded folder, registers the local Native Messaging Host and MCP, and verifies the bridge. It does not share Codex credentials with the extension.
 
-## 如果任务提示未连接
+If multiple copies of Shizuo are loaded or automatic detection fails, copy the target extension ID and run:
 
-不要先重试任务。打开任务前置的连接引导，或者重新执行上面的安装命令，再重新加载扩展。原来的任务内容会被保留，连接成功后可以直接继续。
+```sh
+PAGEDOCK_EXTENSION_ID=your_extension_id ./install.sh --core
+```
 
-## 健康检查
+## Health check
 
-    sh "$HOME/.codex/skills/shizuo/scripts/shizuo.sh" health
+```sh
+sh "$HOME/.codex/skills/shizuo/scripts/shizuo.sh" health
+```
 
-如果 Native Host 已就绪但 Codex CLI 不可用，请在终端运行 codex 并按提示完成登录，然后回到拾作点击检查连接。
+If the Native Host is ready but the Codex CLI is not, run `codex` in a terminal and complete sign-in, then check the connection again in Shizuo.
 
-## 可选安装档位
+## Optional profiles
 
-    PAGEDOCK_EXTENSION_ID=你的扩展ID ./install.sh --core
-    PAGEDOCK_EXTENSION_ID=你的扩展ID ./install.sh --terminal
-    PAGEDOCK_EXTENSION_ID=你的扩展ID ./install.sh --video
+```sh
+./install.sh --core
+./install.sh --terminal
+./install.sh --video
+```
 
-core 是日常任务所需的最小配置。terminal 和 video 属于可选能力。
+`core` is the smallest profile for everyday tasks. Terminal and video support are optional.
+
+[中文说明](local-codex-setup.zh-CN.md)

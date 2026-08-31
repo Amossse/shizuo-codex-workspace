@@ -16,6 +16,7 @@ assert.match(readme, /docs\/local-codex-setup\.md/);
 assert.match(read("CHANGELOG.md"), new RegExp(`## \\[${version.replaceAll(".", "\\.")}\\]`));
 assert(existsSync(path.join(root, `docs/release-v${version}.md`)));
 assert.match(read("SECURITY.md"), new RegExp(`\\| ${version.split(".").slice(0, 2).join("\\.")}\\.x \\| ✅ \\|`));
+assert(existsSync(path.join(root, "README.zh-CN.md")));
 
 const privacy = read("PRIVACY.md");
 for (const permission of manifest.permissions) assert(privacy.includes(`\`${permission}\``), `PRIVACY.md 缺少 ${permission} 权限说明`);
@@ -37,7 +38,8 @@ assert.match(read("scripts/package-release.mjs"), /rootFiles/);
 assert.match(read(".github/workflows/release.yml"), /--require-tag/);
 assert.match(read(".github/workflows/release.yml"), /SHA256SUMS\.txt/);
 assert.match(read(".github/workflows/release.yml"), /cd artifacts && sha256sum --check SHA256SUMS\.txt/);
-assert.match(readme, /^## 快速开始$/m);
-assert.match(readme, /^## 工程结构$/m);
+assert.match(readme, /^## Quick start$/m);
+assert.match(readme, /README\.zh-CN\.md/);
+assert.match(read("README.zh-CN.md"), /^## 快速开始$/m);
 
 console.log(`拾作 ${version} 发布契约验证通过`);
