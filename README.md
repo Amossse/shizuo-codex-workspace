@@ -75,7 +75,7 @@ Webpages / selections / local files
  answers / images / knowledge / workflows
 ```
 
-![Shizuo workflow: capture context, hand it to Codex, and keep reusable results](docs/social-preview-v2.png)
+![Shizuo workflow: capture context, hand it to Codex, and keep reusable results](docs/social-preview-v3.png)
 
 On supported webpages, the compact assistant is injected automatically and reconnects to the local bridge in the background:
 
