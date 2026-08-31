@@ -35,7 +35,7 @@ function labelForItem(item) {
 }
 
 function openBoard(boardId) {
-  chrome.tabs.create({ url: chrome.runtime.getURL(`whiteboard.html?board=${encodeURIComponent(boardId)}`) });
+  chrome.tabs.create({ url: chrome.runtime.getURL(`app/pages/whiteboard/index.html?board=${encodeURIComponent(boardId)}`) });
 }
 
 function emptyState(text) {
@@ -238,7 +238,7 @@ document.getElementById("openCodex").addEventListener("click", async event => {
         createdAt: Date.now()
       }
     });
-    await chrome.tabs.create({ url: chrome.runtime.getURL("whiteboard.html?codex=page") });
+    await chrome.tabs.create({ url: chrome.runtime.getURL("app/pages/whiteboard/index.html?codex=page") });
   } catch (error) {
     console.error("[pagedock-sidepanel] attach page to Codex failed", error);
     setNotice(error?.message || "无法读取当前网页，请刷新页面后重试", true);

@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
 
-const source = fs.readFileSync(new URL("../pagedock-db.js", import.meta.url), "utf8");
-const content = fs.readFileSync(new URL("../content-codex.js", import.meta.url), "utf8");
+const source = fs.readFileSync(new URL("../app/core/pagedock-db.js", import.meta.url), "utf8");
+const content = fs.readFileSync(new URL("../app/content/content-codex.js", import.meta.url), "utf8");
 const context = { console, structuredClone, URL, crypto: { randomUUID: () => "test-id" } };
 context.globalThis = context;
 vm.runInNewContext(source, context, { filename: "pagedock-db.js" });

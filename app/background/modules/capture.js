@@ -13,7 +13,7 @@ async function captureMarkdown(request) {
       ...extracted
     };
     await chrome.storage.local.set({ [CAPTURE_KEY]: payload });
-    await chrome.tabs.create({ url: chrome.runtime.getURL("editor.html") });
+    await chrome.tabs.create({ url: chrome.runtime.getURL("app/pages/editor/editor.html") });
 
     console.info("[capture-markdown] editor opened", {
       tabId: tab.id,
@@ -152,7 +152,7 @@ async function collectPageContent(tab) {
       "vendor/readability/Readability.js",
       "vendor/turndown/turndown.js",
       "vendor/turndown/turndown-plugin-gfm.js",
-      "content-capture.js"
+      "app/content/content-capture.js"
     ]
   });
 
@@ -219,7 +219,7 @@ async function captureFullPage(request) {
 
     await chrome.scripting.executeScript({
       target: { tabId: tab.id },
-      files: ["content-capture.js"]
+      files: ["app/content/content-capture.js"]
     });
 
     console.info("[capture-screenshot] starting scroll capture", { tabId: tab.id });
@@ -389,7 +389,7 @@ async function finishScreenshotStitchSession(sessionId, totalHeight) {
 }
 
 async function ensureOffscreenDocument() {
-  const offscreenUrl = chrome.runtime.getURL("offscreen.html");
+  const offscreenUrl = chrome.runtime.getURL("app/pages/offscreen/offscreen.html");
   if (chrome.runtime.getContexts) {
     const contexts = await chrome.runtime.getContexts({
       contextTypes: ["OFFSCREEN_DOCUMENT"],
@@ -404,7 +404,7 @@ async function ensureOffscreenDocument() {
 async function createOffscreenDocument() {
   try {
     await chrome.offscreen.createDocument({
-      url: "offscreen.html",
+      url: "app/pages/offscreen/offscreen.html",
       reasons: ["BLOBS"],
       justification: "拼接滚动页面截图并生成本地 PDF"
     });

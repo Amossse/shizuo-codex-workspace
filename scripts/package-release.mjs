@@ -30,27 +30,10 @@ const rootFiles = new Set([
   "README.md",
   "SECURITY.md",
   "THIRD_PARTY_NOTICES.md",
-  "background.js",
-  "board-domain.js",
-  "card-protocol.js",
-  "content-capture.js",
-  "content-codex.js",
-  "editor.html",
-  "editor.js",
   "install.sh",
   "manifest.json",
-  "offscreen.html",
-  "offscreen.js",
-  "pagedock-db.js",
-  "paper-theme.css",
-  "popup.html",
-  "popup.js",
-  "sidepanel.html",
-  "sidepanel.js",
-  "tokens.css",
-  "whiteboard.html"
 ]);
-const runtimeDirectories = ["background/", "icons/", "native-host/", "skills/", "vendor/", "whiteboard/"];
+const runtimeDirectories = ["app/", "icons/", "native-host/", "skills/", "vendor/"];
 const trackedFiles = execFileSync("git", ["ls-files", "-z"], { cwd: root })
   .toString("utf8")
   .split("\0")
@@ -59,7 +42,7 @@ const releaseFiles = trackedFiles
   .filter(file => rootFiles.has(file) || runtimeDirectories.some(directory => file.startsWith(directory)))
   .sort();
 
-for (const required of ["manifest.json", "install.sh", "background/runtime-context.js", "whiteboard/bootstrap.js", "whiteboard/whiteboard.css", "native-host/pagedock-codex-host.mjs", "skills/shizuo/SKILL.md", "vendor/markdown/purify.min.js"]) {
+for (const required of ["manifest.json", "install.sh", "app/background/modules/runtime-context.js", "app/pages/whiteboard/modules/bootstrap.js", "app/pages/whiteboard/modules/whiteboard.css", "native-host/pagedock-codex-host.mjs", "skills/shizuo/SKILL.md", "vendor/markdown/purify.min.js"]) {
   if (!releaseFiles.includes(required)) throw new Error(`发布包缺少运行文件：${required}`);
 }
 

@@ -6,6 +6,11 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ## [Unreleased]
 
+### Changed
+
+- Group extension runtime files under `app/` by responsibility, leaving the repository root for extension entrypoints, installation, and open-source governance
+- Reduce the README to the product promise, first-use path, daily actions, and documentation entrypoints; move setup and capability detail into focused docs
+
 ## [2.24.5] - 2026-08-31
 
 ### Fixed

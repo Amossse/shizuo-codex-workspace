@@ -7,7 +7,7 @@ const formatMenuSummaryEl = formatMenuEl.querySelector("summary");
 const statusEl = document.getElementById("status");
 const SAVE_FORMAT_KEY = "__pagedock_popup_save_format__";
 // Resolve the current installation ID so unpacked and signed builds open their own workspace.
-const WHITEBOARD_URL = chrome.runtime.getURL("whiteboard.html");
+const WHITEBOARD_URL = chrome.runtime.getURL("app/pages/whiteboard/index.html");
 let preferredCaptureType = "capture-markdown";
 
 function formatLabel(type) {

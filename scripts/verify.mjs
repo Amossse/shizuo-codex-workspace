@@ -15,8 +15,18 @@ function read(file) {
 }
 
 function verifyJavaScript() {
-  const files = readdirSync(root)
-    .filter(file => file.endsWith(".js"))
+  const files = [
+    "app/background/index.js",
+    "app/content/content-capture.js",
+    "app/content/content-codex.js",
+    "app/core/card-protocol.js",
+    "app/core/board-domain.js",
+    "app/core/pagedock-db.js",
+    "app/pages/editor/editor.js",
+    "app/pages/offscreen/offscreen.js",
+    "app/pages/popup/popup.js",
+    "app/pages/sidepanel/sidepanel.js"
+  ]
     .concat(whiteboardScriptFiles(), backgroundScriptFiles())
     .concat(nativeHostModuleFiles());
   for (const file of files) {
@@ -83,16 +93,16 @@ check(Array.isArray(manifest.optional_host_permissions), "缺少页面卡所需�
 check(manifest.optional_host_permissions?.includes("https://*/*"), "缺少 HTTPS 可选域名权限");
 
 [
-  "whiteboard.html",
-  "whiteboard/bootstrap.js",
-  "whiteboard/whiteboard.css",
-  "background/runtime-context.js",
-  "popup.html",
-  "sidepanel.html",
-  "content-codex.js",
-  "card-protocol.js",
-  "board-domain.js",
-  "pagedock-db.js",
+  "app/pages/whiteboard/index.html",
+  "app/pages/whiteboard/modules/bootstrap.js",
+  "app/pages/whiteboard/modules/whiteboard.css",
+  "app/background/modules/runtime-context.js",
+  "app/pages/popup/popup.html",
+  "app/pages/sidepanel/sidepanel.html",
+  "app/content/content-codex.js",
+  "app/core/card-protocol.js",
+  "app/core/board-domain.js",
+  "app/core/pagedock-db.js",
   "scripts/page-chat-contract.mjs",
   "vendor/xterm/xterm.js",
   "vendor/xterm/xterm.css",
@@ -116,19 +126,19 @@ check(/Use when/.test(read("skills/shizuo/SKILL.md")), "拾作 Skill 描述缺�
 check(read("native-host/shizuo-mcp-server.mjs") === read("skills/shizuo/scripts/shizuo-mcp-server.mjs"), "Native Host 与 Skill 的 MCP 适配器已漂移");
 
 const backgroundSource = readBackgroundSource();
-const pageCodexSource = read("content-codex.js");
+const pageCodexSource = read("app/content/content-codex.js");
 const whiteboardSource = readWhiteboardSource();
-const whiteboardHtml = read("whiteboard.html");
+const whiteboardHtml = read("app/pages/whiteboard/index.html");
 const whiteboardStyles = readWhiteboardStyles();
 check(/#topbar:has\(details\.menu\[open\]\)\s*\{[^}]*z-index:\s*95\b/.test(whiteboardStyles), "顶部菜单展开时必须高于协作面板");
 check(/body\[data-onboarding="first-run"\] \.home-shell \{ width: min\(1440px, calc\(100% - 80px\)\)/.test(whiteboardStyles), "首次进入的内容宽度必须与主页保持一致");
 check(/body\[data-onboarding="first-run"\] \.hero p \{ max-width: none; margin: 16px auto 0; white-space: nowrap; \}/.test(whiteboardStyles), "桌面端首次进入说明不应意外换行");
 check(/body\[data-onboarding="first-run"\] #quickText \{ height: 100%; padding: 14px; font-size: 15px; line-height: 22px; \}/.test(whiteboardStyles), "首次进入输入框的文字必须垂直居中");
 check((whiteboardHtml.match(/id="openWorkflowTemplates"/g) || []).length === 1 && !whiteboardHtml.includes('id="saveWorkflowTemplate"'), "工作流模板菜单必须只有一个入口");
-check(/function clearInbox\(\)/.test(read("pagedock-db.js")) && /clearInbox/.test(whiteboardSource), "收件箱必须提供保留根白板的清空操作");
+check(/function clearInbox\(\)/.test(read("app/core/pagedock-db.js")) && /clearInbox/.test(whiteboardSource), "收件箱必须提供保留根白板的清空操作");
 check(/#versionHistoryDialog \{ height: min\(80dvh, 40rem\); overflow: hidden; \}/.test(whiteboardStyles) && /version-history-list/.test(whiteboardStyles), "版本历史必须只保留列表滚动区域");
 check(/\.share-codex-details \{ margin-top: 12px;/.test(whiteboardStyles), "协作邀请中的 Codex 入口必须与链接保持间距");
-check(manifest.content_scripts?.some(entry => entry.matches?.includes("<all_urls>") && entry.js?.includes("content-codex.js")), "Codex 快捷入口没有注入全部受支持页面");
+check(manifest.content_scripts?.some(entry => entry.matches?.includes("<all_urls>") && entry.js?.includes("app/content/content-codex.js")), "Codex 快捷入口没有注入全部受支持页面");
 check(/attachShadow\(\{ mode: "closed" \}\)/.test(pageCodexSource), "网页 Codex 快捷入口缺少 Shadow DOM 样式隔离");
 check(/chrome\.storage\.local\.set\(\{ \[POSITION_KEY\]: \{ \.\.\.position, collapsed \} \}/.test(pageCodexSource), "网页 Codex 快捷入口缺少跨页面位置保存");
 check(/setPointerCapture/.test(pageCodexSource) && /applyPosition\(\{ x: start\.left \+ dx, y: start\.top \+ dy \}\)/.test(pageCodexSource), "网页 Codex 快捷入口缺少拖动交互");
@@ -174,9 +184,9 @@ check(/仅光标和选区需要清理/.test(backgroundSource), "外部 Codex 永
 check(/event\.key !== "Enter" \|\| event\.shiftKey \|\| event\.isComposing/.test(whiteboardSource), "任务输入框缺少回车发送或输入法保护");
 check(/codexChatInputEl\.addEventListener\("keydown", event => \{[\s\S]{0,260}event\.key !== "Enter" \|\| event\.shiftKey \|\| event\.isComposing[\s\S]{0,160}sendCodexChatMessage\(\)/.test(whiteboardSource), "独立 Codex 会话缺少回车发送、Shift 回车换行或输入法保护");
 check(/expectedUpdatedAt/.test(backgroundSource) && /cards\.stream/.test(backgroundSource), "协作冲突检测或渐进生成链路不完整");
-check(/commitBoardSnapshot/.test(read("pagedock-db.js")) && /BOARD_CONFLICT/.test(read("pagedock-db.js")), "版本化白板写入边界不完整");
-check(/saveTemplateFromBoard/.test(read("pagedock-db.js")) && /runCurrentWorkflow/.test(whiteboardSource), "工作流模板或执行链路不完整");
-check(/normalizeWorkflowPlan/.test(read("board-domain.js")) && /function runDynamicWorkflow/.test(whiteboardSource) && /function executeWorkflowTasks/.test(whiteboardSource), "自然语言动态工作流编排链路不完整");
+check(/commitBoardSnapshot/.test(read("app/core/pagedock-db.js")) && /BOARD_CONFLICT/.test(read("app/core/pagedock-db.js")), "版本化白板写入边界不完整");
+check(/saveTemplateFromBoard/.test(read("app/core/pagedock-db.js")) && /runCurrentWorkflow/.test(whiteboardSource), "工作流模板或执行链路不完整");
+check(/normalizeWorkflowPlan/.test(read("app/core/board-domain.js")) && /function runDynamicWorkflow/.test(whiteboardSource) && /function executeWorkflowTasks/.test(whiteboardSource), "自然语言动态工作流编排链路不完整");
 check(/task-orchestrate/.test(whiteboardSource) && /执行容器/.test(whiteboardSource) && /"image-gen"/.test(whiteboardSource) && /"hyperframes-video"/.test(whiteboardSource) && /"remotion-video"/.test(whiteboardSource), "动态工作流缺少画布入口、执行容器或双视频执行通道");
 check(/id="homeTemplates"[^>]*>模板库</.test(whiteboardHtml), "主页模板入口文案不清晰");
 check(/function updateWorkflowTemplateEntry/.test(whiteboardSource) && /新建白板/.test(whiteboardSource) && /暂无工作流模板/.test(whiteboardSource), "模板库缺少数量反馈或零模板引导");
@@ -188,25 +198,25 @@ check(/function drawSketchEmphasis/.test(whiteboardSource) && /重点突出/.tes
 check(/function drawPaperTexture/.test(whiteboardSource) && /paper-fiber/.test(whiteboardSource) && /createRadialGradient/.test(whiteboardSource), "视觉总结图的纸张纹理不足");
 check(/HanziPen SC/.test(whiteboardSource) && /Xingkai SC/.test(whiteboardSource) && /strokeText/.test(whiteboardSource), "视觉总结文字缺少手写墨迹感");
 check(/手稿信息图/.test(whiteboardSource) && /AI 自由绘图/.test(whiteboardSource) && /image-gen/.test(whiteboardSource), "做图任务缺少模板与 image-gen 双通道");
-check(/searchBoards/.test(read("pagedock-db.js")) && /listBoardRevisions/.test(read("pagedock-db.js")), "跨白板搜索或版本历史链路不完整");
-check(/provenance/.test(read("card-protocol.js")) && /id="provenanceDialog"/.test(whiteboardHtml), "卡片来源追踪链路不完整");
+check(/searchBoards/.test(read("app/core/pagedock-db.js")) && /listBoardRevisions/.test(read("app/core/pagedock-db.js")), "跨白板搜索或版本历史链路不完整");
+check(/provenance/.test(read("app/core/card-protocol.js")) && /id="provenanceDialog"/.test(whiteboardHtml), "卡片来源追踪链路不完整");
 
 verifyJavaScript();
 verifySourceLineLimits();
-verifyHtmlContract("whiteboard.html", "whiteboard modules", whiteboardSource);
-verifyHtmlContract("popup.html", "popup.js");
-verifyHtmlContract("sidepanel.html", "sidepanel.js");
+verifyHtmlContract("app/pages/whiteboard/index.html", "whiteboard modules", whiteboardSource);
+verifyHtmlContract("app/pages/popup/popup.html", "app/pages/popup/popup.js");
+verifyHtmlContract("app/pages/sidepanel/sidepanel.html", "app/pages/sidepanel/sidepanel.js");
 
-for (const file of ["tokens.css", "paper-theme.css", "whiteboard/whiteboard.css"]) verifyCssBraces(file, read(file));
-for (const file of ["whiteboard.html", "popup.html", "sidepanel.html", "editor.html"]) {
+for (const file of ["app/styles/tokens.css", "app/styles/paper-theme.css", "app/pages/whiteboard/modules/whiteboard.css"]) verifyCssBraces(file, read(file));
+for (const file of ["app/pages/whiteboard/index.html", "app/pages/popup/popup.html", "app/pages/sidepanel/sidepanel.html", "app/pages/editor/editor.html"]) {
   const styles = [...read(file).matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)].map(match => match[1]).join("\n");
   verifyCssBraces(file, styles);
 }
 
-const appSources = [whiteboardSource, backgroundSource, whiteboardStyles, ...["popup.js", "sidepanel.js", "whiteboard.html", "popup.html", "sidepanel.html", "paper-theme.css"].map(read)].join("\n");
+const appSources = [whiteboardSource, backgroundSource, whiteboardStyles, ...["app/pages/popup/popup.js", "app/pages/sidepanel/sidepanel.js", "app/pages/whiteboard/index.html", "app/pages/popup/popup.html", "app/pages/sidepanel/sidepanel.html", "app/styles/paper-theme.css"].map(read)].join("\n");
 check(!/transition\s*:\s*all\b/i.test(appSources), "发现 transition: all，会造成不可控动画");
 check(!/\balert\s*\(/.test(appSources), "发现阻塞式 alert，请改为原位错误反馈");
-check(!/chrome-extension:\/\/[a-p]{32}/.test(read("popup.js")), "弹出面板硬编码了扩展 ID");
+check(!/chrome-extension:\/\/[a-p]{32}/.test(read("app/pages/popup/popup.js")), "弹出面板硬编码了扩展 ID");
 
 if (failures.length) {
   console.error(`拾作验证失败（${failures.length} 项）`);

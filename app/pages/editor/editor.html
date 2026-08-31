@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <title>拾作</title>
-  <link rel="stylesheet" href="tokens.css" />
-  <link rel="stylesheet" href="vendor/monaco/min/vs/editor/editor.main.css" />
+  <link rel="stylesheet" href="../../styles/tokens.css" />
+  <link rel="stylesheet" href="../../../vendor/monaco/min/vs/editor/editor.main.css" />
   <style>
     /* Hallmark · genre: modern-minimal · macrostructure: Long Document · design-system: design.md · designed-as-app */
     html, body { height: 100%; margin: 0; font-family: var(--font-body); background: var(--color-paper); color: var(--color-ink); display: flex; flex-direction: column; }
@@ -52,11 +52,11 @@
 
     .status { font-size: 12px; color: var(--color-muted); padding: 4px 14px; background: var(--color-paper-2); border-top: 1px solid var(--color-rule); display: flex; justify-content: space-between; }
   </style>
-  <link rel="stylesheet" href="paper-theme.css" />
+  <link rel="stylesheet" href="../../styles/paper-theme.css" />
 </head>
 <body class="mode-split" data-surface="editor">
   <header>
-    <img class="editor-brand-mark" src="icons/icon32.png" alt="" />
+    <img class="editor-brand-mark" src="../../../icons/icon32.png" alt="" />
     <strong>拾作</strong>
     <div class="seg" id="modeSwitch">
       <button data-mode="code">源码</button>
@@ -75,11 +75,11 @@
     <span id="stat"></span>
   </div>
 
-  <script src="vendor/turndown/turndown.js"></script>
-  <script src="vendor/turndown/turndown-plugin-gfm.js"></script>
-  <script src="vendor/markdown/marked.umd.js"></script>
-  <script src="vendor/markdown/purify.min.js"></script>
-  <script src="vendor/monaco/min/vs/loader.js"></script>
+  <script src="../../../vendor/turndown/turndown.js"></script>
+  <script src="../../../vendor/turndown/turndown-plugin-gfm.js"></script>
+  <script src="../../../vendor/markdown/marked.umd.js"></script>
+  <script src="../../../vendor/markdown/purify.min.js"></script>
+  <script src="../../../vendor/monaco/min/vs/loader.js"></script>
   <script src="editor.js"></script>
 </body>
 </html>

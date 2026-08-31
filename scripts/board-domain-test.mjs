@@ -2,12 +2,16 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
 
-const source = fs.readFileSync(new URL("../board-domain.js", import.meta.url), "utf8");
+const source = fs.readFileSync(new URL("../app/core/board-domain.js", import.meta.url), "utf8");
 const context = { console, structuredClone };
 context.globalThis = context;
 vm.runInNewContext(source, context, { filename: "board-domain.js" });
 const domain = context.PageDockBoardDomain;
-vm.runInNewContext(fs.readFileSync(new URL("../card-protocol.js", import.meta.url), "utf8"), context, { filename: "card-protocol.js" });
+vm.runInNewContext(
+  fs.readFileSync(new URL("../app/core/card-protocol.js", import.meta.url), "utf8"),
+  context,
+  { filename: "card-protocol.js" }
+);
 const protocol = context.PageDockCardProtocol;
 
 const base = {

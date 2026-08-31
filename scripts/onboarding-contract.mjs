@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { readWhiteboardSource, readWhiteboardStyles } from "./source-utils.mjs";
 
 const read = file => readFileSync(new URL(`../${file}`, import.meta.url), "utf8");
-const html = `${read("whiteboard.html")}\n${readWhiteboardStyles()}`;
+const html = `${read("app/pages/whiteboard/index.html")}\n${readWhiteboardStyles()}`;
 const board = readWhiteboardSource();
 
 assert.match(html, /id="homeMoreMenu"[\s\S]{0,900}AI 与连接[\s\S]{0,400}实验能力[\s\S]{0,300}协作与会话/, "主页高级能力必须渐进披露");

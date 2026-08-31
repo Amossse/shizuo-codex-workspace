@@ -4,20 +4,20 @@
 
 ## Extension runtime
 
-- `background.js` 是 Service Worker 的 composition root，只按顺序加载 `background/` Module。
-- `background/runtime-context.js` 持有跨模块共享的 Chrome 运行态。
-- `background/collaboration.js` 实现协作会话、Presence、审批和远程白板 RPC。
-- `background/native-bridge.js` 管理 Native Host 连接与恢复。
-- `background/scheduler.js` 管理定时任务和动态工作流。
-- `background/bridge-requests.js` 适配 Codex 与 Terminal 请求。
-- `background/collection-router.js` 注册 Chrome 事件并收集网页内容。
-- `background/capture.js` 负责页面上下文、Markdown、截图和 PDF。
+- `app/background/index.js` 是 Service Worker 的 composition root，只按顺序加载 `app/background/modules/`。
+- `runtime-context.js` 持有跨模块共享的 Chrome 运行态。
+- `collaboration.js` 实现协作会话、Presence、审批和远程白板 RPC。
+- `native-bridge.js` 管理 Native Host 连接与恢复。
+- `scheduler.js` 管理定时任务和动态工作流。
+- `bridge-requests.js` 适配 Codex 与 Terminal 请求。
+- `collection-router.js` 注册 Chrome 事件并收集网页内容。
+- `capture.js` 负责页面上下文、Markdown、截图和 PDF。
 
 这些脚本运行在同一个经典 Service Worker 全局域中，加载顺序由 composition root 固定。Router 只组合能力，不重新实现业务规则。
 
 ## Whiteboard runtime
 
-`whiteboard.html` 只描述结构并按顺序加载 `whiteboard/` Module。核心边界是：
+`app/pages/whiteboard/index.html` 只描述结构并按顺序加载同目录的 `modules/`。核心边界是：
 
 - `runtime-context`：唯一共享的 Board/Card 运行上下文。
 - `canvas`、`cards`、`card-renderers`：画布行为、通用卡片和外部能力 Adapter。
@@ -26,7 +26,7 @@
 - `board-controller`：Mutation、Revision、持久化、历史与导航。
 - `bootstrap`：事件装配，始终最后加载。
 
-样式集中在 `whiteboard/whiteboard.css`，避免 HTML 同时承担页面结构和视觉实现。
+样式集中在 `modules/whiteboard.css`，避免 HTML 同时承担页面结构和视觉实现。
 
 ## Native Host
 
@@ -44,7 +44,7 @@
 
 ## Persistence
 
-`pagedock-db.js` 保持一个深 IndexedDB Interface：Board、Mutation、Revision、Template、Search 与 Page Chat 共享同一事务边界。它只略高于阈值，因此通过移除无意义空行收敛，而没有为了文件数量制造浅层转发 Module。
+`app/core/pagedock-db.js` 保持一个深 IndexedDB Interface：Board、Mutation、Revision、Template、Search 与 Page Chat 共享同一事务边界。它只略高于阈值，因此通过移除无意义空行收敛，而没有为了文件数量制造浅层转发 Module。
 
 ## Change rules
 

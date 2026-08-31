@@ -10,7 +10,7 @@
   "optional_host_permissions": ["http://*/*", "https://*/*"],
   "action": {
     "default_title": "拾作 — 收集、理解、创作",
-    "default_popup": "popup.html",
+    "default_popup": "app/pages/popup/popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
       "32": "icons/icon32.png",
@@ -18,18 +18,18 @@
     }
   },
   "chrome_url_overrides": {
-    "newtab": "whiteboard.html"
+    "newtab": "app/pages/whiteboard/index.html"
   },
   "side_panel": {
-    "default_path": "sidepanel.html"
+    "default_path": "app/pages/sidepanel/sidepanel.html"
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "app/background/index.js"
   },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content-codex.js"],
+      "js": ["app/content/content-codex.js"],
       "run_at": "document_idle",
       "all_frames": false
     }

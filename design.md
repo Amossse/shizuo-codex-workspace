@@ -47,7 +47,7 @@ modern-minimal
 
 Coral。暖奶油纸张、深棕墨色与克制的珊瑚强调色；不使用渐变、玻璃拟态或纯黑纯白。
 
-颜色、字体、间距、圆角、阴影与动效的唯一来源是 `tokens.css`。
+颜色、字体、间距、圆角、阴影与动效的唯一来源是 `app/styles/tokens.css`。
 
 ## Typography
 
@@ -58,7 +58,7 @@ Coral。暖奶油纸张、深棕墨色与克制的珊瑚强调色；不使用渐
 
 ## Spacing
 
-采用 4px 基础的命名尺度。新样式只引用 `tokens.css` 中的 `--space-*`，不在组件里发明新间距。
+采用 4px 基础的命名尺度。新样式只引用 `app/styles/tokens.css` 中的 `--space-*`，不在组件里发明新间距。
 
 ## Motion
 

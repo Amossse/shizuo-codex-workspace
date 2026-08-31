@@ -10,8 +10,9 @@ const manifest = JSON.parse(read("manifest.json"));
 const version = packageJson.version;
 
 assert.equal(manifest.version, version);
-assert.match(read("README.md"), new RegExp(`releases/download/v${version}/shizuo-codex-workspace-${version}\\.zip`));
-assert.match(read("README.md"), new RegExp(`version-${version.replaceAll(".", "\\.")}-orange`));
+const readme = read("README.md");
+assert.match(readme, /releases\/latest/);
+assert.match(readme, /docs\/local-codex-setup\.md/);
 assert.match(read("CHANGELOG.md"), new RegExp(`## \\[${version.replaceAll(".", "\\.")}\\]`));
 assert(existsSync(path.join(root, `docs/release-v${version}.md`)));
 assert.match(read("SECURITY.md"), new RegExp(`\\| ${version.split(".").slice(0, 2).join("\\.")}\\.x \\| ✅ \\|`));
@@ -36,6 +37,7 @@ assert.match(read("scripts/package-release.mjs"), /rootFiles/);
 assert.match(read(".github/workflows/release.yml"), /--require-tag/);
 assert.match(read(".github/workflows/release.yml"), /SHA256SUMS\.txt/);
 assert.match(read(".github/workflows/release.yml"), /cd artifacts && sha256sum --check SHA256SUMS\.txt/);
-assert.equal((read("README.md").match(/^## Installation profiles$/gm) || []).length, 1);
+assert.match(readme, /^## 快速开始$/m);
+assert.match(readme, /^## 工程结构$/m);
 
 console.log(`拾作 ${version} 发布契约验证通过`);

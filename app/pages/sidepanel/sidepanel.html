@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>拾作 · 收件箱</title>
-  <link rel="stylesheet" href="tokens.css" />
+  <link rel="stylesheet" href="../../styles/tokens.css" />
   <style>
     /* Hallmark · genre: modern-minimal · macrostructure: Workbench · design-system: design.md · designed-as-app */
     /* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V4 · compact capture, 44px targets, quiet batch state */
@@ -55,11 +55,11 @@
     .source-link:hover { text-decoration: underline; }
     .empty { padding: 22px 12px; border: 1px dashed var(--line); border-radius: 8px; color: var(--muted); text-align: center; }
   </style>
-  <link rel="stylesheet" href="paper-theme.css" />
+  <link rel="stylesheet" href="../../styles/paper-theme.css" />
 </head>
 <body data-surface="sidepanel">
   <header>
-    <div class="brand"><img class="mark" src="icons/icon32.png" alt="" /><div class="brand-copy"><strong>拾作 · 收件箱</strong><span id="versionMeta">边浏览，边收集</span></div><button id="openCodex" type="button">问 Codex</button></div>
+    <div class="brand"><img class="mark" src="../../../icons/icon32.png" alt="" /><div class="brand-copy"><strong>拾作 · 收件箱</strong><span id="versionMeta">边浏览，边收集</span></div><button id="openCodex" type="button">问 Codex</button></div>
     <div class="quick"><input id="quickText" placeholder="快速记一条" /><button class="primary" id="quickAdd" type="button">保存</button></div>
   </header>
   <main>
@@ -86,8 +86,8 @@
       <div class="list" id="inboxList"></div>
     </section>
   </main>
-  <script src="card-protocol.js"></script>
-  <script src="pagedock-db.js"></script>
+  <script src="../../core/card-protocol.js"></script>
+  <script src="../../core/pagedock-db.js"></script>
   <script src="sidepanel.js"></script>
 </body>
 </html>

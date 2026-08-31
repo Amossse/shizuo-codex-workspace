@@ -2,390 +2,91 @@
 
 > **The visual workspace for Codex.** Capture context, think on an infinite canvas, and let local agents act with visible, traceable results.
 
-把网页、选区、图片和本地文件放进同一块画布，让 Codex 理解关系、执行任务，并把结果留在上下文旁边。
+把网页、选区、图片和本地文件放进同一块画布。拾作帮助你看清关系，再让本地 Codex 在原始素材旁完成任务并留下结果。
 
-![manifest](https://img.shields.io/badge/Manifest-V3-blue)
-![license](https://img.shields.io/badge/License-MIT-green)
-![browser](https://img.shields.io/badge/Chrome%20%7C%20Edge-supported-brightgreen)
-![version](https://img.shields.io/badge/version-2.24.5-orange)
-![offline](https://img.shields.io/badge/offline-%E2%9C%93-success)
-![telemetry](https://img.shields.io/badge/telemetry-none-success)
+![Manifest V3](https://img.shields.io/badge/Manifest-V3-blue)
+![License MIT](https://img.shields.io/badge/License-MIT-green)
+![Chrome and Edge](https://img.shields.io/badge/Chrome%20%7C%20Edge-supported-brightgreen)
+![No telemetry](https://img.shields.io/badge/telemetry-none-success)
 
-[Download v2.24.5](https://github.com/Amossse/shizuo-codex-workspace/releases/download/v2.24.5/shizuo-codex-workspace-2.24.5.zip) · [Quick start](#quick-start) · [Privacy](PRIVACY.md) · [Contributing](CONTRIBUTING.md)
+[下载最新版本](https://github.com/Amossse/shizuo-codex-workspace/releases/latest) · [快速开始](#快速开始) · [隐私](PRIVACY.md) · [贡献](CONTRIBUTING.md)
 
-![Shizuo real workflow canvas with linked Codex tasks, generated knowledge, images, and video](docs/product-canvas-real.jpg)
+![拾作画布：素材、任务和结果保持连线](docs/product-canvas-real.jpg)
 
-<p align="center"><em>A real Shizuo canvas: source material flows into Codex tasks, then stays connected to reusable results.</em></p>
+## 你可以用它做什么
 
----
+- **收集**：保存网页、选中文字、图片、链接和本地文件，并保留来源。
+- **组织**：在无限画布上摆放卡片、建立连接、搜索和回溯历史。
+- **执行**：把选中的上下文交给本地 Codex，看到状态、过程和结果。
+- **复用**：把结论、图片、知识卡和工作流留在素材旁边，随时继续。
 
-## Why Shizuo
+所有画布数据默认保存在本机；只有你点击执行时，内容才会通过本地 CLI 交给已登录的 AI。
 
-Chat windows lose context. Web clippers stop at collection. Whiteboards still ask you to move everything by hand.
+## 快速开始
 
-Shizuo keeps the material, its relationships, the agent's work, and the result in one local-first workspace:
+### 1. 安装扩展
 
-- **Capture real context** — webpages, selections, images, links, and local files keep their source.
-- **See the structure** — arrange cards on an infinite canvas and connect inputs to outputs.
-- **Let Codex act** — run local tasks through MCP and watch status, progress, and results on the canvas.
-- **Reuse the outcome** — keep answers, images, knowledge cards, provenance, and workflows beside the source.
+1. 下载并解压 [最新发布包](https://github.com/Amossse/shizuo-codex-workspace/releases/latest)。
+2. 打开 chrome://extensions 或 edge://extensions，开启开发者模式。
+3. 点击 Load unpacked，选择解压后的文件夹，再固定拾作。
 
-Core capture and canvas data stay local with zero analytics. Codex runs only when you ask it to.
+现在就可以收集网页内容、创建白板、组织素材、搜索和导出；这些能力不依赖 Codex。
 
-## Quick start
+### 2. 放入第一条内容
 
-### 1. Install the extension
+打开一个新标签页，粘贴一段文字、链接或图片，然后点击 **开始整理**。拾作会把内容放入白板，并提示下一步。
 
-1. Download [`shizuo-codex-workspace-2.24.5.zip`](https://github.com/Amossse/shizuo-codex-workspace/releases/download/v2.24.5/shizuo-codex-workspace-2.24.5.zip) and unzip it. Optionally verify it against [`SHA256SUMS.txt`](https://github.com/Amossse/shizuo-codex-workspace/releases/download/v2.24.5/SHA256SUMS.txt).
-2. Open `chrome://extensions` or `edge://extensions`, enable **Developer mode**, choose **Load unpacked**, and select that folder.
-3. Copy the shown extension ID. Open a terminal in that folder and run `PAGEDOCK_EXTENSION_ID=your_extension_id ./install.sh --core`.
-4. Click **Reload** for 拾作, then pin it. On any webpage, save the page or selected content; open a new tab to enter the canvas.
+![拾作首页：从一条内容开始](docs/product-home-real.jpg)
 
-You can now capture, edit, organize, search, and export locally. Connecting Codex is optional.
+### 3. 可选：连接本地 Codex
 
-![Shizuo home with boards, Inbox capture, search, and the local AI assistant](docs/product-home-real.jpg)
+第一次点击 **交给 AI** 时，拾作会检测连接状态并给出一步一步的引导。连接完成后会自动继续原任务，无需重新输入。
 
-<p align="center"><em>The actual first screen: collect something, open a board, or search what you already know.</em></p>
+若希望提前配置，查看 [连接本地 Codex](docs/local-codex-setup.md)。
 
-### 2. Connect local Codex on macOS
+## 日常使用
 
-Native Messaging requires Chrome to whitelist the exact extension origin. Chrome assigns an unpacked extension ID locally, so load the extension first and copy that ID from `chrome://extensions`, then run:
-
-```bash
-PAGEDOCK_EXTENSION_ID=your_extension_id ./install.sh --core
-```
-
-Reload 拾作 once from `chrome://extensions`. A green **本地已连接** state confirms the local bridge is ready. This preserves the existing extension ID and its local board data.
-
-```bash
-sh "$HOME/.codex/skills/shizuo/scripts/shizuo.sh" health
-```
-
-If a task says **"Codex 暂时不可用"** or **"Codex 未连接"**, do not retry the task first: rerun the same installer command with the ID currently shown in `chrome://extensions`, reload 拾作, then run `health`. The task card will keep the original task so it can be retried after the bridge is healthy.
-
-## How it works
-
-```text
-Webpages / selections / local files
-                ↓
-      source cards on the canvas
-                ↓
-    Codex reads, plans, and acts
-                ↓
- answers / images / knowledge / workflows
-```
-
-![Shizuo workflow: capture context, hand it to Codex, and keep reusable results](docs/social-preview-v3.png)
-
-On supported webpages, the compact assistant is injected automatically and reconnects to the local bridge in the background:
-
-<p align="center">
-  <img src="docs/page-assistant.png" alt="Shizuo in-page Codex assistant connected locally" width="520">
-</p>
-
-## Core capabilities
-
-- Smart webpage extraction to clean Markdown with source metadata
-- Local-first multi-board canvas with cards, links, grouping, search, and revision history
-- Context-aware Codex tasks with visible progress, cancellation, retry, and linked results
-- Page assistant for questions, translation, summarization, analysis, and pasted images
-- Portable board export, PNG/PDF output, full backup, and restore
-- MCP bridge and bundled `shizuo` Skill for local Agent operations
-
-<details>
-<summary><strong>Advanced and experimental capabilities</strong></summary>
-
-Local terminals, HyperFrames/Remotion video, Kokoro post-production, dynamic and scheduled workflows, trusted-LAN collaboration, session preview, and AGY runtime switching are available for advanced setups. They are intentionally outside the first-use path.
-
-</details>
-
-<details>
-<summary><strong>Full capability reference</strong></summary>
-
-Most web clippers ship raw HTML, dump unformatted text, or pipe your data through a cloud service. **拾作** keeps page capture, understanding, and visual creation together:
-
-- 🧹 **Smart extraction** — Mozilla Readability isolates the real article and drops nav / sidebar / footer noise
-- ✍️ **Clean Markdown** — Turndown + GFM produces portable CommonMark you can paste into Obsidian, Logseq, Notion, Bear, Feishu, GitHub, Hugo, …
-- 🖥️ **Real editor** — Monaco (the VS Code editor) with word wrap, find & replace, and a warm light reading theme
-- 👀 **Live preview** — code / split / preview modes; `Cmd/Ctrl + 1/2/3` to switch
-- ↔️ **Resizable split view** — drag the center divider to resize source and preview panes; the ratio is remembered
-- 🗂️ **Multiple boards** — browse every board from the new-tab home, then open a board to view and edit its details
-- 📥 **One-step collection** — right-click selected text, images, links, or a page to save it into the Inbox with source metadata
-- 🧠 **Expanding whiteboard editing** — drag or pan in any direction to grow the canvas on demand, with zoom, multi-select, align, group, undo/redo, keyboard shortcuts, and minimap navigation
-- 🌐 **Analyzable page cards** — enter an HTTP(S) URL to browse it inside a resizable card; when sent to Codex, approve that domain once and 拾作 extracts the rendered, authenticated page content instead of passing only the URL
-- 🧩 **Typed card protocol** — every card declares its content inputs, outputs, runtime state, data connections, and capability permissions through one versioned contract
-- 🔗 **Content-carrying connections** — connect two selected cards in source → target order; documents receive a snapshot and Codex tasks read the latest upstream content whenever they run
-- 📁 **Local file and folder cards** — choose local material with explicit browser permission, keep handles separate from portable board data, refresh previews, and reconnect safely after import
-- 📝 **Document and code cards** — write Markdown with an inline preview or keep resizable, language-labelled source code directly on the canvas
-- `>_` **Interactive local terminals** — use a persistent login shell backed by a real PTY, with native prompts, history, completion, ANSI color, Ctrl+C, vim/top, resize, and bounded scrollback
-- 🧭 **Relationship-aware canvas** — keep source-to-Codex-to-result links visible, then optimize the whole board into a cleaner left-to-right layout with one click
-- 🧭 **Side-panel Inbox** — multi-select collected cards, move them to a board, archive/restore/delete in batches, and jump back to their source pages
-- 🤖 **Independent Codex workspace chat** — use coding-mode Codex from the lower-right, then place any useful answer onto the current board with one click
-- ⚡ **Codex on every page** — use a draggable, collapsible quick entry on supported pages; select text to ask Codex, translate it to Chinese, summarize, analyze, or find new insights without leaving the page
-- 🔌 **Codex-to-whiteboard MCP** — let a local or explicitly authorized LAN Codex read and edit boards while the canvas shows its live task status, progress, linked outputs, and final result
-- 🔎 **Cross-board search and provenance** — search card content and captured sources across every board, then inspect the exact upstream cards, source URLs, templates, and card revisions behind a result
-- 🧰 **Reusable workflows** — save a board as a permission-clean workflow template, instantiate it with remapped links, and run task-card dependency waves with cycle detection and bounded concurrency
-- 🧭 **Dynamic workflows** — describe a multi-step goal once, let Codex plan a validated DAG, then watch query, text, image-gen, and video execution containers run with live status and linked results
-- 🕘 **Version history** — keep 100 local delta revisions per board and restore a chosen version as a new, auditable revision
-- 📄 **Warm paper workbench** — one soft, bright Coral design system across the whiteboard, Codex, Inbox, popup, and Markdown editor
-- ✨ **Multi-turn selection tasks** — keep each task card's material context and conversation history, read structured Markdown answers, continue asking follow-up questions, or launch text-summary, image, and video shortcuts from the same card
-- ✅ **Concurrent, recoverable Codex tasks** — run up to three independent local tasks, follow user-readable process events in each card, reconnect after a page refresh, and stop or retry cards independently; image and video generation each stay limited to one at a time
-- 🔊 **Narration quality gate** — segment spoken Chinese by scene, normalize numbers and domain terms for pronunciation, repair weak takes before render, duck music under speech, and normalize the final mix
-- 💾 **IndexedDB persistence** — board records and imported image data stay out of `chrome.storage.local` size limits
-- 📦 **Portable exports** — current-board `.pagedock`, PNG, PDF, plus full backup and restore
-- 📸 **Full-page screenshot PDF** — preserve native pixel density and combine any number of capture segments into one multi-page PDF
-- 🧩 **Virtual-scroll support** — accumulate rendered document blocks instead of reading only the first screen
-- 🔒 **Privacy-first** — core capture and whiteboards stay local with zero analytics; optional Codex analysis runs only on explicit request
-- 📦 **No build step** — pure JavaScript, all deps vendored; load unpacked and you're done
-
-</details>
-
-## Privacy and permissions
-
-拾作 has no analytics or advertising SDK. Core captures, boards, revisions, search indexes, and page-chat history remain in browser-local storage. Codex credentials stay with the local Codex CLI and are never copied into the extension.
-
-Some capabilities need broad-looking browser permissions because they operate on user-selected webpages or connect to a local Native Messaging host. The exact purpose, activation boundary, stored data, network behavior, and deletion path for every permission are documented in [PRIVACY.md](PRIVACY.md). Host access is optional and requested only when you explicitly ask 拾作 to read a page-card URL.
-
-## Installation profiles
-
-拾作 uses Chrome Native Messaging and your existing Codex CLI login. It never sends Codex credentials to the extension. Video generation additionally requires the `hyperframes` CLI and FFmpeg in your shell `PATH`.
-
-```bash
-PAGEDOCK_EXTENSION_ID=your_extension_id ./install.sh              # Core: Codex + MCP
-PAGEDOCK_EXTENSION_ID=your_extension_id ./install.sh --terminal   # 核心 + 本地终端
-PAGEDOCK_EXTENSION_ID=your_extension_id ./install.sh --video      # 核心 + 终端 + 视频依赖检查
-```
-
-The installer registers `com.pagedock.codex` for the unpacked extension ID shown in `chrome://extensions` and creates an isolated Codex workspace. Whiteboard task cards and the independent lower-right chat run as Codex coding agents with local tools and `workspace-write` access to `~/code` when that directory exists; material-analysis shortcuts remain read-only. Experimental terminal cards open the configured login shell only after the user explicitly connects the card. Experimental video generation uses HyperFrames or Remotion to create silent video; optional Kokoro post-production can add narration and subtitles afterward. Reload 拾作 once from `chrome://extensions` after installation. To choose another coding root:
-
-```bash
-PAGEDOCK_EXTENSION_ID=your_extension_id ./native-host/install-macos.sh
-PAGEDOCK_CODING_WORKSPACE=/absolute/path/to/code ./native-host/install-macos.sh
-```
-
-### Let Codex actively operate a whiteboard
-
-The macOS installer also creates a random bridge token and installs an MCP adapter at:
-
-```text
-~/Library/Application Support/PageDock/shizuo-mcp-server.mjs
-```
-
-It also installs the `shizuo` Skill into `~/.codex/skills/shizuo`. In a new Codex session, requests such as “读取拾作白板”“把这段结论放进拾作” or “开启拾作内网连接” will load the Skill and follow its connection, permission, mutation, and verification workflow. Deterministic setup commands are available directly:
-
-```bash
-sh "$HOME/.codex/skills/shizuo/scripts/shizuo.sh" health
-sh "$HOME/.codex/skills/shizuo/scripts/shizuo.sh" status
-sh "$HOME/.codex/skills/shizuo/scripts/shizuo.sh" local
-```
-
-The bridge listens only on `127.0.0.1:43127` by default. Add it to Codex's `~/.codex/config.toml`; the local MCP adapter reads the protected token file automatically:
-
-```toml
-[mcp_servers.shizuo]
-command = "node"
-args = ["/Users/your-name/Library/Application Support/PageDock/shizuo-mcp-server.mjs"]
-```
-
-Restart Codex and it can read, search, edit, stream, connect, comment, publish presence, and long-poll collaboration events through the `shizuo_*` tools. Chrome and the 拾作 extension must be running because the extension remains the only owner of IndexedDB. Embedded image/video data, browser file handles, terminal execution, and unrestricted shell access are not exposed.
-
-The local Native Host also observes Codex Desktop turn start, completion, and cancellation events, so the collaboration pet reflects the current local task even when that turn does not call `shizuo_report_task`. Only lifecycle metadata and a short user-request title are forwarded; response content, hidden reasoning, terminal logs, and credentials are never read into the plugin.
-
-To collaborate on the same trusted private network, open a board and click **邀请协作**. The primary one-time link opens a live browser board without requiring 拾作 or Codex; people can create, edit, move, resize, and connect cards immediately, while the owner can still downgrade them to ask-each-time or read-only. A separate expandable instruction connects another Codex directly from its terminal. Every claimed invitation receives its own token restricted to the currently open board, and optimistic version checks prevent silent overwrites. Use **停止共享** to revoke every browser and Codex session and return to local-only mode.
-
-LAN mode accepts only loopback/private source addresses and rate-limits authenticated clients, but HTTP traffic is not end-to-end encrypted. Use it only on a trusted intranet. Do not distribute the host-owner token: only a one-time canvas invite may issue a remote, board-scoped client token. Card deletion remains disabled unless separately authorized. Return to the safe defaults at any time:
-
-```bash
-node "$HOME/Library/Application Support/PageDock/configure-bridge.mjs" --local --deny-delete
-```
-
-### Chrome Web Store / Edge Add-ons
-
-🚧 Coming soon — listing links will appear here once approved.
-
-## 🧭 Usage
-
-| Action | How |
+| 想做什么 | 从哪里开始 |
 | --- | --- |
-| Open tool menu | Click the toolbar icon |
-| Parse Markdown | Pick `Markdown` once from the save-format menu, then choose `保存当前页`; the complete result opens in the editor |
-| Capture full page | Pick `PDF` once from the save-format menu, then choose `保存当前页`; each scroll pauses briefly for dynamic rendering before one PDF is produced |
-| Open 拾作 home | Choose `打开拾作`, click Chrome's `+`, or press `Cmd/Ctrl + T` |
-| Open the side panel | Use Chrome's 拾作 side-panel command; the panel stays focused on Inbox capture and organization |
-| Ask about the current page | Choose `问 Codex` in the Inbox side panel; 拾作 opens Codex chat with that page explicitly attached |
-| Use Codex directly on a page | Drag the floating `Codex` entry anywhere, collapse it to the `C` button, or select text and choose `问问 Codex / 翻译中文 / 内容总结 / 内容分析 / 启发`; conversations are restored locally for the same normalized page URL |
-| Chat with Codex | Use the fixed `Codex` entry at the lower-right of 拾作; press `Enter` to send, `Shift + Enter` for a new line, and use `添加到白板` on any answer |
-| Ask about selected board content | Select one or more cards and choose `交给 Codex`; type any question in the new context-aware task card, then press `Enter` to send or `Shift + Enter` for a new line |
-| Collect from a page | Right-click selected text, an image, a link, or the page, then choose the Inbox or one of the three most recently used boards |
-| Organize the Inbox | Multi-select cards in the side panel, then move, archive, restore, or permanently delete them in batches |
-| Create/open a board | Use the new-tab board list; click a board card to open its detail canvas |
-| Edit a board | Use `添加` for text, images, or Codex task cards; selection-only alignment and grouping live under the floating `更多` menu |
-| Add local material | Use `添加 > 文件 / 文件夹`; 拾作 asks for read access only for that card and keeps the browser handle out of exports |
-| Write on the board | Use `添加 > 文档 / 代码`; documents support Markdown preview and code cards remember their language |
-| Connect card data | Select the source card first, Shift-select the target, then choose `更多 > 连接所选` |
-| Open a terminal | Use `添加 > 控制台`, then `连接`; the card opens the configured macOS login shell and accepts normal terminal keyboard interaction |
-| Export or restore | Use `更多` in board detail for `.pagedock`, PNG, PDF, full backup, and restore |
-| Reuse or run a workflow | Use `更多 > 保存为工作流模板`, create a board from the template library, then choose `运行当前工作流` |
-| Plan a workflow from a goal | Add a task card, open `更多设置` to choose `通用 / 提效 / 技能 / 视野 / 格局`, enter a goal such as `查询热点，然后生成图片和视频`, then choose `拆解并执行` |
-| Schedule a task or workflow | Choose `定时`, select `执行当前任务` or `动态规划并执行工作流`, then set a one-time, daily, or weekly run; Chrome plans the DAG, creates live containers, executes text/image/video steps, and writes every result back without requiring the board to stay open |
-| Search across boards | Search on the home page; results include card content, task results, captured source titles, and URLs |
-| Inspect source/history | Use a card's `↗` source button, or `更多 > 版本历史` to inspect and restore a board revision |
-| Switch view | Top-bar buttons `Source / Split / Preview` or `Cmd/Ctrl + 1 / 2 / 3` |
-| Resize split view | Drag the center divider; double-click to reset to 50/50, or use arrow keys while it is focused |
-| Find & replace | Monaco native `Cmd/Ctrl + F`, `Cmd/Ctrl + H` |
-| Auto-save draft | Happens automatically (600 ms debounce) |
-| Copy Markdown | Inside the editor: `Cmd/Ctrl + A` → `Cmd/Ctrl + C` |
+| 收集当前页面 | 点击扩展图标，或右键选中文字、图片、链接 |
+| 打开画布 | 新标签页，或点击扩展图标中的打开拾作 |
+| 让 AI 处理素材 | 圈选卡片后点击交给 AI |
+| 在网页直接提问 | 选中文字后使用问问 Codex，或打开右下角入口 |
+| 找回以前内容 | 在首页搜索白板、卡片和来源 |
 
-> Browser internal pages (`chrome://`, `edge://`, the Web Store) cannot be injected due to sandboxing — the editor opens empty in that case.
+## 工程结构
 
-## 🗂️ Project structure
+    manifest.json       Chrome 扩展入口
+    app/
+      core/             数据库、领域模型和卡片协议
+      content/          网页采集与页面助手
+      background/       Service Worker、桥接和调度
+      pages/            白板、弹窗、侧栏、编辑器和离屏页面
+      styles/           全局设计令牌与主题
+    native-host/        受限的本地 Codex / MCP / PTY 桥接
+    docs/               使用、排障与架构文档
+    scripts/            验证与发布脚本
+    vendor/             固定版本的前端依赖
 
-```
-shizuo/
-├── manifest.json                # MV3 manifest
-├── popup.html / popup.js        # Two-intent launcher with remembered Markdown / PDF format
-├── pagedock-db.js               # IndexedDB boards and normalized item records
-├── card-protocol.js              # Typed cards, data connections, and per-card capability permissions
-├── whiteboard.html                # New-tab board shell
-├── whiteboard/                    # Board list, canvas, cards, tasks, chat, and collaboration modules
-├── sidepanel.html / sidepanel.js # Persistent Inbox beside the source page
-├── native-host/                  # Restricted Codex/PTY host, tokenized whiteboard bridge, and MCP adapter
-├── skills/shizuo/                # Installable Codex Skill for setup, connection, permissions, and board operations
-├── background.js                  # Service worker composition root
-├── background/                    # Capture, bridge, collaboration, scheduler, and routing modules
-├── content-capture.js           # Find real scroll containers and collect virtualized page content
-├── offscreen.html / offscreen.js # Stitch screenshot tiles into one lossless multi-page PDF
-├── editor.html                  # Editor + preview UI
-├── editor.js                    # Turndown / Monaco / marked / DOMPurify glue
-├── icons/                       # 16 / 48 / 128 placeholder icons
-├── vendor/                      # Bundled third-party libs (no CDN, no build step)
-│   ├── readability/Readability.js
-│   ├── turndown/turndown.js
-│   ├── turndown/turndown-plugin-gfm.js
-│   ├── markdown/marked.umd.js
-│   ├── markdown/purify.min.js
-│   ├── xterm/                    # xterm.js terminal renderer and fit addon
-│   └── monaco/min/vs/...
-├── LICENSE
-├── README.md
-├── CHANGELOG.md
-├── CONTRIBUTING.md
-├── CODE_OF_CONDUCT.md
-├── SECURITY.md
-├── THIRD_PARTY_NOTICES.md
-├── package.json
-└── .gitignore
-```
+没有构建步骤：加载目录后即可开发。
 
-## 🧬 Architecture
+## 文档
 
-```
-Click toolbar icon
-  └─ popup.html
-      ├─ Markdown
-      │    └─ content-capture.js finds the real scroll container
-      │         ├─ scroll + accumulate virtualized document blocks
-      │         └─ fallback: Readability → cleaned <body>
-      │              └─ editor.js → Turndown + Monaco + live preview
-      └─ Screenshot
-           └─ content-capture.js scrolls the real container
-                └─ captureVisibleTab tiles
-                     └─ offscreen.js stitches tiles → lossless PDF → chrome.downloads.download
+- [连接本地 Codex](docs/local-codex-setup.md)：安装、登录与常见连接问题
+- [能力说明](docs/capabilities.md)：画布、工作流、协作和实验能力
+- [架构](docs/architecture.md)：运行边界、数据与本地桥接
+- [隐私与权限](PRIVACY.md)
+- [安全策略](SECURITY.md)
+- [贡献指南](CONTRIBUTING.md)
 
-Right-click page content
-  └─ background.js → PageDockDB → IndexedDB Inbox
-       ├─ sidepanel.html shows recent collections beside the page
-       └─ whiteboard.html new-tab home → board list → detail canvas
-```
+## 开发
 
-## 🛠️ Customization
+加载扩展后，修改代码并在 chrome://extensions 点击重新加载。提交前运行：
 
-| You want to… | Edit |
-| --- | --- |
-| Tune Markdown style (bullet marker, em delimiter, headings) | `editor.js` → `buildTurndown()` `TurndownService` options |
-| Add / change HTML → MD rules | `editor.js` → `td.addRule(...)` |
-| Skip Readability and clip the whole body | `background.js` → `extractArticle()` — remove the Readability branch |
-| Light theme | `editor.js` → `theme: "vs"`, then adjust `#preview` colors in `editor.html` |
-| Default view (code / split / preview) | `editor.js` → fallback in `await setMode(savedMode \|\| "split")` |
-| New keyboard shortcuts | Bottom of `editor.js`, `document.addEventListener("keydown", ...)` |
-| Code-block syntax highlighting | Bundle highlight.js / Prism, hook into `marked.setOptions({ highlight })` |
+    npm test
 
-## 🔐 Privacy
+欢迎提交 Issue 和 PR。安全问题请按 [安全策略](SECURITY.md) 私下报告。
 
-- Core capture, Markdown/PDF export, Inbox, and whiteboards do not use a 拾作 cloud service or telemetry
-- Boards, cards, sources, and imported image data stay locally in IndexedDB; `chrome.storage.local` only keeps editor state
-- Codex is opt-in and sends only the explicit task plus attached whiteboard context through your local CLI to its configured model provider; task cards can inspect, run commands, and modify files inside the configured coding workspace, while independent chat and material analysis stay read-only
-- External Codex access is opt-in, bearer-token protected, local-only by default, and limited to bounded whiteboard RPCs; LAN mode must be explicitly enabled and never exposes terminal execution or browser file handles
-- Video generation is opt-in: Codex authors only inside an isolated task directory, the bridge executes fixed HyperFrames check/render commands, and the temporary project is removed after its MP4 is returned to the local IndexedDB board
-- Page collection runs only after a toolbar or 拾作 context-menu action
-- When you right-click an image, 拾作 may fetch that selected source URL once to cache the image locally; inaccessible images retain their original URL
-- Screenshot stitching happens locally in an extension offscreen document
-- No analytics, no error reporting, no ads, no remote config
+## License
 
-## 🆚 Compared to alternatives
-
-| | **拾作** | Notion Web Clipper | MarkDownload | Joplin Web Clipper |
-| --- | --- | --- | --- | --- |
-| Output format | Markdown / PDF / PNG / `.pagedock` | Notion blocks | Markdown | Markdown / HTML |
-| Editor | Monaco + preview | None | Textarea | Form |
-| Live preview | ✅ | ❌ | ❌ | ❌ |
-| Offline | ✅ | ❌ (cloud) | ✅ | ✅ |
-| Telemetry | ❌ | ✅ | ❌ | ❌ |
-| MV3 | ✅ | ✅ | ⚠️ | ⚠️ |
-| Open source | ✅ MIT | ❌ | ✅ | ✅ |
-
-## ❓ FAQ
-
-**Why does it sometimes say `[Fallback]` instead of `[Article]` in the header?**
-Readability is tuned for article-shaped pages (blogs, news, docs). Single-page apps, dashboards, table-heavy pages, etc. fall back to a cleaned whole-body capture.
-
-**Monaco shows a blank screen.**
-Confirm `vendor/monaco/min/vs/loader.js` and `vs/editor/editor.main.js` exist, and that `web_accessible_resources` in `manifest.json` exposes `vendor/monaco/min/*`. Workers are wrapped through `chrome.runtime.getURL` + a Blob shim to avoid cross-origin restrictions.
-
-**Images don't render in preview.**
-Usually the source site uses auth-gated CDNs or a restrictive `img-src` CSP. The Markdown still contains absolute URLs you can open directly.
-
-**Can it preserve fonts / colors / custom CSS?**
-No — Markdown intentionally drops arbitrary styling. If you need pixel-perfect copy, export HTML instead.
-
-**Firefox support?**
-Not yet — see the roadmap. Most code should port by swapping `chrome.*` for `browser.*`.
-
-## 🗺️ Roadmap
-
-- [ ] Toolbar actions: `Export .md`, `Copy Markdown`, `Re-clip`
-- [ ] Synced scrolling between editor and preview
-- [ ] Code-block syntax highlighting (highlight.js)
-- [ ] CSS-selector pick mode for manual region capture
-- [ ] OCR fallback for image-heavy pages
-- [ ] i18n (Chinese / Japanese UI)
-- [ ] Firefox build
-
-## 🤝 Contributing
-
-Issues and PRs welcome. Please read [CONTRIBUTING.md](./CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) first.
-
-## 🔒 Security
-
-Report vulnerabilities privately — see [SECURITY.md](./SECURITY.md). Please do **not** open public issues for undisclosed security problems.
-
-## 📦 Third-party dependencies
-
-See [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) for full attribution.
-
-- [Mozilla Readability](https://github.com/mozilla/readability) — Apache-2.0
-- [Turndown](https://github.com/mixmark-io/turndown) — MIT
-- [turndown-plugin-gfm](https://github.com/mixmark-io/turndown-plugin-gfm) — MIT
-- [marked](https://github.com/markedjs/marked) — MIT
-- [DOMPurify](https://github.com/cure53/DOMPurify) — Apache-2.0 / MPL-2.0
-- [Monaco Editor](https://github.com/microsoft/monaco-editor) — MIT
-
-## 📄 License
-
-[MIT](./LICENSE) © 拾作 Contributors
-
----
-
-<p align="center">
-  <sub>If 拾作 saved you time, please ⭐ the repo — it really helps discoverability.</sub>
-</p>
+[MIT](LICENSE) © 拾作 Contributors

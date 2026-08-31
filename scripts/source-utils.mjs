@@ -14,7 +14,8 @@ function referencedFiles(source, pattern) {
 }
 
 export function whiteboardScriptFiles() {
-  return referencedFiles(readSource("whiteboard.html"), /<script src="(whiteboard\/[^"]+\.js)"><\/script>/g);
+  return referencedFiles(readSource("app/pages/whiteboard/index.html"), /<script src="(modules\/[^"]+\.js)"><\/script>/g)
+    .map(file => "app/pages/whiteboard/" + file);
 }
 
 export function readWhiteboardSource() {
@@ -22,15 +23,16 @@ export function readWhiteboardSource() {
 }
 
 export function backgroundScriptFiles() {
-  return referencedFiles(readSource("background.js"), /"(background\/[^"]+\.js)"/g);
+  return referencedFiles(readSource("app/background/index.js"), /"(modules\/[^"]+\.js)"/g)
+    .map(file => "app/background/" + file);
 }
 
 export function readBackgroundSource() {
-  return ["background.js", ...backgroundScriptFiles()].map(readSource).join("\n");
+  return ["app/background/index.js", ...backgroundScriptFiles()].map(readSource).join("\n");
 }
 
 export function readWhiteboardStyles() {
-  return readSource("whiteboard/whiteboard.css");
+  return readSource("app/pages/whiteboard/modules/whiteboard.css");
 }
 
 export function nativeHostModuleFiles() {

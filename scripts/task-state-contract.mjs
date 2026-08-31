@@ -6,9 +6,9 @@ import { readBackgroundSource, readNativeHostSource, readWhiteboardSource, readW
 const read = file => readFileSync(new URL(`../${file}`, import.meta.url), "utf8");
 const board = readWhiteboardSource();
 const background = readBackgroundSource();
-const database = read("pagedock-db.js");
+const database = read("app/core/pagedock-db.js");
 const host = readNativeHostSource();
-const html = `${read("whiteboard.html")}\n${readWhiteboardStyles()}`;
+const html = `${read("app/pages/whiteboard/index.html")}\n${readWhiteboardStyles()}`;
 const installer = read("native-host/install-macos.sh");
 
 assert.match(html, /id="healthCheckDialog"[\s\S]{0,900}id="aiRuntimeSelect"[\s\S]{0,200}<option value="codex">Codex<\/option>[\s\S]{0,120}<option value="agy">AGY<\/option>/, "the plugin must keep the Codex/AGY runtime switch in advanced AI settings");
