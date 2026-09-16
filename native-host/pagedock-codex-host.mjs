@@ -114,7 +114,7 @@ const taskArtifacts = createTaskArtifacts({ activeJobs, agyBrainRoot, codexWorks
 const { consumeCodexLine, consumeAgyLine, sendJobProgress, sendVideoArtifact, runVideoPost, stageAgyGeneratedImage, agyImageArtifactSelfTest, agyFailureDetailSelfTest, sendImageArtifact, runHyperframesCommand, runNodeScript, runFfmpegCommand } = taskArtifacts;
 const videoAdapters = createVideoAdapters({ activeJobs, codexBinary, hyperframesBinary, remotionBinary, ffmpegBinary, codexEnvironment, send, log, cleanupJob, preserveFailedVideoWorkspace, inspectVideoVisualProject, normalizeVideoProjectScript, ensureOfficialGsapRuntime, sendJobProgress, sendVideoArtifact, sendImageArtifact, stageAgyGeneratedImage, agyFailureDetail, runHyperframesCommand, runNodeScript, runFfmpegCommand, terminateChildTree });
 const { hyperframesCheckClassificationSelfTest, finishVideoJob, finishRemotionVideoJob, finishImageGenJob } = videoAdapters;
-const runCodex = createTaskRunner({ activeJobs, codexBinary, agyBinary, hyperframesBinary, remotionBinary, codexWorkspace, codingWorkspace, agyBrainRoot, codexEnvironment, send, log, materializeImages, cleanupImages, cleanupJob, terminateChildTree, buildAnalysisPrompt, buildConversationPrompt, buildCodingPrompt, buildImageGenPrompt, buildAgyImagePrompt, buildHyperframesVideoPrompt, buildRemotionVideoPrompt, consumeCodexLine, consumeAgyLine, sendJobProgress, runVideoPost, finishVideoJob, finishRemotionVideoJob, finishImageGenJob });
+const runCodex = createTaskRunner({ activeJobs, codexBinary, agyBinary, hyperframesBinary, remotionBinary, codexWorkspace, codingWorkspace, agyBrainRoot, codexEnvironment, send, log, materializeImages, cleanupImages, cleanupJob, terminateChildTree, buildAnalysisPrompt, buildConversationPrompt, buildCodingPrompt, buildImageGenPrompt, buildAgyImagePrompt, buildHyperframesVideoPrompt, buildRemotionVideoPrompt, consumeCodexLine, consumeAgyLine, sendJobProgress, runVideoPost, finishVideoJob, finishRemotionVideoJob, finishImageGenJob, agyFailureDetail });
 const { revokeBridgeClientRequest, settlePluginRequest, startBridgeServer, createBridgeShare, stopBridgeShare, shutdownCollaborationBridge } = collaborationBridge;
 const { listObservedCodexSessions, previewObservedCodexSession, startCodexSessionMonitor, codexSessionMonitorSelfTest } = codexSessionObserver;
 
@@ -700,8 +700,7 @@ function videoVisualSelfTest() {
 
 function videoStageTimeoutSelfTest() {
   const configuredTimeouts = [
-    ANALYSIS_JOB_TIMEOUT_MS,
-    CODING_JOB_TIMEOUT_MS,
+    TASK_TIMEOUT_MS,
     DEFAULT_VIDEO_STAGE_TIMEOUT_MS,
     ...Object.values(VIDEO_STAGE_TIMEOUT_MS)
   ];
