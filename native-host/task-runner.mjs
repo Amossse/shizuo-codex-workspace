@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { appendBoundedOutput, commandAvailable, truncate } from "./runtime-utils.mjs";
 
@@ -13,7 +14,7 @@ const MAX_RESULT_CHARS = 200_000;
 
 // Selects a Runtime Adapter and supervises one local task from start through cleanup.
 export function createTaskRunner(dependencies) {
-  const { activeJobs, codexBinary, agyBinary, hyperframesBinary, remotionBinary, codexWorkspace, codingWorkspace, agyBrainRoot, codexEnvironment, send, log, materializeImages, cleanupImages, cleanupJob, terminateChildTree, buildAnalysisPrompt, buildConversationPrompt, buildCodingPrompt, buildImageGenPrompt, buildAgyImagePrompt, buildHyperframesVideoPrompt, buildRemotionVideoPrompt, consumeCodexLine, consumeAgyLine, sendJobProgress, runVideoPost, finishVideoJob, finishRemotionVideoJob, finishImageGenJob } = dependencies;
+  const { activeJobs, codexBinary, agyBinary, hyperframesBinary, remotionBinary, codexWorkspace, codingWorkspace, agyBrainRoot, codexEnvironment, send, log, materializeImages, cleanupImages, cleanupJob, terminateChildTree, buildAnalysisPrompt, buildConversationPrompt, buildCodingPrompt, buildImageGenPrompt, buildAgyImagePrompt, buildHyperframesVideoPrompt, buildRemotionVideoPrompt, consumeCodexLine, consumeAgyLine, sendJobProgress, runVideoPost, finishVideoJob, finishRemotionVideoJob, finishImageGenJob, agyFailureDetail } = dependencies;
   async function runCodex(message) {
     if (message.mode === "video-post") return runVideoPost(message);
     const id = String(message.id || "").slice(0, 120);
