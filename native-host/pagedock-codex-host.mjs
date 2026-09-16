@@ -72,6 +72,7 @@ const MAX_CONCURRENT_VIDEO_JOBS = 1;
 const MAX_FAILED_VIDEO_WORKSPACES = 3;
 const codexBinary = process.env.PAGEDOCK_CODEX_BIN || "codex";
 const agyBinary = process.env.PAGEDOCK_AGY_BIN || "agy";
+const claudeBinary = process.env.PAGEDOCK_CLAUDE_BIN || "claude";
 const hyperframesBinary = process.env.PAGEDOCK_HYPERFRAMES_BIN || "hyperframes";
 const remotionBinary = process.env.PAGEDOCK_REMOTION_BIN || "remotion";
 const hyperframesBrowserPath = process.env.PAGEDOCK_HYPERFRAMES_BROWSER_PATH || process.env.HYPERFRAMES_BROWSER_PATH || "";
@@ -111,16 +112,16 @@ const terminalController = createTerminalController({ activeJobs, codingWorkspac
 const { openTerminalSession, writeTerminalSession, resizeTerminalSession, closeTerminalSession, runTerminal, shutdownTerminalSessions } = terminalController;
 const { buildAnalysisPrompt, buildConversationPrompt, buildCodingPrompt, buildImageGenPrompt, buildAgyImagePrompt, buildHyperframesVideoPrompt, buildRemotionVideoPrompt } = taskPrompts;
 const taskArtifacts = createTaskArtifacts({ activeJobs, agyBrainRoot, codexWorkspace, hyperframesBinary, ffmpegBinary, ffprobeBinary, codexEnvironment, materializeVideo, terminateChildTree, send, log, cleanupJob, agyFailureDetail });
-const { consumeCodexLine, consumeAgyLine, sendJobProgress, sendVideoArtifact, runVideoPost, stageAgyGeneratedImage, agyImageArtifactSelfTest, agyFailureDetailSelfTest, sendImageArtifact, runHyperframesCommand, runNodeScript, runFfmpegCommand } = taskArtifacts;
+const { consumeCodexLine, consumeAgyLine, consumeClaudeLine, sendJobProgress, sendVideoArtifact, runVideoPost, stageAgyGeneratedImage, agyImageArtifactSelfTest, agyFailureDetailSelfTest, sendImageArtifact, runHyperframesCommand, runNodeScript, runFfmpegCommand } = taskArtifacts;
 const videoAdapters = createVideoAdapters({ activeJobs, codexBinary, hyperframesBinary, remotionBinary, ffmpegBinary, codexEnvironment, send, log, cleanupJob, preserveFailedVideoWorkspace, inspectVideoVisualProject, normalizeVideoProjectScript, ensureOfficialGsapRuntime, sendJobProgress, sendVideoArtifact, sendImageArtifact, stageAgyGeneratedImage, agyFailureDetail, runHyperframesCommand, runNodeScript, runFfmpegCommand, terminateChildTree });
 const { hyperframesCheckClassificationSelfTest, finishVideoJob, finishRemotionVideoJob, finishImageGenJob } = videoAdapters;
-const runCodex = createTaskRunner({ activeJobs, codexBinary, agyBinary, hyperframesBinary, remotionBinary, codexWorkspace, codingWorkspace, agyBrainRoot, codexEnvironment, send, log, materializeImages, cleanupImages, cleanupJob, terminateChildTree, buildAnalysisPrompt, buildConversationPrompt, buildCodingPrompt, buildImageGenPrompt, buildAgyImagePrompt, buildHyperframesVideoPrompt, buildRemotionVideoPrompt, consumeCodexLine, consumeAgyLine, sendJobProgress, runVideoPost, finishVideoJob, finishRemotionVideoJob, finishImageGenJob, agyFailureDetail });
+const runCodex = createTaskRunner({ activeJobs, codexBinary, agyBinary, claudeBinary, hyperframesBinary, remotionBinary, codexWorkspace, codingWorkspace, agyBrainRoot, codexEnvironment, send, log, materializeImages, cleanupImages, cleanupJob, terminateChildTree, buildAnalysisPrompt, buildConversationPrompt, buildCodingPrompt, buildImageGenPrompt, buildAgyImagePrompt, buildHyperframesVideoPrompt, buildRemotionVideoPrompt, consumeCodexLine, consumeAgyLine, consumeClaudeLine, sendJobProgress, runVideoPost, finishVideoJob, finishRemotionVideoJob, finishImageGenJob, agyFailureDetail });
 const { revokeBridgeClientRequest, settlePluginRequest, startBridgeServer, createBridgeShare, stopBridgeShare, shutdownCollaborationBridge } = collaborationBridge;
 const { listObservedCodexSessions, previewObservedCodexSession, startCodexSessionMonitor, codexSessionMonitorSelfTest } = codexSessionObserver;
 
 function codexEnvironment() {
   return executionEnvironment({
-    binaries: [codexBinary, agyBinary, hyperframesBinary, remotionBinary, ffmpegBinary],
+    binaries: [codexBinary, agyBinary, claudeBinary, hyperframesBinary, remotionBinary, ffmpegBinary],
     extra: hyperframesBrowserPath ? { HYPERFRAMES_BROWSER_PATH: hyperframesBrowserPath } : {}
   });
 }
@@ -556,6 +557,7 @@ async function handleMessage(message) {
         hostVersion: HOST_VERSION,
         codexAvailable: commandAvailable(codexBinary),
         agyAvailable: commandAvailable(agyBinary),
+        claudeAvailable: commandAvailable(claudeBinary),
         hyperframesAvailable: commandAvailable(hyperframesBinary),
         remotionAvailable: commandAvailable(remotionBinary),
         codingWorkspace,
@@ -721,8 +723,10 @@ async function selfTest() {
   const hyperframesReady = commandAvailable(hyperframesBinary);
   const remotionReady = commandAvailable(remotionBinary);
   if (profile === "video" && !hyperframesReady && !remotionReady) throw new Error("HyperFrames 与 Remotion 均不可用");
-  const [codex, hyperframes, remotion, terminal] = await Promise.all([
+  const claudeReady = commandAvailable(claudeBinary);
+  const [codex, claude, hyperframes, remotion, terminal] = await Promise.all([
     commandVersion(codexBinary),
+    claudeReady ? commandVersion(claudeBinary) : Promise.resolve("not-installed"),
     profile === "video" && hyperframesReady ? commandVersion(hyperframesBinary) : Promise.resolve(profile === "video" ? "not-installed" : "not-required"),
     // Remotion CLI 4 prints its version banner for --version but exits with 1; validate the banner instead of the exit code.
     profile === "video" && remotionReady ? commandVersion(remotionBinary, { acceptOutput: /@remotion\/cli\s+\d+\.\d+\.\d+/ }) : Promise.resolve(profile === "video" ? "not-installed" : "not-required"),
@@ -731,7 +735,7 @@ async function selfTest() {
   const videoVisualValidator = profile === "video" ? videoVisualSelfTest() : "not-required";
   const hyperframesCheckClassifier = profile === "video" ? hyperframesCheckClassificationSelfTest() : "not-required";
   const videoStageTimeouts = profile === "video" ? videoStageTimeoutSelfTest() : "not-required";
-  process.stdout.write(JSON.stringify({ ok: true, profile, hostVersion: HOST_VERSION, codex, codingWorkspace, terminal, terminalPty: profile === "core" ? "not-required" : "ok", hyperframes, remotion, audio: profile === "video" ? "kokoro-post" : "not-required", videoVisualValidator, hyperframesCheckClassifier, videoStageTimeouts }));
+  process.stdout.write(JSON.stringify({ ok: true, profile, hostVersion: HOST_VERSION, codex, claude, codingWorkspace, terminal, terminalPty: profile === "core" ? "not-required" : "ok", hyperframes, remotion, audio: profile === "video" ? "kokoro-post" : "not-required", videoVisualValidator, hyperframesCheckClassifier, videoStageTimeouts }));
 }
 
 if (process.argv.includes("--agy-image-artifact-self-test")) {

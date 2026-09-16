@@ -176,6 +176,7 @@ async function runHealthCheck() {
       ["Native Host", health.nativeHost, health.nativeHost ? `版本 ${health.nativeHostVersion || "unknown"}` : "未连接；请运行 ./install.sh --core", true],
       ["Codex CLI", health.codex, health.codex ? "已就绪" : "未找到或未登录", aiRuntime === "codex"],
       ["AGY CLI", health.agy, health.agy ? "已就绪" : "未找到或未登录", aiRuntime === "agy"],
+      ["Claude Code CLI", health.claude, health.claude ? "已就绪" : "未找到或未登录", aiRuntime === "claude"],
       ["交互终端", health.terminal, health.terminal ? "已就绪" : "可选；运行 ./install.sh --terminal", false],
       ["视频创作", videoEngines.length > 0, videoEngines.length ? `${videoEngines.join("、")} 已就绪` : "可选；运行 ./install.sh --video", false],
       ["MCP 桥接", health.bridge, health.bridge ? `${health.bridgeScope || "local"} · ${health.bridgePort || ""}` : "未启用", false]
@@ -244,7 +245,7 @@ function openConnectionGuide({ snapshot = lastCodexStatusSnapshot, resume } = {}
     connectionGuideTitleEl.textContent = `完成 ${runtimeName} 登录`;
     connectionGuideIntroEl.textContent = "本地桥接已就绪，只差命令行登录。完成后会自动继续刚才的任务。";
     connectionGuideStepsEl.append(
-      connectionGuideStep(`打开 ${runtimeName} CLI`, `在终端运行 ${aiRuntime === "agy" ? "agy" : "codex"} 并按提示完成登录。`),
+      connectionGuideStep(`打开 ${runtimeName} CLI`, `在终端运行 ${aiRuntimeCommand()} 并按提示完成登录。`),
       connectionGuideStep("回到拾作检查连接", "登录完成后无需重新创建任务。")
     );
     connectionGuideCommandEl.hidden = true;

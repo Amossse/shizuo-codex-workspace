@@ -93,6 +93,7 @@ function connectCodexNative() {
           nativeHostVersion = String(message.hostVersion || "");
           codexReady = Boolean(message.codexAvailable);
           agyReady = Boolean(message.agyAvailable);
+          claudeReady = Boolean(message.claudeAvailable);
           hyperframesAvailable = Boolean(message.hyperframesAvailable);
           remotionAvailable = Boolean(message.remotionAvailable);
           terminalAvailable = Boolean(message.terminalAvailable);
@@ -106,6 +107,7 @@ function connectCodexNative() {
             hostVersion: message.hostVersion,
             codexAvailable: codexReady,
             agyAvailable: agyReady,
+            claudeAvailable: claudeReady,
             terminalAvailable
           });
           settle();
@@ -155,6 +157,7 @@ function connectCodexNative() {
         nativeHostVersion = "";
         codexReady = false;
         agyReady = false;
+        claudeReady = false;
         hyperframesAvailable = false;
         remotionAvailable = false;
         terminalAvailable = false;
@@ -224,6 +227,7 @@ function connectCodexNative() {
           nativeHostReady = false;
           codexReady = false;
           agyReady = false;
+          claudeReady = false;
         }
         port.disconnect();
         settle(new Error("连接本地桥接超时"));
@@ -233,6 +237,7 @@ function connectCodexNative() {
       if (codexNativePort === port) codexNativePort = undefined;
       codexReady = false;
       agyReady = false;
+      claudeReady = false;
       scheduleCodexReconnect(error?.message || String(error));
       settle(error);
     }

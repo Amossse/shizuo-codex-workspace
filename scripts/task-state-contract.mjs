@@ -11,7 +11,7 @@ const host = readNativeHostSource();
 const html = `${read("app/pages/whiteboard/index.html")}\n${readWhiteboardStyles()}`;
 const installer = read("native-host/install-macos.sh");
 
-assert.match(html, /id="healthCheckDialog"[\s\S]{0,900}id="aiRuntimeSelect"[\s\S]{0,200}<option value="codex">Codex<\/option>[\s\S]{0,120}<option value="agy">AGY<\/option>/, "the plugin must keep the Codex/AGY runtime switch in advanced AI settings");
+assert.match(html, /id="healthCheckDialog"[\s\S]{0,900}id="aiRuntimeSelect"[\s\S]{0,240}<option value="codex">Codex<\/option>[\s\S]{0,140}<option value="agy">AGY<\/option>[\s\S]{0,160}<option value="claude">Claude Code<\/option>/, "the plugin must keep the Codex/AGY/Claude runtime switch in advanced AI settings");
 assert.doesNotMatch(html, /id="aiRuntimeMenu"/, "the runtime switch must not compete with primary toolbar actions");
 assert.match(board, /const transientMenus = \[addMenuEl, exportMenuEl, homeMoreMenuEl, selectionMoreMenuEl\]/, "all visible toolbar menus must share mutual exclusion and outside-click dismissal");
 assert.match(board, /document\.addEventListener\("pointerdown"[\s\S]{0,220}transientMenus\.forEach\(menu => \{ menu\.open = false; \}\);\s*\}, true\);/, "outside-click dismissal must run in capture phase so card event handlers cannot block it");
@@ -19,13 +19,17 @@ assert.match(html, /\.hero h1\s*\{[^}]*white-space:\s*nowrap/, "the desktop home
 assert.match(html, /@media \(max-width: 414px\)[\s\S]{0,180}\.hero h1\s*\{[^}]*white-space:\s*normal/, "the home headline must remain responsive on narrow mobile screens");
 assert.match(board, /AI_RUNTIME_STORAGE_KEY\s*=\s*"__pagedock_ai_runtime_v1__"/, "the selected runtime must have one global storage key");
 assert.match(board, /chrome\.storage\.local\.set\(\{ \[AI_RUNTIME_STORAGE_KEY\]: aiRuntime \}\)/, "the selected runtime must persist in extension storage");
-assert.match(board, /const taskMode = aiRuntime === "agy" \? "conversation" : "coding"/, "ordinary AGY questions must choose conversation mode");
+assert.match(board, /const taskMode = [^;]*aiRuntime === "agy"[\s\S]{0,120}"conversation"[\s\S]{0,120}"coding"/, "ordinary AGY questions must choose conversation mode while Claude can use coding mode");
 assert.match(board, /taskLastMode = taskMode[\s\S]{0,5000}mode: taskMode/, "the selected task mode must reach the native request");
-assert.match(board, /const images = aiRuntime === "agy" \? \[\] : await Promise\.all\(imageItems\.map\(imageDataForCodex\)\)/, "AGY questions must not fail just because their task card has linked image sources");
+assert.match(board, /const images = \["agy", "claude"\]\.includes\(aiRuntime\) \? \[\] : await Promise\.all\(imageItems\.map\(imageDataForCodex\)\)/, "AGY and Claude questions must not fail just because their task card has linked image sources");
+assert.match(board, /aiRuntime === "claude" && \["image", "image-gen", "video", "video-post"\]\.includes\(mode\)/, "Claude Code media shortcuts must fail explicitly before native execution");
 assert.match(background, /agyReady\s*=\s*Boolean\(message\.agyAvailable\)/, "the background bridge must detect the AGY CLI");
+assert.match(background, /claudeReady\s*=\s*Boolean\(message\.claudeAvailable\)/, "the background bridge must detect the Claude Code CLI");
 assert.match(background, /type:\s*"run",[\s\S]{0,120}runtime,/, "the background bridge must forward the selected runtime");
 assert.match(host, /const agyBinary\s*=\s*process\.env\.PAGEDOCK_AGY_BIN/, "the native host must resolve the AGY CLI");
+assert.match(host, /const claudeBinary\s*=\s*process\.env\.PAGEDOCK_CLAUDE_BIN/, "the native host must resolve the Claude Code CLI");
 assert.match(host, /function consumeAgyLine[\s\S]{0,1200}event\.event === "result"/, "the native host must adapt AGY stream-json events");
+assert.match(host, /function consumeClaudeLine[\s\S]{0,1800}event\.type === "result"/, "the native host must adapt Claude Code stream-json events");
 assert.match(host, /AGY 当前支持分析、对话和生图/, "unsupported AGY coding and video modes must fail explicitly");
 assert.match(host, /function stageAgyGeneratedImage[\s\S]{0,1600}agyConversationId/, "AGY image artifacts must be staged into the existing image delivery path");
 assert.match(host, /function agyFailureDetail[\s\S]{0,1800}User location is not supported/, "AGY failures must recover actionable upstream errors from its task log");
@@ -79,7 +83,7 @@ assert.match(board, /selectedVideoEngine === "remotion" \? "remotion-video" : "h
 assert.match(background, /item\.taskVideoEngine === "remotion" \? "remotion-video" : "hyperframes-video"/, "scheduled workflow videos must route through the persisted engine");
 assert.match(background, /availableVideoMode[\s\S]{0,500}hyperframesAvailable[\s\S]{0,500}remotionAvailable/, "scheduled videos must fall back to an available engine");
 assert.match(background, /health:[\s\S]{0,500}hyperframes:[\s\S]{0,160}remotion:/, "connection health must report both installed video engines");
-assert.match(board, /videoEngines[\s\S]{0,600}视频创作/, "health UI must summarize every available video engine");
+assert.match(board, /videoEngines[\s\S]{0,900}视频创作/, "health UI must summarize every available video engine");
 assert.match(board, /composeMain\.hidden = active \|\| failed \|\| pending/, "pending workflow steps must not look manually executable");
 assert.match(html, /\.task-content\[data-state="pending"\]/, "pending workflow steps must have a distinct canvas treatment");
 assert.match(html, /\.task-content\[data-state="pending"\] \.task-compose\s*\{[^}]*background:\s*transparent/s, "pending workflow status must not inherit the normal white composer panel");

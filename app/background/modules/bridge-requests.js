@@ -36,7 +36,7 @@ async function handleCodexBridgeRequest(message) {
   if (message.type === CODEX_RUN_REQUEST) {
     await connectCodexNative();
     const runtime = normalizeAiRuntime(message.runtime || aiRuntime);
-    if (message.mode !== "video-post" && !runtimeReady(runtime)) throw new Error(`本机未找到 ${runtime === "agy" ? "AGY" : "Codex"} CLI`);
+    if (message.mode !== "video-post" && !runtimeReady(runtime)) throw new Error(`本机未找到 ${aiRuntimeName(runtime)} CLI`);
     const taskId = String(message.id || "");
     if (!taskId) throw new Error("Codex 任务缺少 id");
     const activeTaskCount = codexActiveTaskIds.size + terminalActiveTaskIds.size;

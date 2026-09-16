@@ -7,6 +7,7 @@ import { join } from "node:path";
 const root = new URL("../", import.meta.url).pathname;
 const directory = mkdtempSync(join(tmpdir(), "shizuo-process-stream-"));
 const fakeCodex = join(directory, "codex");
+const fakeClaude = join(directory, "claude");
 writeFileSync(fakeCodex, `#!/usr/bin/env node
 const fs = require("node:fs");
 const path = require("node:path");
@@ -30,11 +31,27 @@ process.stdin.on("end", () => {
 `);
 chmodSync(fakeCodex, 0o755);
 
+writeFileSync(fakeClaude, `#!/usr/bin/env node
+if (!process.argv.includes("--verbose")) {
+  process.stderr.write("Claude stream-json requires --verbose\\n");
+  process.exit(2);
+}
+const events = [
+  { type: "system", subtype: "init" },
+  { type: "tool_use", name: "Bash", input: { command: "DEMO_KEY=sample npm test" } },
+  { type: "result", result: "Claude 完成" }
+];
+process.stdout.write(events.map(event => JSON.stringify(event)).join("\\n") + "\\n");
+`);
+chmodSync(fakeClaude, 0o755);
+
+
 const host = spawn(process.execPath, [join(root, "native-host/pagedock-codex-host.mjs")], {
   cwd: root,
   env: {
     ...process.env,
     PAGEDOCK_CODEX_BIN: fakeCodex,
+    PAGEDOCK_CLAUDE_BIN: fakeClaude,
     PAGEDOCK_CODEX_WORKSPACE: root,
     PAGEDOCK_CODING_WORKSPACE: root
   },
@@ -110,7 +127,31 @@ try {
   assert(imageMessages.some(message => message.type === "artifact-chunk" && message.data), "missing image artifact chunk");
   assert(imageMessages.some(message => message.type === "artifact-done"), "missing image artifact completion");
   assert(imageMessages.some(message => message.type === "done"), "missing image-gen completion");
-  console.log(`Native Host 过程流验证通过：${progress.length} 个过程事件，image-gen 图片产物回传通过`);
+
+
+  sendNativeMessage({
+    type: "run",
+    id: "claude-process-test",
+    runtime: "claude",
+    mode: "coding",
+    prompt: "运行 Claude 测试",
+    page: { title: "Claude 测试", content: "测试素材" }
+  });
+  await new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error("Native Host Claude process stream test timed out")), 5_000);
+    const poll = setInterval(() => {
+      if (!messages.some(message => message.id === "claude-process-test" && message.type === "done")) return;
+      clearTimeout(timeout);
+      clearInterval(poll);
+      resolve();
+    }, 20);
+  });
+  const claudeMessages = messages.filter(message => message.id === "claude-process-test");
+  assert(claudeMessages.some(message => message.type === "progress" && message.stage === "thinking"), "missing Claude thinking progress");
+  assert(claudeMessages.every(message => !JSON.stringify(message).includes("DEMO_KEY=sample")), "Claude process events leaked a secret");
+  assert.equal(claudeMessages.find(message => message.type === "done")?.answer, "Claude 完成");
+
+  console.log(`Native Host 过程流验证通过：${progress.length} 个过程事件，image-gen 图片产物回传通过，Claude Code 过程流通过`);
 } finally {
   host.kill("SIGTERM");
   rmSync(directory, { recursive: true, force: true });

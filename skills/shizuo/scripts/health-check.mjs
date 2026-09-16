@@ -35,6 +35,7 @@ for (const [id, label, command, required] of [
   ["node", "Node.js", "node", true],
   ["codex", "Codex CLI", "codex", true],
   ["agy", "AGY CLI", "agy", false],
+  ["claude", "Claude Code CLI", "claude", false],
   ["python", "Python 3", "python3", terminalRequired],
   ["hyperframes", "HyperFrames", "hyperframes", false],
   ["ffmpeg", "FFmpeg", "ffmpeg", videoRequired]
