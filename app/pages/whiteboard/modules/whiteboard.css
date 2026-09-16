@@ -700,6 +700,7 @@ dialog::backdrop { background: var(--color-scrim); backdrop-filter: blur(3px); }
 .dialog-form h2 { margin: 0 0 6px; font-size: 18px; }
 .dialog-form p { margin: 0 0 16px; color: var(--muted); }
 .dialog-form input, .dialog-form select { width: 100%; height: 40px; padding: 0 11px; border: 1px solid var(--line); border-radius: 8px; outline: 0; background: var(--color-surface); color: var(--color-ink); }
+.dialog-form select { padding-right: 32px; background-position: right 14px center; }
 .dialog-form input:focus, .dialog-form select:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
 .schedule-fields { display: grid; grid-template-columns: minmax(0, 1fr) 120px; gap: 10px; }
 .schedule-fields label { display: grid; gap: 6px; color: var(--color-muted); font-size: 11px; }

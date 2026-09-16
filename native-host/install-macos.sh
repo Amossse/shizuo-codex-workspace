@@ -35,6 +35,7 @@ allowed_origin="chrome-extension://$extension_id/"
 node_bin="$(command -v node || true)"
 codex_bin="$(command -v codex || true)"
 agy_bin="$(command -v agy || true)"
+claude_bin="$(command -v claude || true)"
 hyperframes_bin="$(command -v hyperframes || true)"
 npm_bin="$(command -v npm || true)"
 remotion_runtime="$install_root/remotion-runtime"
@@ -169,6 +170,7 @@ chmod 644 "$install_profile"
 print -r -- '#!/bin/zsh' > "$host_launcher"
 print -r -- "export PAGEDOCK_CODEX_BIN=${(q)codex_bin}" >> "$host_launcher"
 print -r -- "export PAGEDOCK_AGY_BIN=${(q)agy_bin}" >> "$host_launcher"
+print -r -- "export PAGEDOCK_CLAUDE_BIN=${(q)claude_bin}" >> "$host_launcher"
 print -r -- "export PAGEDOCK_HYPERFRAMES_BIN=${(q)hyperframes_bin}" >> "$host_launcher"
 print -r -- "export PAGEDOCK_REMOTION_BIN=${(q)remotion_bin}" >> "$host_launcher"
 print -r -- "export PAGEDOCK_HYPERFRAMES_BROWSER_PATH=${(q)hyperframes_browser_path}" >> "$host_launcher"
@@ -212,6 +214,7 @@ fi
   HOME="$HOME" \
   PAGEDOCK_CODEX_BIN="$codex_bin" \
   PAGEDOCK_AGY_BIN="$agy_bin" \
+  PAGEDOCK_CLAUDE_BIN="$claude_bin" \
   PAGEDOCK_HYPERFRAMES_BIN="$hyperframes_bin" \
   PAGEDOCK_REMOTION_BIN="$remotion_bin" \
   PAGEDOCK_HYPERFRAMES_BROWSER_PATH="$hyperframes_browser_path" \
@@ -229,6 +232,7 @@ print "拾作 Codex Host 已安装：$manifest_path"
 print "安装档位：${profile#--}"
 print "Codex 编码工作区：$coding_workspace_dir"
 print "AGY CLI：${agy_bin:-未安装（可选）}"
+print "Claude Code CLI：${claude_bin:-未安装（可选）}"
 print "控制台 Shell：$terminal_shell"
 print "HyperFrames 浏览器：${hyperframes_browser_path:-未配置（可稍后运行 ./install.sh --video）}"
 if [[ "$profile" == "--video" ]]; then

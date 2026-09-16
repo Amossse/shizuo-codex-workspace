@@ -59,6 +59,7 @@ let nativeHostReady = false;
 let nativeHostVersion = "";
 let codexReady = false;
 let agyReady = false;
+let claudeReady = false;
 let aiRuntime = "codex";
 let hyperframesAvailable = false;
 let remotionAvailable = false;
@@ -115,11 +116,21 @@ function normalizeLocalCodexSessionStatus(status = {}) {
 }
 
 function normalizeAiRuntime(value) {
-  return value === "agy" ? "agy" : "codex";
+  return ["agy", "claude"].includes(value) ? value : "codex";
+}
+
+function aiRuntimeName(runtime = aiRuntime) {
+  const normalized = normalizeAiRuntime(runtime);
+  if (normalized === "agy") return "AGY";
+  if (normalized === "claude") return "Claude Code";
+  return "Codex";
 }
 
 function runtimeReady(runtime = aiRuntime) {
-  return normalizeAiRuntime(runtime) === "agy" ? agyReady : codexReady;
+  const normalized = normalizeAiRuntime(runtime);
+  if (normalized === "agy") return agyReady;
+  if (normalized === "claude") return claudeReady;
+  return codexReady;
 }
 
 function rememberCodexTerminalEvent(event) {
@@ -139,7 +150,7 @@ function codexSnapshot(runtime = aiRuntime, taskId = "") {
   return {
     ready: runtimeReady(runtime),
     runtime,
-    runtimes: { codex: codexReady, agy: agyReady },
+    runtimes: { codex: codexReady, agy: agyReady, claude: claudeReady },
     // 保留 activeTaskId，兼容旧版页面；新版以 activeTaskIds 区分每个并发任务。
     activeTaskId: activeTaskIds[0] || "",
     activeTaskIds,
@@ -159,6 +170,7 @@ function codexSnapshot(runtime = aiRuntime, taskId = "") {
       nativeHostVersion,
       codex: codexReady,
       agy: agyReady,
+      claude: claudeReady,
       terminal: nativeHostReady && terminalAvailable && terminalPtyAvailable,
       hyperframes: nativeHostReady && hyperframesAvailable,
       remotion: nativeHostReady && remotionAvailable,

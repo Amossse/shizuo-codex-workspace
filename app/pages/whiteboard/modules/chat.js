@@ -13,7 +13,7 @@ function refreshCodexChatLoadingTime(task) {
 
 function updateCodexChatProgress(task, progressText) {
   if (!task || codexChatTask !== task) return;
-  task.progressText = String(progressText || "Codex 正在处理…");
+  task.progressText = String(progressText || `${aiRuntimeLabel()} 正在处理…`);
   setCodexChatStatus(task.progressText, "loading");
   renderCodexChatMessages();
   syncLocalPluginCodexTask(task, "running", { message: task.progressText });
@@ -36,7 +36,7 @@ function friendlyCodexProgress(message, fallback = "正在处理任务") {
     "repairing-render": "正在组装画面",
     "rendering-video": "正在导出视频",
     "packaging-video": "正在导出视频",
-    "generating-image": "Codex 正在自由绘图",
+    "generating-image": `${aiRuntimeLabel()} 正在自由绘图`,
     "packaging-image": "正在将图片添加到白板"
   };
   return String(message?.label || stages[String(message?.stage || "")] || fallback);
@@ -456,7 +456,7 @@ function codexChatConversationContext(currentMessageId) {
   let context = codexChatMessages
     .filter(message => message.id !== currentMessageId && message.role !== "error")
     .slice(-16)
-    .map(message => `${message.role === "user" ? "用户" : "Codex"}：\n${message.text}`)
+    .map(message => `${message.role === "user" ? "用户" : aiRuntimeLabel()}：\n${message.text}`)
     .join("\n\n---\n\n");
   if (context.length > MAX_CODEX_CHAT_CONTEXT_CHARS) {
     context = context.slice(context.length - MAX_CODEX_CHAT_CONTEXT_CHARS);
@@ -474,7 +474,7 @@ async function connectCodexChat() {
     codexConnectionHint = codexChatReady
       ? ""
       : (response.health?.nativeHost
-        ? `${aiRuntimeLabel()} CLI 不可用，请确认已在终端完成登录`
+        ? `${aiRuntimeLabel()} CLI 不可用，请确认已安装并在终端完成登录`
         : "本地桥接未连接：请在 chrome://extensions 重新加载拾作；首次安装请先在扩展目录运行 ./install.sh --core");
     updateCodexTaskSnapshot(response);
     updateExternalCodexStatus(response);
@@ -542,11 +542,11 @@ async function sendCodexChatMessage() {
       type: CODEX_RUN_REQUEST,
       id: task.id,
       runtime: aiRuntime,
-      // Codex 会话保留工作区执行能力；AGY 走只读对话，避免绕过其交互式权限确认。
+      // Codex / Claude Code 会话保留工作区执行能力；AGY 走只读对话，避免绕过其交互式权限确认。
       mode: aiRuntime === "agy" ? "conversation" : "coding",
       prompt,
       page: {
-        title: codexAttachedPage?.title || (currentBoard ? `${currentBoard.name} · Codex 会话` : "拾作 · Codex 会话"),
+        title: codexAttachedPage?.title || (currentBoard ? `${currentBoard.name} · ${aiRuntimeLabel()} 会话` : `拾作 · ${aiRuntimeLabel()} 会话`),
         url: codexAttachedPage?.url || "",
         content: [materialContext, conversationContext].filter(Boolean).join("\n\n---\n\n")
       },
@@ -587,7 +587,7 @@ function handleCodexChatEvent(message) {
   if (message.type === "done") {
     stopCodexChatProgress(task);
     codexChatTask = undefined;
-    const answer = message.answer || "Codex 没有返回内容";
+    const answer = message.answer || `${aiRuntimeLabel()} 没有返回内容`;
     appendCodexChatMessage("assistant", answer);
     syncLocalPluginCodexTask(task, "completed", { message: "回答已生成", result: answer });
     console.info("[pagedock-codex-chat] conversation completed", { taskId: task.id });
@@ -602,7 +602,7 @@ function handleCodexChatEvent(message) {
   } else if (message.type === "error") {
     stopCodexChatProgress(task);
     codexChatTask = undefined;
-    const errorMessage = message.error || "Codex 会话失败";
+    const errorMessage = message.error || `${aiRuntimeLabel()} 会话失败`;
     appendCodexChatMessage("error", errorMessage);
     syncLocalPluginCodexTask(task, "failed", { message: errorMessage });
     setCodexChatStatus("执行失败", "error");

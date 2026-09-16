@@ -202,6 +202,23 @@ async function runWhiteboardCodex(mode, taskItem = null, contextOptions = {}) {
     if (cancelled) return cancelled;
   }
   const imageItems = selection.filter(item => item.type === "image" && item.src);
+  if (aiRuntime === "claude" && ["image", "image-gen", "video", "video-post"].includes(mode)) {
+    const error = "Claude Code 当前支持文字总结、知识卡和任务对话；生图和视频请切换到 Codex 或 AGY";
+    if (taskItem) {
+      preparingTaskItemIds.delete(taskItem.id);
+      taskItem.taskStatus = "error";
+      taskItem.taskError = error;
+      taskItem.taskProgress = "";
+      updateTaskItemElement(taskItem);
+      scheduleSave();
+      updateCodexChatControls();
+    } else {
+      selectionAiStatusEl.textContent = error;
+      selectionAiStatusEl.classList.remove("hidden");
+      setStatus(error, true);
+    }
+    return;
+  }
   if (imageItems.length > MAX_CODEX_IMAGES) {
     const error = `单次最多分析 ${MAX_CODEX_IMAGES} 张图片，请减少圈选内容`;
     if (taskItem) {
@@ -317,7 +334,7 @@ async function runWhiteboardCodex(mode, taskItem = null, contextOptions = {}) {
   if (!taskItem) setStatus("正在理解素材");
 
   try {
-    const images = await Promise.all(imageItems.map(imageDataForCodex));
+    const images = ["agy", "claude"].includes(aiRuntime) ? [] : await Promise.all(imageItems.map(imageDataForCodex));
     task.images = images;
     updateWhiteboardCodexStatus(task, `正在理解${generationContext.label}`);
     const shortcutPrompts = {
@@ -347,7 +364,8 @@ async function runWhiteboardCodex(mode, taskItem = null, contextOptions = {}) {
         url: "",
         content: [
           primaryContext ? `${generationContext.label}：\n\n${primaryContext}` : "",
-          sourceContext ? `${generationContext.label}：\n\n${sourceContext}` : ""
+          sourceContext ? `${generationContext.label}：\n\n${sourceContext}` : "",
+          ["agy", "claude"].includes(aiRuntime) && imageItems.length ? `说明：当前使用 ${aiRuntimeLabel()}，未传入图片像素；请不要声称看到了图片内容。` : ""
         ].filter(Boolean).join("\n\n---\n\n")
       },
       images,
@@ -361,7 +379,7 @@ async function runWhiteboardCodex(mode, taskItem = null, contextOptions = {}) {
       messageCount: contextSnapshot.messageIds.length,
       sourceCount: contextSnapshot.sourceIds.length
     });
-    if (!response?.ok) throw new Error(response?.error || "Codex 任务启动失败");
+    if (!response?.ok) throw new Error(response?.error || `${aiRuntimeLabel()} 任务启动失败`);
     return completion;
   } catch (error) {
     whiteboardCodexTasks.delete(task.id);
@@ -419,7 +437,7 @@ function parseVisualSummary(answer) {
   } catch (_) {
     return {
       title: "内容总结",
-      summary: fallback.slice(0, 300) || "Codex 没有返回内容",
+      summary: fallback.slice(0, 300) || `${aiRuntimeLabel()} 没有返回内容`,
       highlights: [],
       relations: [],
       imageNotes: [],

@@ -52,8 +52,22 @@ function setCodexChatStatus(message, state = "default") {
   renderCodexLauncherConnectionStatus();
 }
 
-function aiRuntimeLabel() {
-  return aiRuntime === "agy" ? "AGY" : "Codex";
+function normalizeAiRuntime(value) {
+  return ["agy", "claude"].includes(value) ? value : "codex";
+}
+
+function aiRuntimeLabel(runtime = aiRuntime) {
+  const normalized = normalizeAiRuntime(runtime);
+  if (normalized === "agy") return "AGY";
+  if (normalized === "claude") return "Claude Code";
+  return "Codex";
+}
+
+function aiRuntimeCommand(runtime = aiRuntime) {
+  const normalized = normalizeAiRuntime(runtime);
+  if (normalized === "agy") return "agy";
+  if (normalized === "claude") return "claude";
+  return "codex";
 }
 
 function updateAiRuntimeCopy() {
@@ -67,11 +81,11 @@ function updateAiRuntimeCopy() {
 
 async function loadAiRuntime() {
   const stored = await chrome.storage.local.get(AI_RUNTIME_STORAGE_KEY);
-  aiRuntime = stored[AI_RUNTIME_STORAGE_KEY] === "agy" ? "agy" : "codex";
+  aiRuntime = normalizeAiRuntime(stored[AI_RUNTIME_STORAGE_KEY]);
   aiRuntimeSelectEl.value = aiRuntime;
   updateAiRuntimeCopy();
   aiRuntimeSelectEl.addEventListener("change", async () => {
-    aiRuntime = aiRuntimeSelectEl.value === "agy" ? "agy" : "codex";
+    aiRuntime = normalizeAiRuntime(aiRuntimeSelectEl.value);
     await chrome.storage.local.set({ [AI_RUNTIME_STORAGE_KEY]: aiRuntime });
     updateAiRuntimeCopy();
     console.info("[pagedock-ai-runtime] runtime changed", { runtime: aiRuntime });
@@ -84,15 +98,15 @@ function renderCodexLauncherConnectionStatus() {
   codexExternalStatusEl.dataset.connected = String(connected);
   if (codexChatReady) {
     codexExternalStatusEl.textContent = "本地已连接";
-    codexExternalStatusEl.title = "拾作已自动连接本地 Codex";
+    codexExternalStatusEl.title = "拾作已自动连接本地 AI";
     return;
   }
   codexExternalStatusEl.textContent = externalCodexConnected
     ? (externalCodexScope === "lan" ? "MCP 内网已接入" : "MCP 已接入")
-    : (externalCodexScope === "lan" ? "MCP 内网待接入" : (codexConnectionHint ? "需要重新加载拾作" : "正在连接本地 Codex"));
+    : (externalCodexScope === "lan" ? "MCP 内网待接入" : (codexConnectionHint ? "需要重新加载拾作" : "正在连接本地 AI"));
   codexExternalStatusEl.title = externalCodexConnected
     ? `外部 Codex 已通过${externalCodexScope === "lan" ? "内网" : "本机"} MCP 接入拾作`
-    : (externalCodexScope === "lan" ? "拾作已开启内网共享，正在等待同事的 Codex 接入" : (codexConnectionHint || "打开拾作后会自动连接本地 Codex"));
+    : (externalCodexScope === "lan" ? "拾作已开启内网共享，正在等待同事的 Codex 接入" : (codexConnectionHint || "打开拾作后会自动连接本地 AI"));
 }
 
 function updateExternalCodexStatus(snapshot = {}) {

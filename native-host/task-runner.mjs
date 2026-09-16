@@ -14,7 +14,7 @@ const MAX_RESULT_CHARS = 200_000;
 
 // Selects a Runtime Adapter and supervises one local task from start through cleanup.
 export function createTaskRunner(dependencies) {
-  const { activeJobs, codexBinary, agyBinary, hyperframesBinary, remotionBinary, codexWorkspace, codingWorkspace, agyBrainRoot, codexEnvironment, send, log, materializeImages, cleanupImages, cleanupJob, terminateChildTree, buildAnalysisPrompt, buildConversationPrompt, buildCodingPrompt, buildImageGenPrompt, buildAgyImagePrompt, buildHyperframesVideoPrompt, buildRemotionVideoPrompt, consumeCodexLine, consumeAgyLine, sendJobProgress, runVideoPost, finishVideoJob, finishRemotionVideoJob, finishImageGenJob, agyFailureDetail } = dependencies;
+  const { activeJobs, codexBinary, agyBinary, claudeBinary, hyperframesBinary, remotionBinary, codexWorkspace, codingWorkspace, agyBrainRoot, codexEnvironment, send, log, materializeImages, cleanupImages, cleanupJob, terminateChildTree, buildAnalysisPrompt, buildConversationPrompt, buildCodingPrompt, buildImageGenPrompt, buildAgyImagePrompt, buildHyperframesVideoPrompt, buildRemotionVideoPrompt, consumeCodexLine, consumeAgyLine, consumeClaudeLine, sendJobProgress, runVideoPost, finishVideoJob, finishRemotionVideoJob, finishImageGenJob, agyFailureDetail } = dependencies;
   async function runCodex(message) {
     if (message.mode === "video-post") return runVideoPost(message);
     const id = String(message.id || "").slice(0, 120);
@@ -42,16 +42,21 @@ export function createTaskRunner(dependencies) {
         log("video engine fallback", { requestedMode: requestedVideoMode, actualMode: mode });
       }
     }
-    const runtime = message.runtime === "agy" ? "agy" : "codex";
+    const runtime = ["agy", "claude"].includes(message.runtime) ? message.runtime : "codex";
+    const runtimeLabel = runtime === "agy" ? "AGY" : runtime === "claude" ? "Claude Code" : "Codex";
     if (runtime === "agy" && !["analysis", "conversation", "image-gen"].includes(mode)) {
       throw new Error("AGY 当前支持分析、对话和生图；编码和视频请切换到 Codex");
     }
-    if (runtime === "agy" && mode !== "image-gen" && Array.isArray(message.images) && message.images.length) {
-      throw new Error("AGY 当前不支持图片输入，请切换到 Codex");
+    if (runtime === "claude" && !["analysis", "conversation", "coding"].includes(mode)) {
+      throw new Error("Claude Code 当前支持分析、对话和编码；生图和视频请切换到 Codex 或 AGY");
+    }
+    if (["agy", "claude"].includes(runtime) && mode !== "image-gen" && Array.isArray(message.images) && message.images.length) {
+      throw new Error(`${runtimeLabel} 当前不支持图片输入，请切换到 Codex`);
     }
     if (runtime === "agy" && !commandAvailable(agyBinary)) throw new Error("本机未找到 AGY CLI");
+    if (runtime === "claude" && !commandAvailable(claudeBinary)) throw new Error("本机未找到 Claude Code CLI");
     if (activeJobs.size >= MAX_CONCURRENT_JOBS) {
-      throw new Error(`最多可同时执行 ${MAX_CONCURRENT_JOBS} 个 Codex 任务`);
+      throw new Error(`最多可同时执行 ${MAX_CONCURRENT_JOBS} 个本地 AI 任务`);
     }
     const activeVideoJobs = [...activeJobs.values()]
       .filter(job => ["hyperframes-video", "remotion-video"].includes(job.mode)).length;
@@ -63,9 +68,9 @@ export function createTaskRunner(dependencies) {
     if (["hyperframes-video", "remotion-video"].includes(mode) && activeVideoJobs >= MAX_CONCURRENT_VIDEO_JOBS) {
       throw new Error("同时只能生成 1 个视频，请等待当前视频完成");
     }
-    if (!fs.existsSync(codexWorkspace)) throw new Error("Codex 安全工作目录不存在，请重新安装本地桥接");
+    if (!fs.existsSync(codexWorkspace)) throw new Error("本地 AI 安全工作目录不存在，请重新安装本地桥接");
     if (mode === "coding" && !fs.existsSync(codingWorkspace)) {
-      throw new Error("Codex 编码工作区不存在，请重新安装本地桥接或配置 PAGEDOCK_CODING_WORKSPACE");
+      throw new Error("本地 AI 编码工作区不存在，请重新安装本地桥接或配置 PAGEDOCK_CODING_WORKSPACE");
     }
     if (mode === "hyperframes-video" && !commandAvailable(hyperframesBinary)) {
       throw new Error("本机未找到 HyperFrames CLI，请重新安装本地桥接");
@@ -98,8 +103,8 @@ export function createTaskRunner(dependencies) {
           : mode === "coding"
             ? buildCodingPrompt(message)
             : mode === "conversation" ? buildConversationPrompt(message) : buildAnalysisPrompt(message);
-      if (runtime === "agy" && Buffer.byteLength(prompt, "utf8") > 120_000) {
-        throw new Error("AGY 输入超过 120 KB，请缩小上下文或切换到 Codex");
+      if (["agy", "claude"].includes(runtime) && Buffer.byteLength(prompt, "utf8") > 120_000) {
+        throw new Error(`${runtimeLabel} 输入超过 120 KB，请缩小上下文或切换到 Codex`);
       }
     } catch (error) {
       if (workDirectory) fs.rmSync(workDirectory, { recursive: true, force: true });
@@ -118,24 +123,34 @@ export function createTaskRunner(dependencies) {
         "--log-file", agyLogPath,
         "--print-timeout", "24h"
       ]
-      : [
-        "--sandbox", ["coding", "hyperframes-video", "remotion-video", "image-gen"].includes(mode) ? "workspace-write" : "read-only",
-        "--ask-for-approval", "never",
-        ...(["analysis", "conversation"].includes(mode) ? ["--disable", "shell_tool", "--disable", "unified_exec"] : []),
-        "exec",
-        ...imageBundle.paths.flatMap(imagePath => ["--image", imagePath]),
-        "--json",
-        "--ephemeral",
-        "--skip-git-repo-check",
-        ...(mode === "coding" ? [] : ["--ignore-user-config"]),
-        "--color", "never",
-        ...(mode === "coding" ? [] : ["--ignore-rules"]),
-        "--cd", executionDirectory,
-        "-"
-      ];
+      : runtime === "claude"
+        ? [
+          "--print",
+          "--verbose",
+          "--output-format", "stream-json",
+          "--permission-mode", mode === "coding" ? "acceptEdits" : "plan",
+          "--permission-prompts", "none",
+          "--no-session-persistence",
+          "--add-dir", executionDirectory
+        ]
+        : [
+          "--sandbox", ["coding", "hyperframes-video", "remotion-video", "image-gen"].includes(mode) ? "workspace-write" : "read-only",
+          "--ask-for-approval", "never",
+          ...(["analysis", "conversation"].includes(mode) ? ["--disable", "shell_tool", "--disable", "unified_exec"] : []),
+          "exec",
+          ...imageBundle.paths.flatMap(imagePath => ["--image", imagePath]),
+          "--json",
+          "--ephemeral",
+          "--skip-git-repo-check",
+          ...(mode === "coding" ? [] : ["--ignore-user-config"]),
+          "--color", "never",
+          ...(mode === "coding" ? [] : ["--ignore-rules"]),
+          "--cd", executionDirectory,
+          "-"
+        ];
     let child;
     try {
-      child = spawn(runtime === "agy" ? agyBinary : codexBinary, args, {
+      child = spawn(runtime === "agy" ? agyBinary : runtime === "claude" ? claudeBinary : codexBinary, args, {
         cwd: executionDirectory,
         // Chrome 启动 Native Host 时不会继承 NVM 的 PATH；Codex 的 env-node shebang 需要当前 Node 目录。
         env: { ...codexEnvironment(), NO_COLOR: "1", HYPERFRAMES_SKIP_SKILLS: "1" },
@@ -174,7 +189,7 @@ export function createTaskRunner(dependencies) {
       const fallbackLabel = mode !== requestedVideoMode ? `（原引擎不可用，已自动切换）` : "";
       sendJobProgress(job, id, "building-video", { label: `${engineLabel} 正在创建画面${fallbackLabel}`, status: "running", createdAt: Date.now() });
     }
-    if (mode === "image-gen") sendJobProgress(job, id, "generating-image", { label: `${runtime === "agy" ? "AGY" : "Codex"} 正在自由绘图`, status: "running", createdAt: Date.now() });
+    if (mode === "image-gen") sendJobProgress(job, id, "generating-image", { label: `${runtimeLabel} 正在自由绘图`, status: "running", createdAt: Date.now() });
     log("job started", { id, mode, runtime, imageCount: imageBundle.paths.length });
   
     if (!["hyperframes-video", "remotion-video"].includes(mode)) {
@@ -182,7 +197,7 @@ export function createTaskRunner(dependencies) {
       job.timer = setTimeout(() => {
         job.cancelled = true;
         terminateChildTree(job.child);
-        send({ type: "error", id, error: `${runtime === "agy" ? "AGY" : "Codex"} 任务超过 24 小时，已自动停止` });
+        send({ type: "error", id, error: `${runtimeLabel} 任务超过 24 小时，已自动停止` });
         log("job timeout", { id, mode, timeoutMs });
       }, timeoutMs);
     }
@@ -191,7 +206,7 @@ export function createTaskRunner(dependencies) {
       job.stdoutBuffer += chunk.toString("utf8");
       const lines = job.stdoutBuffer.split("\n");
       job.stdoutBuffer = lines.pop() || "";
-      for (const line of lines) (runtime === "agy" ? consumeAgyLine : consumeCodexLine)(job, id, line);
+      for (const line of lines) (runtime === "agy" ? consumeAgyLine : runtime === "claude" ? consumeClaudeLine : consumeCodexLine)(job, id, line);
     });
     child.stderr.on("data", chunk => {
       job.stderr = truncate(job.stderr + chunk.toString("utf8"), 20_000);
@@ -201,11 +216,11 @@ export function createTaskRunner(dependencies) {
       clearTimeout(job.timer);
       activeJobs.delete(id);
       cleanupJob(job);
-      send({ type: "error", id, error: `无法启动${runtime === "agy" ? " AGY" : " Codex"}：${error.message}` });
+      send({ type: "error", id, error: `无法启动 ${runtimeLabel}：${error.message}` });
       log("job spawn failed", { id, reason: error.message });
     });
     child.on("close", code => {
-      if (job.stdoutBuffer.trim()) (runtime === "agy" ? consumeAgyLine : consumeCodexLine)(job, id, job.stdoutBuffer);
+      if (job.stdoutBuffer.trim()) (runtime === "agy" ? consumeAgyLine : runtime === "claude" ? consumeClaudeLine : consumeCodexLine)(job, id, job.stdoutBuffer);
       if (job.cancelled || job.spawnFailed) {
         clearTimeout(job.timer);
         activeJobs.delete(id);
@@ -235,7 +250,6 @@ export function createTaskRunner(dependencies) {
         log("job completed", { id, answerLength: job.answer.length });
         return;
       }
-      const runtimeLabel = runtime === "agy" ? "AGY" : "Codex";
       send({
         type: "error",
         id,
@@ -243,7 +257,7 @@ export function createTaskRunner(dependencies) {
       });
       log("job failed", { id, code });
     });
-    child.stdin.end(runtime === "codex" ? prompt : undefined);
+    child.stdin.end(["codex", "claude"].includes(runtime) ? prompt : undefined);
   }
 
   return runCodex;

@@ -507,7 +507,7 @@ async function runScheduledTask(boardId, itemId) {
   }
   try {
     await connectCodexNative();
-    if (!runtimeReady()) throw new Error(`本机未找到 ${aiRuntime === "agy" ? "AGY" : "Codex"} CLI`);
+    if (!runtimeReady()) throw new Error(`本机未找到 ${aiRuntimeName(aiRuntime)} CLI`);
     if (codexActiveTaskIds.size + terminalActiveTaskIds.size >= CODEX_MAX_CONCURRENT_TASKS) throw new Error("本地任务并发已满");
   } catch (error) {
     await failScheduledTask(boardId, itemId, error, true);

@@ -160,6 +160,44 @@ export function createTaskArtifacts(dependencies) {
     }
   }
   
+  function extractClaudeTextContent(content) {
+    if (typeof content === "string") return content;
+    if (!Array.isArray(content)) return "";
+    return content.map(part => {
+      if (typeof part === "string") return part;
+      if (part?.type === "text" || part?.type === "output_text") return String(part.text || part.content || "");
+      return "";
+    }).filter(Boolean).join("\n");
+  }
+
+  function claudeActivity(event) {
+    const eventType = String(event?.type || event?.event || "");
+    if (["system", "init", "assistant"].includes(eventType)) return { stage: "thinking", label: "Claude Code 正在理解任务", status: "running" };
+    if (eventType === "tool_use" || eventType.includes("tool")) {
+      return {
+        stage: /result|done|completed/.test(eventType) ? "using-tool" : "using-tool",
+        label: /result|done|completed/.test(eventType) ? "Claude Code 工具调用完成" : "Claude Code 正在调用工具",
+        detail: compactCommand(event.name || event.tool_name || event.tool || event.server),
+        status: /error|failed/.test(eventType) ? "error" : /result|done|completed/.test(eventType) ? "success" : "running"
+      };
+    }
+    return null;
+  }
+
+  function consumeClaudeLine(job, id, line) {
+    if (!line.trim()) return;
+    try {
+      const event = JSON.parse(line);
+      const resultText = event.type === "result" ? String(event.result || event.response || event.text || "") : "";
+      const assistantText = event.type === "assistant" ? extractClaudeTextContent(event.message?.content || event.content) : "";
+      if (resultText || assistantText) job.answer = resultText || assistantText;
+      if (event.type === "result" && event.is_error) job.runtimeError = String(event.error || event.result || "Claude Code 执行失败");
+      sendJobActivity(job, id, claudeActivity(event));
+    } catch (error) {
+      log("ignored malformed Claude Code event", { id, reason: error.message });
+    }
+  }
+
   function sendJobProgress(job, id, stage, metadata = {}) {
     if (job.lastStage === stage) return;
     job.lastStage = stage;
@@ -514,5 +552,5 @@ export function createTaskArtifacts(dependencies) {
     });
   }
 
-  return Object.freeze({ consumeCodexLine, consumeAgyLine, sendJobProgress, sendVideoArtifact, runVideoPost, stageAgyGeneratedImage, agyImageArtifactSelfTest, agyFailureDetailSelfTest, sendImageArtifact, runHyperframesCommand, runNodeScript, runFfmpegCommand });
+  return Object.freeze({ consumeCodexLine, consumeAgyLine, consumeClaudeLine, sendJobProgress, sendVideoArtifact, runVideoPost, stageAgyGeneratedImage, agyImageArtifactSelfTest, agyFailureDetailSelfTest, sendImageArtifact, runHyperframesCommand, runNodeScript, runFfmpegCommand });
 }

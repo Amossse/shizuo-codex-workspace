@@ -151,7 +151,7 @@ async function runBoardCardTask(item, sourceItems = null) {
     if (!codexChatReady) throw new Error(codexConnectionHint || `${aiRuntimeLabel()} 未连接`);
     item.taskProgress = initialProgress;
     updateTaskItemElement(item);
-    const images = aiRuntime === "agy" ? [] : await Promise.all(imageItems.map(imageDataForCodex));
+    const images = ["agy", "claude"].includes(aiRuntime) ? [] : await Promise.all(imageItems.map(imageDataForCodex));
     item.taskProgress = initialProgress;
     updateTaskItemElement(item);
     const response = await chrome.runtime.sendMessage({
@@ -165,7 +165,7 @@ async function runBoardCardTask(item, sourceItems = null) {
         url: "",
         content: [
           selection.length ? `原始素材：\n\n${selectionContextForCodex(selection)}` : "",
-          aiRuntime === "agy" && imageItems.length ? "说明：当前使用 AGY，未传入图片像素；请不要声称看到了图片内容。" : "",
+          ["agy", "claude"].includes(aiRuntime) && imageItems.length ? `说明：当前使用 ${aiRuntimeLabel()}，未传入图片像素；请不要声称看到了图片内容。` : "",
           replyContextText ? `本轮明确引用的回答：\n\n${replyContextText}` : "",
           conversationContext ? `任务卡历史对话：\n\n${conversationContext}` : ""
         ].filter(Boolean).join("\n\n---\n\n")
