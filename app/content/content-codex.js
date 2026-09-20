@@ -59,6 +59,7 @@
     .dock[data-collapsed="true"] .dot,
     .dock[data-collapsed="true"] .launcher-action { display: none; }
     .panel { position: fixed; z-index: 2147483646; width: min(372px, calc(100vw - 24px)); height: min(540px, calc(100vh - 24px)); display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: var(--paper); box-shadow: 0 18px 52px rgba(58, 36, 24, .23); pointer-events: auto; }
+    .panel[data-expanded="true"] { width: calc(100vw - 16px); height: calc(100dvh - 16px); border-radius: 12px; }
     .panel[hidden], .selection-menu[hidden] { display: none; }
     .panel-head { height: 52px; display: flex; align-items: center; gap: 9px; flex: none; padding: 8px 10px; border-bottom: 1px solid var(--line); background: var(--paper-2); }
     .panel-head .mark { width: 32px; height: 32px; border-radius: 10px; }
@@ -139,6 +140,7 @@
     <header class="panel-head">
       <span class="mark">C</span>
       <div class="heading"><strong>问问 Codex</strong><span id="panelStatus">正在自动连接本地 Codex…</span></div>
+      <button class="head-button" id="resize" type="button" aria-label="放大窗口" title="放大窗口">放大</button>
       <button class="head-button" id="clear" type="button">新会话</button>
       <button class="head-button" id="close" type="button">关闭</button>
     </header>
@@ -225,6 +227,11 @@
 
   function positionPanel() {
     if (panel.hidden) return;
+    if (panel.dataset.expanded === "true") {
+      panel.style.left = "8px";
+      panel.style.top = "8px";
+      return;
+    }
     const margin = 10;
     const rect = dock.getBoundingClientRect();
     const panelWidth = panel.offsetWidth || Math.min(372, innerWidth - 24);
@@ -300,6 +307,15 @@
   function closePanel() {
     panel.hidden = true;
     launcherMain.setAttribute("aria-expanded", "false");
+  }
+
+  function setPanelExpanded(expanded) {
+    const resize = element("resize");
+    panel.dataset.expanded = String(Boolean(expanded));
+    resize.textContent = expanded ? "还原" : "放大";
+    resize.setAttribute("aria-label", expanded ? "还原窗口" : "放大窗口");
+    resize.title = expanded ? "还原窗口" : "放大窗口";
+    positionPanel();
   }
 
   function setAttachedSelection(text = "") {
@@ -663,6 +679,7 @@
   });
   element("collapse").addEventListener("click", () => setCollapsed(true));
   element("close").addEventListener("click", closePanel);
+  element("resize").addEventListener("click", () => setPanelExpanded(panel.dataset.expanded !== "true"));
   element("clear").addEventListener("click", async () => {
     if (busy) return;
     messages = [];
