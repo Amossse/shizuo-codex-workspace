@@ -240,7 +240,7 @@ function wireEvents() {
     } finally {
       button.disabled = false;
       button.dataset.state = "default";
-      button.textContent = firstRun ? "开始整理" : "存入收件箱";
+      button.textContent = firstRun ? "开始收集" : "存入收件箱";
     }
   });
   quickTextEl.addEventListener("keydown", event => {

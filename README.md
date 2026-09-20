@@ -1,6 +1,6 @@
 # Shizuo · 拾作
 
-> **A local-first visual workspace for Codex.** Capture context from the web, organize it on an infinite canvas, and let local agents act with visible, traceable results.
+> **Turn scattered web research into answers you can check and revisit.** Collect source material, ask Codex about it, and keep the answers beside the originals.
 
 [简体中文](README.zh-CN.md) · [Download](https://github.com/Amossse/shizuo-codex-workspace/releases/latest) · [Setup](#quick-start) · [Privacy](PRIVACY.md)
 
@@ -8,12 +8,11 @@
 
 ## Why Shizuo
 
-AI work becomes hard to follow when source material, prompts, progress, and results live in separate windows. Shizuo keeps them together:
+Comparing several articles usually means copying passages into a chat and finding the originals again later. Shizuo keeps the material and the conversation together:
 
-- **Capture** selected text, pages, images, links, and local files with their sources.
-- **Organize** cards and relationships on an infinite canvas with search and version history.
-- **Act** on selected context with a local Codex CLI and see live status beside the source.
-- **Keep** answers, images, knowledge cards, and reusable workflows where the work happened.
+- Collect pages or selected passages with their source links.
+- Select the material and ask Codex to summarize, compare, or answer a question.
+- Return to the saved answer, check the original material, and ask a follow-up.
 
 Board data stays in your browser by default. Content is sent to your local AI CLI only when you explicitly run a task.
 
@@ -29,11 +28,13 @@ You can now capture and organize content without Codex.
 
 ### 2. Capture your first item
 
-Open a new tab, paste text, a link, or an image, then choose **Start organizing**. Shizuo places it on a board and shows the next action.
+Open a new tab, paste a passage, then choose **开始收集 (Start collecting)**. Shizuo saves it and opens the board with that item selected. No board setup is needed.
 
-![Shizuo first-run screen](docs/product-home-real.jpg)
+To keep an article's source, collect its text using the extension button or selection menu on the original page. Pasting a URL saves the link; it does not import the article body.
 
-### 3. Connect local Codex (optional)
+### 3. Ask about your material
+
+Select your material and choose **交给 AI (Ask AI)**. Connect Codex when you first want an answer; collection works without it.
 
 Install and sign in to the [Codex CLI](https://developers.openai.com/codex/cli), then run this once from the extracted Shizuo folder:
 
@@ -42,6 +43,16 @@ Install and sign in to the [Codex CLI](https://developers.openai.com/codex/cli),
 ```
 
 Reload Shizuo in `chrome://extensions`. The installer detects the unpacked extension automatically, registers the local Native Host and MCP, and verifies the bridge. See [local Codex setup](docs/local-codex-setup.md) if detection fails.
+
+## Try one real research task
+
+Collect passages from three articles about a topic you are researching into the same board. Select the three cards, choose **交给 AI**, and ask:
+
+> Where do these articles agree and disagree? Identify the source for each point. If the collected passages do not support a conclusion, say so.
+
+The answer is saved on the board. Compare it with the source cards, then ask a follow-up in the same task. Source links make checking easier; they do not guarantee that an AI answer is correct. Nothing is sent to Codex until you run a task.
+
+Image generation, multi-step workflows, and other advanced tools remain in the menus and task settings. See [capabilities](docs/capabilities.md) when you need them.
 
 ## Everyday actions
 

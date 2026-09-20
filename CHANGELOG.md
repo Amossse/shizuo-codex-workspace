@@ -8,6 +8,8 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ### Changed
 
+- Focus the home page and onboarding on collecting research, asking questions, and returning to saved answers; defer image shortcuts to advanced task settings
+- Document a three-article comparison walkthrough and clarify that pasting a URL saves a link rather than importing article text
 - Group extension runtime files under `app/` by responsibility, leaving the repository root for extension entrypoints, installation, and open-source governance
 - Reduce the README to the product promise, first-use path, daily actions, and documentation entrypoints; move setup and capability detail into focused docs
 - Make English the concise primary README, retain a complete Chinese README, and reduce local AI setup to loading the extension plus one installer command

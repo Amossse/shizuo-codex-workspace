@@ -1,7 +1,7 @@
 {
   "name": "shizuo",
   "version": "2.24.5",
-  "description": "Local-first visual workspace for Codex: capture context, organize it on an infinite canvas, and let local agents act with visible results.",
+  "description": "Collect web research, ask Codex about it, and keep answers beside their sources for follow-up questions.",
   "type": "module",
   "keywords": [
     "chrome-extension",

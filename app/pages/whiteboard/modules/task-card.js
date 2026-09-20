@@ -579,6 +579,8 @@ function updateTaskItemElement(item) {
       : `按“${lens.label}”视角规划并执行多步骤工作流`;
   starterGroup.hidden = item.taskWorkflowRole === "step" || hasAnswer || !item.taskSourceCount || active || failed;
   starters.forEach(button => {
+    // Keep research shortcuts visible; image tools remain available in advanced settings.
+    button.hidden = button.dataset.mode !== "text" && !settingsExpanded;
     button.disabled = active || atCapacity;
     button.title = atCapacity
       ? codexCapacityReason()
