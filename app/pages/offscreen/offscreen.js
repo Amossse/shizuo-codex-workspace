@@ -12,7 +12,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.type === STITCH_TILE_REQUEST) {
     const tiles = screenshotSessions.get(message.sessionId);
     if (!tiles) {
-      sendResponse({ ok: false, error: "截图拼接会话不存在" });
+      sendResponse({ ok: false, error: ui("截图拼接会话不存在") });
       return;
     }
     tiles.push(message.tile);
@@ -44,7 +44,7 @@ function buildOutputPlan(sourceWidth, totalHeightCss, scaleX, scaleY) {
   const scale = 1;
   const width = Math.max(1, Math.floor(sourceWidth * scale));
   if (width > maxDimension || width > maxPixels) {
-    throw new Error(`页面宽度过大，无法生成高清截图：${width}px`);
+    throw new Error(ui("页面宽度过大，无法生成高清截图：{0}px", width));
   }
 
   const totalHeight = Math.max(1, Math.ceil(totalHeightCss * scaleY * scale));
@@ -64,7 +64,7 @@ function buildOutputPlan(sourceWidth, totalHeightCss, scaleX, scaleY) {
 }
 
 async function stitchTiles(tiles, totalHeightCss) {
-  if (!Array.isArray(tiles) || !tiles.length) throw new Error("没有可拼接的截图分片");
+  if (!Array.isArray(tiles) || !tiles.length) throw new Error(ui("没有可拼接的截图分片"));
 
   const firstImage = await decodeImage(tiles[0].dataUrl);
   const scaleX = firstImage.width / tiles[0].viewportWidth;
@@ -88,7 +88,7 @@ async function stitchTiles(tiles, totalHeightCss) {
     );
     if (segmentEnd > segmentStart) {
       if (segmentStart > coveredUntil + 2) {
-        throw new Error(`截图分片之间存在空缺：${coveredUntil} - ${segmentStart}`);
+        throw new Error(ui("截图分片之间存在空缺：{0} - {1}", coveredUntil, segmentStart));
       }
       segments.push({ tile, start: segmentStart, end: segmentEnd });
       coveredUntil = segmentEnd;
@@ -96,7 +96,7 @@ async function stitchTiles(tiles, totalHeightCss) {
   }
 
   if (coveredUntil < totalHeightCss - 2) {
-    throw new Error(`截图未覆盖完整页面：${coveredUntil} / ${totalHeightCss}`);
+    throw new Error(ui("截图未覆盖完整页面：{0} / {1}", coveredUntil, totalHeightCss));
   }
 
   const pages = [];
@@ -158,7 +158,7 @@ async function stitchTiles(tiles, totalHeightCss) {
 
 async function canvasToPdfPage(canvas, context) {
   if (typeof CompressionStream !== "function") {
-    throw new Error("当前 Chrome 版本不支持本地 PDF 压缩");
+    throw new Error(ui("当前 Chrome 版本不支持本地 PDF 压缩"));
   }
 
   const { width, height } = canvas;
@@ -189,7 +189,7 @@ async function canvasToPdfPage(canvas, context) {
 }
 
 async function buildPdfDataUrl(pages) {
-  if (!pages.length) throw new Error("没有可写入 PDF 的截图页面");
+  if (!pages.length) throw new Error(ui("没有可写入 PDF 的截图页面"));
 
   const encoder = new TextEncoder();
   const chunks = [];
@@ -271,7 +271,7 @@ async function buildPdfDataUrl(pages) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(reader.error || new Error("PDF 读取失败"));
+    reader.onerror = () => reject(reader.error || new Error(ui("PDF 读取失败")));
     reader.readAsDataURL(blob);
   });
 }

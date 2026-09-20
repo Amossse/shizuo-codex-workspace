@@ -84,11 +84,11 @@ function taskGenerationContext(item, options = {}) {
       ? taskTurnForAnswer(conversation, scope === "message" ? requestedMessageId : "")
       : [];
   if (scope !== "sources" && !messages.length) {
-    return { scope: "sources", label: "原始素材", messages: [], messageIds: [], messageId: "" };
+    return { scope: "sources", label: ui("原始素材"), messages: [], messageIds: [], messageId: "" };
   }
   return {
     scope,
-    label: scope === "conversation" ? "当前对话" : scope === "sources" ? "原始素材" : "当前回答",
+    label: scope === "conversation" ? ui("当前对话") : scope === "sources" ? ui("原始素材") : ui("当前回答"),
     messages,
     messageIds: messages.map(message => message.id),
     messageId: scope === "message" ? requestedMessageId : ""
@@ -97,7 +97,7 @@ function taskGenerationContext(item, options = {}) {
 
 function taskGenerationContextText(context) {
   return context.messages
-    .map(message => `${message.role === "user" ? "用户" : "Codex"}：\n${message.text}`)
+    .map(message => `${message.role === "user" ? ui("用户") : "Codex"}：\n${message.text}`)
     .join("\n\n---\n\n")
     .slice(-MAX_CODEX_CHAT_CONTEXT_CHARS);
 }
@@ -106,7 +106,7 @@ function taskConversationContext(messages, currentMessageId) {
   let context = normalizeTaskMessages(messages)
     .filter(message => message.kind === "conversation" && message.id !== currentMessageId)
     .slice(-16)
-    .map(message => `${message.role === "user" ? "用户" : "Codex"}：\n${message.text}`)
+    .map(message => `${message.role === "user" ? ui("用户") : "Codex"}：\n${message.text}`)
     .join("\n\n---\n\n");
   if (context.length > MAX_CODEX_CHAT_CONTEXT_CHARS) {
     context = context.slice(context.length - MAX_CODEX_CHAT_CONTEXT_CHARS);
@@ -158,7 +158,7 @@ async function copyTaskAnswer(text) {
   fallback.select();
   const copied = document.execCommand("copy");
   fallback.remove();
-  if (!copied) throw new Error("浏览器拒绝复制");
+  if (!copied) throw new Error(ui("浏览器拒绝复制"));
 }
 
 function positionTaskCreatePanel(trigger, panel) {
@@ -194,7 +194,7 @@ function createTaskMessageElement(message, item, active = false) {
   article.dataset.messageId = message.id;
   const label = document.createElement("div");
   label.className = "task-message-label";
-  label.textContent = message.role === "user" ? "你" : aiRuntimeLabel();
+  label.textContent = message.role === "user" ? ui("你") : aiRuntimeLabel();
   const body = document.createElement("div");
   body.className = "task-message-body";
   if (message.role === "assistant") renderTaskMarkdown(body, message.text);
@@ -206,21 +206,21 @@ function createTaskMessageElement(message, item, active = false) {
     const copy = document.createElement("button");
     copy.className = "task-message-action";
     copy.type = "button";
-    copy.textContent = "复制";
+    copy.textContent = ui("复制");
     copy.addEventListener("click", async () => {
       try {
         await copyTaskAnswer(message.text);
-        copy.textContent = "已复制";
-        window.setTimeout(() => { copy.textContent = "复制"; }, 1600);
+        copy.textContent = ui("已复制");
+        window.setTimeout(() => { copy.textContent = ui("复制"); }, 1600);
       } catch (error) {
         console.warn("[pagedock-task] answer copy failed", error);
-        setStatus("复制失败，请重新选择文字", true);
+        setStatus(ui("复制失败，请重新选择文字"), true);
       }
     });
     const quote = document.createElement("button");
     quote.className = "task-message-action task-message-quote";
     quote.type = "button";
-    quote.textContent = "引用";
+    quote.textContent = ui("引用");
     quote.disabled = active;
     quote.addEventListener("click", () => {
       item.taskReplyMessageId = message.id;
@@ -234,27 +234,27 @@ function createTaskMessageElement(message, item, active = false) {
     const createSummary = document.createElement("button");
     createSummary.className = "task-message-action task-create-summary";
     createSummary.type = "button";
-    createSummary.textContent = "创作";
-    createSummary.setAttribute("aria-label", "基于这条回答继续创作");
+    createSummary.textContent = ui("创作");
+    createSummary.setAttribute("aria-label", ui("基于这条回答继续创作"));
     createSummary.setAttribute("aria-expanded", "false");
     const createPanel = document.createElement("div");
     createPanel.className = "task-create-panel";
     createPanel.id = `task-create-${message.id}`;
     createPanel.setAttribute("popover", "auto");
     createPanel.setAttribute("role", "dialog");
-    createPanel.setAttribute("aria-label", "选择创作方式");
+    createPanel.setAttribute("aria-label", ui("选择创作方式"));
     createSummary.setAttribute("popovertarget", createPanel.id);
     const createContext = document.createElement("label");
     createContext.className = "task-create-context";
     const createLabel = document.createElement("span");
-    createLabel.textContent = "素材范围";
+    createLabel.textContent = ui("素材范围");
     const createSelect = document.createElement("select");
-    createSelect.setAttribute("aria-label", "选择创作依据");
+    createSelect.setAttribute("aria-label", ui("选择创作依据"));
     createSelect.disabled = active;
     [
-      ["message", "当前回答"],
-      ["conversation", "完整对话"],
-      ["sources", "原始素材"]
+      ["message", ui("当前回答")],
+      ["conversation", ui("完整对话")],
+      ["sources", ui("原始素材")]
     ].forEach(([value, text]) => {
       const option = document.createElement("option");
       option.value = value;
@@ -263,10 +263,10 @@ function createTaskMessageElement(message, item, active = false) {
       createSelect.appendChild(option);
     });
     [
-      ["text", "文字总结", "提炼为可编辑文字", "文"],
-      ["image", "手稿信息图", "用模板稳定呈现结构与关系", "图"],
-      ["image-gen", "AI 自由绘图", "由 Codex image-gen 直接创作", "绘"],
-      ["video", "生成视频", "生成纯画面视频", "影"]
+      ["text", ui("文字总结"), ui("提炼为可编辑文字"), ui("文")],
+      ["image", ui("手稿信息图"), ui("用模板稳定呈现结构与关系"), ui("图")],
+      ["image-gen", ui("AI 自由绘图"), ui("由 Codex image-gen 直接创作"), ui("绘")],
+      ["video", ui("生成视频"), ui("生成纯画面视频"), ui("影")]
     ].forEach(([mode, title, description, icon]) => {
       const button = document.createElement("button");
       button.className = "task-create-option";
@@ -338,7 +338,7 @@ function renderTaskThread(item, thread, active) {
   ].join("|");
   if (thread.dataset.signature === signature) {
     const loading = thread.querySelector(".task-loading");
-    if (loading) loading.textContent = item.taskProgress || "Codex 正在理解并组织回答…";
+    if (loading) loading.textContent = item.taskProgress || ui("Codex 正在理解并组织回答…");
     return;
   }
   const previousMessageCount = Number(thread.dataset.messageCount) || 0;
@@ -359,7 +359,7 @@ function renderTaskThread(item, thread, active) {
     const reveal = document.createElement("button");
     reveal.className = "task-thread-reveal";
     reveal.type = "button";
-    reveal.textContent = `显示更早的 ${hiddenMessageCount} 条消息`;
+    reveal.textContent = ui("显示更早的 {0} 条消息", hiddenMessageCount);
     reveal.addEventListener("click", () => {
       expandedTaskThreadIds.add(item.id);
       thread.dataset.signature = "";
@@ -375,7 +375,7 @@ function renderTaskThread(item, thread, active) {
     const loading = document.createElement("div");
     loading.className = "task-loading";
     loading.setAttribute("role", "status");
-    loading.textContent = item.taskProgress || "Codex 正在理解并组织回答…";
+    loading.textContent = item.taskProgress || ui("Codex 正在理解并组织回答…");
     thread.appendChild(loading);
   }
   requestAnimationFrame(() => {
@@ -385,16 +385,16 @@ function renderTaskThread(item, thread, active) {
 
 function taskErrorPresentation(rawError, cancelled = false) {
   const detail = String(rawError || "").trim();
-  if (cancelled) return { summary: "任务已停止，可以重新执行", detail: "" };
+  if (cancelled) return { summary: ui("任务已停止，可以重新执行"), detail: "" };
   if (/最多可同时执行|个任务执行中/.test(detail)) {
-    return { summary: codexAtCapacity() ? codexCapacityReason() : "现在可以重新执行", detail };
+    return { summary: codexAtCapacity() ? codexCapacityReason() : ui("现在可以重新执行"), detail };
   }
-  if (/未连接|桥接|native host|node:/i.test(detail)) return { summary: "Codex 暂时不可用，请检查本地连接", detail };
-  if (/timeout|超时|超过\s*\d+\s*(?:分钟|小时)/i.test(detail)) return { summary: "任务耗时过长，已自动停止", detail };
-  if (/hyperframes|browsergpumode|render|渲染/i.test(detail)) return { summary: "视频生成没有完成，请重试", detail };
-  if (/remotion/i.test(detail)) return { summary: "Remotion 视频生成没有完成，请重试", detail };
-  if (/图片|image/i.test(detail)) return { summary: "图片处理没有完成，请检查素材后重试", detail };
-  return { summary: detail ? "任务执行失败，请重试" : "任务执行失败，请重试", detail };
+  if (/未连接|桥接|native host|node:/i.test(detail)) return { summary: ui("Codex 暂时不可用，请检查本地连接"), detail };
+  if (/timeout|超时|超过\s*\d+\s*(?:分钟|小时)/i.test(detail)) return { summary: ui("任务耗时过长，已自动停止"), detail };
+  if (/hyperframes|browsergpumode|render|渲染/i.test(detail)) return { summary: ui("视频生成没有完成，请重试"), detail };
+  if (/remotion/i.test(detail)) return { summary: ui("Remotion 视频生成没有完成，请重试"), detail };
+  if (/图片|image/i.test(detail)) return { summary: ui("图片处理没有完成，请检查素材后重试"), detail };
+  return { summary: detail ? ui("任务执行失败，请重试") : ui("任务执行失败，请重试"), detail };
 }
 
 function resizeTaskPrompt(prompt) {
@@ -408,14 +408,14 @@ function resizeTaskPrompt(prompt) {
 }
 
 function taskStatusText(item, active) {
-  if (active) return item.taskProgress || `${aiRuntimeLabel()} 正在执行…`;
+  if (active) return item.taskProgress || ui("{0} 正在执行…", aiRuntimeLabel());
   if (item.taskStatus === "error") return taskErrorPresentation(item.taskError).summary;
-  if (item.taskStatus === "cancelled") return "任务已停止";
+  if (item.taskStatus === "cancelled") return ui("任务已停止");
   if (codexAtCapacity()) return codexCapacityReason();
-  if (item.taskStatus === "success") return item.taskWorkflowRole === "controller" ? "工作流已完成" : "可以继续追问";
-  if (normalizeTaskMessages(item.taskMessages, item).length) return "继续提问";
-  if (item.taskSourceCount) return "输入问题，或选择快捷操作";
-  return "描述任务后发送";
+  if (item.taskStatus === "success") return item.taskWorkflowRole === "controller" ? ui("工作流已完成") : ui("可以继续追问");
+  if (normalizeTaskMessages(item.taskMessages, item).length) return ui("继续提问");
+  if (item.taskSourceCount) return ui("输入问题，或选择快捷操作");
+  return ui("描述任务后发送");
 }
 
 function taskWorkflowPendingText(item) {
@@ -423,12 +423,12 @@ function taskWorkflowPendingText(item) {
     .map(itemById)
     .filter(source => source?.taskWorkflowRole === "step" && source.taskStatus !== "success");
   return dependencies.length
-    ? `等待上一步 · ${dependencies.map(source => source.taskWorkflowTitle).filter(Boolean).join("、") || "依赖任务"}`
-    : "等待执行";
+    ? ui("等待上一步 · {0}", dependencies.map(source => source.taskWorkflowTitle).filter(Boolean).join("、") || ui("依赖任务"))
+    : ui("等待执行");
 }
 
 function taskWorkflowModeLabel(mode) {
-  return ({ coding: "Codex", text: "文字", "image-gen": "图片", video: "视频" })[mode] || "任务";
+  return ({ coding: "Codex", text: ui("文字"), "image-gen": ui("图片"), video: ui("视频") })[mode] || ui("任务");
 }
 
 function taskVideoEngine(value) {
@@ -442,12 +442,12 @@ function taskCardLabel(item) {
   const lens = PageDockBoardDomain.workflowLens(item.taskWorkflowLens);
   const hasConversation = normalizeTaskMessages(item.taskMessages, item).length > 0;
   return item.taskWorkflowRole === "controller"
-    ? `动态工作流${lens.id === "general" ? "" : ` · ${lens.label}`} · ${item.taskWorkflowTitle || "执行中"}`
+    ? ui("动态工作流{0} · {1}", lens.id === "general" ? "" : ` · ${lens.label}`, item.taskWorkflowTitle || ui("执行中"))
     : item.taskWorkflowRole === "step"
-      ? `执行容器 · ${taskWorkflowModeLabel(item.taskWorkflowMode)} · ${item.taskWorkflowTitle || "未命名步骤"}`
+      ? ui("执行容器 · {0} · {1}", taskWorkflowModeLabel(item.taskWorkflowMode), item.taskWorkflowTitle || ui("未命名步骤"))
       : item.taskSourceCount
-        ? `基于 ${item.taskSourceCount} 项素材`
-        : hasConversation ? `与 ${aiRuntimeLabel()} 对话` : `问问 ${aiRuntimeLabel()}`;
+        ? ui("基于 {0} 项素材", item.taskSourceCount)
+        : hasConversation ? ui("与 {0} 对话", aiRuntimeLabel()) : ui("问问 {0}", aiRuntimeLabel());
 }
 
 function localDateTimeValue(timestamp) {
@@ -458,12 +458,12 @@ function localDateTimeValue(timestamp) {
 
 function taskScheduleLabel(input) {
   const schedule = PageDockBoardDomain.normalizeTaskSchedule(input);
-  if (!schedule?.enabled || !schedule.nextRunAt) return "定时";
-  const prefix = schedule.execution === "workflow" ? "工作流 · " : "";
+  if (!schedule?.enabled || !schedule.nextRunAt) return ui("定时");
+  const prefix = schedule.execution === "workflow" ? ui("工作流 · ") : "";
   const date = new Date(schedule.nextRunAt);
   const time = `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
-  if (schedule.repeat === "daily") return `${prefix}每天 ${time}`;
-  if (schedule.repeat === "weekly") return `${prefix}每周${"日一二三四五六"[date.getDay()]} ${time}`;
+  if (schedule.repeat === "daily") return ui("{0}每天 {1}", prefix, time);
+  if (schedule.repeat === "weekly") return ui("{0}每周{1} {2}", prefix, ShizuoI18n.language === "en" ? ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][date.getDay()] : "日一二三四五六"[date.getDay()], time);
   return `${prefix}${date.getMonth() + 1}/${date.getDate()} ${time}`;
 }
 
@@ -485,13 +485,13 @@ async function persistTaskSchedule(item, schedule) {
   item.taskSchedule = PageDockBoardDomain.normalizeTaskSchedule(schedule);
   item.updatedAt = Date.now();
   updateTaskItemElement(item);
-  if (!await saveBoardNow()) throw new Error("定时规则保存失败");
+  if (!await saveBoardNow()) throw new Error(ui("定时规则保存失败"));
   const response = await chrome.runtime.sendMessage({
     type: TASK_SCHEDULE_SYNC_REQUEST,
     boardId: currentBoard.id,
     itemId: item.id
   });
-  if (!response?.ok) throw new Error(response?.error || "后台定时器同步失败");
+  if (!response?.ok) throw new Error(response?.error || ui("后台定时器同步失败"));
   notifyDataChanged([currentBoard.id], "task-schedule-updated");
 }
 
@@ -554,19 +554,19 @@ function updateTaskItemElement(item) {
   prompt.hidden = active || failed || pending;
   prompt.placeholder = conversation.length
       ? replyContext.messageId
-        ? "围绕引用的回答继续提问，回车发送，Shift + 回车换行"
-        : "继续当前对话，回车发送，Shift + 回车换行"
+        ? ui("围绕引用的回答继续提问，回车发送，Shift + 回车换行")
+        : ui("继续当前对话，回车发送，Shift + 回车换行")
       : item.taskSourceCount
-        ? "针对已选素材自由提问，回车发送，Shift + 回车换行"
-        : "描述要完成的任务，回车发送，Shift + 回车换行";
+        ? ui("针对已选素材自由提问，回车发送，Shift + 回车换行")
+        : ui("描述要完成的任务，回车发送，Shift + 回车换行");
   send.hidden = active || failed || pending;
   send.disabled = active || atCapacity || !String(item.text || "").trim();
-  send.textContent = "发送";
+  send.textContent = ui("发送");
   send.title = atCapacity
     ? codexCapacityReason()
     : !String(item.text || "").trim()
-      ? "先输入问题或要完成的任务"
-      : `发送给 ${aiRuntimeLabel()}`;
+      ? ui("先输入问题或要完成的任务")
+      : ui("发送给 {0}", aiRuntimeLabel());
   const settingsExpanded = settingsToggle.getAttribute("aria-expanded") === "true";
   // Keep the common question flow visually dominant; reveal orchestration with the advanced controls.
   orchestrate.hidden = active || failed || item.taskWorkflowRole === "step" || !settingsExpanded;
@@ -575,8 +575,8 @@ function updateTaskItemElement(item) {
   orchestrate.title = atCapacity
     ? codexCapacityReason()
     : !String(item.text || "").trim()
-      ? "先描述一个需要分步骤完成的目标"
-      : `按“${lens.label}”视角规划并执行多步骤工作流`;
+      ? ui("先描述一个需要分步骤完成的目标")
+      : ui("按“{0}”视角规划并执行多步骤工作流", lens.label);
   starterGroup.hidden = item.taskWorkflowRole === "step" || hasAnswer || !item.taskSourceCount || active || failed;
   starters.forEach(button => {
     // Keep research shortcuts visible; image tools remain available in advanced settings.
@@ -584,22 +584,22 @@ function updateTaskItemElement(item) {
     button.disabled = active || atCapacity;
     button.title = atCapacity
       ? codexCapacityReason()
-      : `${button.textContent}（基于原始素材）`;
+      : ui("{0}（基于原始素材）", button.textContent);
   });
   composeContext.hidden = active || failed || pending;
   composeMain.hidden = active || failed || pending;
   composeContextLabel.textContent = replyContext.messageId
-    ? `引用：第 ${replyContext.answerNumber} 条回答`
+    ? ui("引用：第 {0} 条回答", replyContext.answerNumber)
     : hasAnswer
-      ? "继续当前对话"
+      ? ui("继续当前对话")
       : item.taskSourceCount
-        ? `基于：${item.taskSourceCount} 项素材`
-        : "直接提问";
+        ? ui("基于：{0} 项素材", item.taskSourceCount)
+        : ui("直接提问");
   composeContext.dataset.kind = replyContext.messageId ? "quote" : "default";
   composeContextClear.hidden = !replyContext.messageId;
   settingsToggle.hidden = Boolean(item.taskWorkflowRole);
-  settingsToggle.textContent = settingsExpanded ? "收起设置" : item.taskSchedule?.enabled ? "已定时" : "更多设置";
-  settingsToggle.title = settingsExpanded ? "收起高级能力" : "工作流、视频与定时等高级能力";
+  settingsToggle.textContent = settingsExpanded ? ui("收起设置") : item.taskSchedule?.enabled ? ui("已定时") : ui("更多设置");
+  settingsToggle.title = settingsExpanded ? ui("收起高级能力") : ui("工作流、视频与定时等高级能力");
   workflowLens.hidden = Boolean(item.taskWorkflowRole) || !settingsExpanded;
   workflowLens.disabled = active;
   workflowLens.value = PageDockBoardDomain.workflowLens(item.taskWorkflowLens).id;
@@ -609,7 +609,7 @@ function updateTaskItemElement(item) {
   scheduleButton.hidden = item.taskWorkflowRole === "step" || !settingsExpanded;
   scheduleButton.textContent = taskScheduleLabel(item.taskSchedule);
   scheduleButton.dataset.active = String(Boolean(item.taskSchedule?.enabled));
-  scheduleButton.title = item.taskSchedule?.enabled ? `下次执行：${new Date(item.taskSchedule.retryAt || item.taskSchedule.nextRunAt).toLocaleString()}` : "设置定时执行";
+  scheduleButton.title = item.taskSchedule?.enabled ? ui("下次执行：{0}", new Date(item.taskSchedule.retryAt || item.taskSchedule.nextRunAt).toLocaleString()) : ui("设置定时执行");
   stop.hidden = !preparing && !activeConversation && !activeShortcut && !activeWorkflow && !activePersisted;
   stop.disabled = Boolean(active && (activeConversation
     ? activeConversationTask?.cancelRequested
@@ -620,9 +620,9 @@ function updateTaskItemElement(item) {
         : cancellingPreparedTaskItemIds.has(item.id)));
   retry.hidden = !failed;
   retry.disabled = atCapacity;
-  const retryMode = ({ text: "总结", image: "手稿图", "image-gen": "图片", video: "视频", "video-post": "口播视频" })[item.taskLastMode] || "任务";
-  retry.textContent = `重试${retryMode}`;
-  retry.title = atCapacity ? codexCapacityReason() : `重新执行这项${retryMode}`;
+  const retryMode = ({ text: ui("总结"), image: ui("手稿图"), "image-gen": ui("图片"), video: ui("视频"), "video-post": ui("口播视频") })[item.taskLastMode] || ui("任务");
+  retry.textContent = ui("重试{0}", retryMode);
+  retry.title = atCapacity ? codexCapacityReason() : ui("重新执行这项{0}", retryMode);
   edit.hidden = !failed;
   const error = taskErrorPresentation(item.taskError, state === "cancelled");
   errorPanel.hidden = !failed;
@@ -635,12 +635,12 @@ function updateTaskItemElement(item) {
   renderTaskThread(item, thread, active);
   element.querySelectorAll(".task-create-option").forEach(button => {
     button.disabled = active || atCapacity;
-    const title = button.querySelector(".task-create-option-title")?.textContent || "继续创作";
-    button.title = atCapacity ? codexCapacityReason() : `${title}（基于当前选择）`;
+    const title = button.querySelector(".task-create-option-title")?.textContent || ui("继续创作");
+    button.title = atCapacity ? codexCapacityReason() : ui("{0}（基于当前选择）", title);
   });
   element.querySelectorAll(".task-create-summary").forEach(button => {
     button.disabled = active || atCapacity;
-    button.title = active ? "当前任务执行中" : atCapacity ? codexCapacityReason() : "继续创作";
+    button.title = active ? ui("当前任务执行中") : atCapacity ? codexCapacityReason() : ui("继续创作");
     button.closest(".task-create-menu").dataset.state = button.disabled ? "disabled" : "default";
   });
   element.querySelectorAll(".task-create-context select").forEach(select => { select.disabled = active; });
@@ -662,12 +662,12 @@ function createTaskContent(item, element) {
   starters.className = "task-starters";
   const starterLabel = document.createElement("span");
   starterLabel.className = "task-starters-label";
-  starterLabel.textContent = "从素材开始";
+  starterLabel.textContent = ui("从素材开始");
   starters.appendChild(starterLabel);
   [
-    ["text", "总结"],
-    ["image", "做成信息图"],
-    ["image-gen", "自由画图"]
+    ["text", ui("总结")],
+    ["image", ui("做成信息图")],
+    ["image-gen", ui("自由画图")]
   ].forEach(([mode, text]) => {
     const button = document.createElement("button");
     button.className = "task-starter";
@@ -684,9 +684,9 @@ function createTaskContent(item, element) {
   prompt.className = "task-prompt";
   prompt.maxLength = 8_000;
   prompt.placeholder = item.taskSourceCount
-    ? "针对已选素材自由提问，回车发送，Shift + 回车换行"
-    : "描述要完成的任务，回车发送，Shift + 回车换行";
-  prompt.setAttribute("aria-label", "Codex 任务内容");
+    ? ui("针对已选素材自由提问，回车发送，Shift + 回车换行")
+    : ui("描述要完成的任务，回车发送，Shift + 回车换行");
+  prompt.setAttribute("aria-label", ui("Codex 任务内容"));
   prompt.value = item.text || "";
   prompt.addEventListener("input", () => {
     item.text = prompt.value;
@@ -708,7 +708,7 @@ function createTaskContent(item, element) {
   const thread = document.createElement("div");
   thread.className = "task-thread";
   thread.setAttribute("role", "log");
-  thread.setAttribute("aria-label", "Codex 对话记录");
+  thread.setAttribute("aria-label", ui("Codex 对话记录"));
   thread.setAttribute("aria-live", "polite");
   thread.setAttribute("aria-relevant", "additions text");
   const errorPanel = document.createElement("section");
@@ -720,7 +720,7 @@ function createTaskContent(item, element) {
   const errorDetails = document.createElement("details");
   errorDetails.className = "task-error-details";
   const errorDetailsSummary = document.createElement("summary");
-  errorDetailsSummary.textContent = "查看技术详情";
+  errorDetailsSummary.textContent = ui("查看技术详情");
   const errorDetailsText = document.createElement("pre");
   errorDetails.append(errorDetailsSummary, errorDetailsText);
   errorPanel.append(errorSummary, errorDetails);
@@ -734,7 +734,7 @@ function createTaskContent(item, element) {
   composeContextClear.className = "task-compose-context-clear";
   composeContextClear.type = "button";
   composeContextClear.textContent = "×";
-  composeContextClear.setAttribute("aria-label", "取消引用回答");
+  composeContextClear.setAttribute("aria-label", ui("取消引用回答"));
   composeContextClear.addEventListener("click", () => {
     item.taskReplyMessageId = "";
     item.updatedAt = Date.now();
@@ -744,9 +744,9 @@ function createTaskContent(item, element) {
   });
   const workflowLens = document.createElement("select");
   workflowLens.className = "task-workflow-lens";
-  workflowLens.setAttribute("aria-label", "工作流成长视角");
-  workflowLens.title = "选择动态工作流的规划侧重点";
-  [["general", "通用"], ["efficiency", "提效"], ["skill", "技能"], ["perspective", "视野"], ["strategy", "格局"]].forEach(([value, text]) => {
+  workflowLens.setAttribute("aria-label", ui("工作流成长视角"));
+  workflowLens.title = ui("选择动态工作流的规划侧重点");
+  [["general", ui("通用")], ["efficiency", ui("提效")], ["skill", ui("技能")], ["perspective", ui("视野")], ["strategy", ui("格局")]].forEach(([value, text]) => {
     const option = document.createElement("option");
     option.value = value;
     option.textContent = text;
@@ -761,8 +761,8 @@ function createTaskContent(item, element) {
   });
   const videoEngine = document.createElement("select");
   videoEngine.className = "task-video-engine";
-  videoEngine.setAttribute("aria-label", "视频生成引擎");
-  [["hyperframes", "视频 · HyperFrames"], ["remotion", "视频 · Remotion"]].forEach(([value, text]) => {
+  videoEngine.setAttribute("aria-label", ui("视频生成引擎"));
+  [["hyperframes", ui("视频 · HyperFrames")], ["remotion", ui("视频 · Remotion")]].forEach(([value, text]) => {
     const option = document.createElement("option");
     option.value = value;
     option.textContent = text;
@@ -783,7 +783,7 @@ function createTaskContent(item, element) {
   const settingsToggle = document.createElement("button");
   settingsToggle.className = "task-settings-toggle";
   settingsToggle.type = "button";
-  settingsToggle.textContent = "更多设置";
+  settingsToggle.textContent = ui("更多设置");
   settingsToggle.setAttribute("aria-expanded", "false");
   settingsToggle.addEventListener("click", () => {
     settingsToggle.setAttribute("aria-expanded", String(settingsToggle.getAttribute("aria-expanded") !== "true"));
@@ -801,13 +801,13 @@ function createTaskContent(item, element) {
   const stop = document.createElement("button");
   stop.className = "task-button stop task-stop";
   stop.type = "button";
-  stop.textContent = "停止";
+  stop.textContent = ui("停止");
   stop.hidden = true;
   stop.addEventListener("click", () => cancelTaskItem(item));
   const edit = document.createElement("button");
   edit.className = "task-button task-edit";
   edit.type = "button";
-  edit.textContent = "修改";
+  edit.textContent = ui("修改");
   edit.hidden = true;
   edit.addEventListener("click", () => {
     item.taskStatus = "idle";
@@ -819,19 +819,19 @@ function createTaskContent(item, element) {
   const retry = document.createElement("button");
   retry.className = "task-button primary task-retry";
   retry.type = "button";
-  retry.textContent = "重试";
+  retry.textContent = ui("重试");
   retry.hidden = true;
   retry.addEventListener("click", () => retryTaskItem(item));
   const send = document.createElement("button");
   send.className = "task-button primary task-send";
   send.type = "button";
-  send.textContent = "发送";
+  send.textContent = ui("发送");
   send.addEventListener("click", () => runBoardCardTask(item));
   const orchestrate = document.createElement("button");
   orchestrate.className = "task-button task-orchestrate";
   orchestrate.type = "button";
-  orchestrate.textContent = "规划多步任务";
-  orchestrate.title = "适合检索、整理、画图或视频等需要连续完成的目标";
+  orchestrate.textContent = ui("规划多步任务");
+  orchestrate.title = ui("适合检索、整理、画图或视频等需要连续完成的目标");
   orchestrate.hidden = true;
   orchestrate.addEventListener("click", () => runDynamicWorkflow(item));
   composeMain.append(prompt, orchestrate, send);

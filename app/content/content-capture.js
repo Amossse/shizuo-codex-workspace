@@ -220,7 +220,7 @@
     if (sessionTarget?.isConnected) return sessionTarget;
     const target = [...document.querySelectorAll(`[${TARGET_ATTRIBUTE}]`)]
       .find(element => element.getAttribute(TARGET_ATTRIBUTE) === sessionId);
-    if (!target) throw new Error("页面截图会话已失效，请重试");
+    if (!target) throw new Error(ui("页面截图会话已失效，请重试"));
     return target;
   }
 

@@ -1,5 +1,6 @@
 (function initPageDockBoardDomain(global) {
   "use strict";
+  const ui = (text, ...values) => globalThis.ShizuoI18n ? globalThis.ShizuoI18n.t(text, ...values) : text.replace(/\{(\d+)\}/g, (match, i) => i < values.length ? String(values[i]) : match);
 
   const clone = value => global.structuredClone
     ? global.structuredClone(value)
@@ -97,8 +98,8 @@
       id: String(metadata.id || global.crypto?.randomUUID?.() || `revision-${Date.now()}-${Math.random().toString(36).slice(2)}`),
       boardId: String(after.id || before.id || ""),
       revision: Math.max(1, Number(metadata.revision) || Number(after.revision) || 1),
-      actor: clone(metadata.actor || { id: "owner", name: "白板用户" }),
-      reason: String(metadata.reason || "更新白板").slice(0, 200),
+      actor: clone(metadata.actor || { id: "owner", name: ui("白板用户") }),
+      reason: String(metadata.reason || ui("更新白板")).slice(0, 200),
       createdAt: Number(metadata.createdAt) || Date.now(),
       boardBefore,
       boardAfter,
@@ -144,7 +145,7 @@
   }
 
   function toSearchDocument(board, item) {
-    const label = String(item?.text || item?.alt || item?.localName || item?.source?.title || item?.type || "卡片")
+    const label = String(item?.text || item?.alt || item?.localName || item?.source?.title || item?.type || ui("卡片"))
       .replace(/\s+/g, " ")
       .trim()
       .slice(0, 160);
@@ -226,7 +227,7 @@
       kind: "pagedock-template",
       version: 1,
       id: String(options.id || global.crypto?.randomUUID?.() || `template-${Date.now()}-${Math.random().toString(36).slice(2)}`),
-      name: String(options.name || board?.name || "未命名工作流").trim().slice(0, 80) || "未命名工作流",
+      name: String(options.name || board?.name || ui("未命名工作流")).trim().slice(0, 80) || ui("未命名工作流"),
       description: String(options.description || "").trim().slice(0, 500),
       createdAt: Number(options.createdAt) || Date.now(),
       sourceBoardId: String(board?.id || ""),
@@ -237,7 +238,7 @@
 
   function instantiateTemplate(template, options = {}) {
     if (!template || template.kind !== "pagedock-template" || Number(template.version) !== 1) {
-      throw new Error("不是有效的拾作工作流模板");
+      throw new Error(ui("不是有效的拾作工作流模板"));
     }
     const makeId = options.makeId || (prefix => global.crypto?.randomUUID?.() || `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     const now = Number(options.now) || Date.now();
@@ -273,7 +274,7 @@
     });
     return {
       id: boardId,
-      name: String(options.name || `${template.name || "工作流"}（副本）`).slice(0, 80),
+      name: String(options.name || ui("{0}（副本）", template.name || ui("工作流"))).slice(0, 80),
       createdAt: now,
       updatedAt: now,
       revision: 0,
@@ -323,36 +324,36 @@
 
   function normalizeWorkflowPlan(input = {}) {
     const rawSteps = Array.isArray(input.steps) ? input.steps : [];
-    if (!rawSteps.length) throw new Error("动态工作流至少需要一个步骤");
-    if (rawSteps.length > 8) throw new Error("动态工作流最多支持 8 个步骤");
+    if (!rawSteps.length) throw new Error(ui("动态工作流至少需要一个步骤"));
+    if (rawSteps.length > 8) throw new Error(ui("动态工作流最多支持 8 个步骤"));
     const used = new Set();
     const rawIds = new Set();
     const idMap = new Map();
     const steps = rawSteps.map((raw, index) => {
       const rawId = String(raw?.id || `step-${index + 1}`);
-      if (rawIds.has(rawId)) throw new Error(`动态工作流步骤 ID 重复：${rawId}`);
+      if (rawIds.has(rawId)) throw new Error(ui("动态工作流步骤 ID 重复：{0}", rawId));
       rawIds.add(rawId);
       const id = rawId.replace(/[^a-zA-Z0-9_-]/g, "-").slice(0, 60) || `step-${index + 1}`;
-      if (used.has(id)) throw new Error(`动态工作流步骤 ID 冲突：${rawId}`);
+      if (used.has(id)) throw new Error(ui("动态工作流步骤 ID 冲突：{0}", rawId));
       used.add(id);
       idMap.set(rawId, id);
       if (raw?.mode && !["coding", "text", "image-gen", "video"].includes(raw.mode)) {
-        throw new Error(`动态工作流步骤 ${rawId} 使用了不支持的执行方式：${raw.mode}`);
+        throw new Error(ui("动态工作流步骤 {0} 使用了不支持的执行方式：{1}", rawId, raw.mode));
       }
       const mode = raw?.mode || "coding";
-      const title = String(raw?.title || raw?.instruction || `步骤 ${index + 1}`).trim().slice(0, 80);
+      const title = String(raw?.title || raw?.instruction || ui("步骤 {0}", index + 1)).trim().slice(0, 80);
       const instruction = String(raw?.instruction || raw?.title || "").trim().slice(0, 8_000);
-      if (!instruction) throw new Error(`动态工作流步骤 ${index + 1} 缺少执行内容`);
+      if (!instruction) throw new Error(ui("动态工作流步骤 {0} 缺少执行内容", index + 1));
       return { id, title, instruction, mode, dependsOn: [] };
     });
     const ids = new Set(steps.map(step => step.id));
     steps.forEach((step, index) => {
       const requested = [...new Set((Array.isArray(rawSteps[index]?.dependsOn) ? rawSteps[index].dependsOn : [])
         .map(id => idMap.get(String(id)) || String(id)))];
-      if (requested.length > 6) throw new Error(`动态工作流步骤 ${step.title} 最多支持 6 个依赖`);
+      if (requested.length > 6) throw new Error(ui("动态工作流步骤 {0} 最多支持 6 个依赖", step.title));
       const unknown = requested.filter(id => !ids.has(id));
-      if (unknown.length) throw new Error(`动态工作流步骤 ${step.title} 引用了不存在的依赖：${unknown.join("、")}`);
-      if (requested.includes(step.id)) throw new Error(`动态工作流步骤 ${step.title} 不能依赖自身`);
+      if (unknown.length) throw new Error(ui("动态工作流步骤 {0} 引用了不存在的依赖：{1}", step.title, unknown.join("、")));
+      if (requested.includes(step.id)) throw new Error(ui("动态工作流步骤 {0} 不能依赖自身", step.title));
       step.dependsOn = requested;
     });
     const graph = planWorkflow(steps.map(step => ({
@@ -360,9 +361,9 @@
       type: "task",
       relationSourceIds: step.dependsOn
     })));
-    if (graph.cycles.length) throw new Error(`动态工作流存在循环依赖：${graph.cycles.join("、")}`);
+    if (graph.cycles.length) throw new Error(ui("动态工作流存在循环依赖：{0}", graph.cycles.join("、")));
     return {
-      title: String(input.title || "动态工作流").trim().slice(0, 80) || "动态工作流",
+      title: String(input.title || ui("动态工作流")).trim().slice(0, 80) || ui("动态工作流"),
       steps,
       waves: graph.waves
     };
@@ -385,22 +386,22 @@
   function workflowLens(input) {
     const id = ["efficiency", "skill", "perspective", "strategy"].includes(input) ? input : "general";
     return ({
-      general: { id, label: "通用", guidance: "围绕目标选择最短可验证路径，最终产出可以直接使用的结果。" },
-      efficiency: { id, label: "工作提效", guidance: "识别重复劳动、等待和交接，优先自动化与复用，并用节省时间或减少步骤验证结果。" },
-      skill: { id, label: "技能提升", guidance: "先诊断能力缺口，再安排方法讲解、刻意练习、反馈纠错和可复用方法沉淀。" },
-      perspective: { id, label: "视野拓展", guidance: "扩大来源与观点差异，核对事实冲突、趋势变化和跨领域类比，最后说明机会与风险。" },
-      strategy: { id, label: "格局提升", guidance: "连接长期目标、利益相关方、约束和备选方案，分析二阶影响与取舍，形成可验证的决策记录。" }
+      general: { id, label: ui("通用"), guidance: ui("围绕目标选择最短可验证路径，最终产出可以直接使用的结果。") },
+      efficiency: { id, label: ui("工作提效"), guidance: ui("识别重复劳动、等待和交接，优先自动化与复用，并用节省时间或减少步骤验证结果。") },
+      skill: { id, label: ui("技能提升"), guidance: ui("先诊断能力缺口，再安排方法讲解、刻意练习、反馈纠错和可复用方法沉淀。") },
+      perspective: { id, label: ui("视野拓展"), guidance: ui("扩大来源与观点差异，核对事实冲突、趋势变化和跨领域类比，最后说明机会与风险。") },
+      strategy: { id, label: ui("格局提升"), guidance: ui("连接长期目标、利益相关方、约束和备选方案，分析二阶影响与取舍，形成可验证的决策记录。") }
     })[id];
   }
 
   function workflowPlanningPrompt(goal, lensInput) {
     const lens = workflowLens(lensInput);
     return [
-      "你是拾作动态工作流编排器。把用户目标拆成可执行 DAG，只输出合法 JSON，不要 Markdown 或解释。",
-      "格式：{\"title\":\"工作流名称\",\"steps\":[{\"id\":\"英文短标识\",\"title\":\"容器标题\",\"instruction\":\"可独立执行的完整指令\",\"mode\":\"coding|text|image-gen|video\",\"dependsOn\":[\"上游 id\"]}]}。",
-      "最多 8 步；查询、检索、分析和调用工具用 coding；纯文字整理用 text；直接绘图用 image-gen；生成视频用 video。依赖必须准确，不得循环。",
-      `成长视角：${lens.label}。${lens.guidance}`,
-      `用户目标：${String(goal || "").trim()}`
+      ui("你是拾作动态工作流编排器。把用户目标拆成可执行 DAG，只输出合法 JSON，不要 Markdown 或解释。"),
+      ui(`格式：{"title":"工作流名称","steps":[{"id":"英文短标识","title":"容器标题","instruction":"可独立执行的完整指令","mode":"coding|text|image-gen|video","dependsOn":["上游 id"]}]}。`),
+      ui("最多 8 步；查询、检索、分析和调用工具用 coding；纯文字整理用 text；直接绘图用 image-gen；生成视频用 video。依赖必须准确，不得循环。"),
+      ui("成长视角：{0}。{1}", lens.label, lens.guidance),
+      ui("用户目标：{0}", String(goal || "").trim())
     ].join("\n\n");
   }
 

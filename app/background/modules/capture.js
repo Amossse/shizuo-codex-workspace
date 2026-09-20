@@ -1,6 +1,6 @@
 // Module: page context, Markdown, screenshot, and PDF capture adapters.
 async function captureMarkdown(request) {
-  return runExclusive(request.tabId, "Markdown 解析", async () => {
+  return runExclusive(request.tabId, ui("Markdown 解析"), async () => {
     const tab = await validateSourceTab(request);
     console.info("[capture-markdown] collecting page content", { tabId: tab.id });
     const extracted = await collectPageContent(tab);
@@ -32,8 +32,8 @@ async function captureMarkdown(request) {
 
 async function captureCodexPageContext() {
   const [activeTab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-  if (!activeTab?.id) throw new Error("找不到当前网页");
-  return runExclusive(activeTab.id, "Codex 网页分析", async () => {
+  if (!activeTab?.id) throw new Error(ui("找不到当前网页"));
+  return runExclusive(activeTab.id, ui("Codex 网页分析"), async () => {
     const tab = await validateSourceTab({ tabId: activeTab.id, expectedUrl: activeTab.url });
     console.info("[pagedock-codex] collecting current page", { tabId: tab.id });
     const extracted = await collectPageContent(tab);
@@ -46,7 +46,9 @@ async function captureCodexPageContext() {
       reachedEnd: extracted.reachedEnd !== false
     });
     const limitedMarkdown = markdown.length > CODEX_PAGE_CONTENT_LIMIT
-      ? `${markdown.slice(0, CODEX_PAGE_CONTENT_LIMIT)}\n\n[拾作：网页内容超过分析上限，已截断]`
+      ? ui(`{0}
+
+[拾作：网页内容超过分析上限，已截断]`, markdown.slice(0, CODEX_PAGE_CONTENT_LIMIT))
       : markdown;
     return {
       title: extracted.title || tab.title || "",
@@ -60,7 +62,7 @@ async function captureCodexPageContext() {
 
 function pageOriginPattern(value) {
   const url = new URL(String(value || ""));
-  if (!["http:", "https:"].includes(url.protocol)) throw new Error("页面卡地址不是可读取的 HTTP(S) 网页");
+  if (!["http:", "https:"].includes(url.protocol)) throw new Error(ui("页面卡地址不是可读取的 HTTP(S) 网页"));
   return `${url.protocol}//${url.host}/*`;
 }
 
@@ -84,11 +86,11 @@ function waitForTabComplete(tabId, timeoutMs = 45_000) {
       if (updatedTabId === tabId && changeInfo.status === "complete") finish(tab);
     };
     const onRemoved = removedTabId => {
-      if (removedTabId === tabId) fail(new Error("页面读取标签页已关闭"));
+      if (removedTabId === tabId) fail(new Error(ui("页面读取标签页已关闭")));
     };
     chrome.tabs.onUpdated.addListener(onUpdated);
     chrome.tabs.onRemoved.addListener(onRemoved);
-    timer = setTimeout(() => fail(new Error("页面加载超过 45 秒，请确认网页可以正常打开")), timeoutMs);
+    timer = setTimeout(() => fail(new Error(ui("页面加载超过 45 秒，请确认网页可以正常打开"))), timeoutMs);
     chrome.tabs.get(tabId).then(tab => {
       if (tab?.status === "complete") finish(tab);
     }).catch(fail);
@@ -99,10 +101,10 @@ async function capturePageCardContext(request) {
   const requestedUrl = new URL(String(request?.url || ""));
   const requestedOrigin = pageOriginPattern(requestedUrl);
   const allowed = await chrome.permissions.contains({ origins: [requestedOrigin] });
-  if (!allowed) throw new Error(`尚未允许读取 ${requestedUrl.host} 的页面内容`);
+  if (!allowed) throw new Error(ui("尚未允许读取 {0} 的页面内容", requestedUrl.host));
 
   const created = await chrome.tabs.create({ url: requestedUrl.toString(), active: false });
-  if (!created?.id) throw new Error("无法创建页面读取标签页");
+  if (!created?.id) throw new Error(ui("无法创建页面读取标签页"));
   try {
     await waitForTabComplete(created.id);
     // 给动态页面首屏请求和组件渲染留出时间，随后复用完整滚动采集器读取虚拟列表。
@@ -110,7 +112,7 @@ async function capturePageCardContext(request) {
     const tab = await chrome.tabs.get(created.id);
     const finalOrigin = pageOriginPattern(tab.url || requestedUrl);
     if (!await chrome.permissions.contains({ origins: [finalOrigin] })) {
-      const error = new Error(`页面跳转到了 ${new URL(tab.url).host}，需要重新授权后读取`);
+      const error = new Error(ui("页面跳转到了 {0}，需要重新授权后读取", new URL(tab.url).host));
       error.code = "page-permission-required";
       error.requiredOrigin = finalOrigin;
       error.requiredHost = new URL(tab.url).host;
@@ -123,9 +125,11 @@ async function capturePageCardContext(request) {
     });
     const extracted = await collectPageContent(tab);
     const markdown = await convertCapturedHtmlToMarkdown(tab.id, extracted.html, tab.url);
-    if (!markdown.trim()) throw new Error("页面没有提取到可分析的正文");
+    if (!markdown.trim()) throw new Error(ui("页面没有提取到可分析的正文"));
     const content = markdown.length > CODEX_PAGE_CONTENT_LIMIT
-      ? `${markdown.slice(0, CODEX_PAGE_CONTENT_LIMIT)}\n\n[拾作：网页内容超过分析上限，已截断]`
+      ? ui(`{0}
+
+[拾作：网页内容超过分析上限，已截断]`, markdown.slice(0, CODEX_PAGE_CONTENT_LIMIT))
       : markdown;
     console.info("[pagedock-page] page-card content collected", {
       tabId: tab.id,
@@ -149,6 +153,9 @@ async function collectPageContent(tab) {
   await chrome.scripting.executeScript({
     target: { tabId: tab.id },
     files: [
+      "app/core/i18n-en.js",
+      "app/core/i18n-en-extended.js",
+      "app/core/i18n.js",
       "vendor/readability/Readability.js",
       "vendor/turndown/turndown.js",
       "vendor/turndown/turndown-plugin-gfm.js",
@@ -171,11 +178,12 @@ async function collectPageContent(tab) {
 }
 
 async function convertCapturedHtmlToMarkdown(tabId, html, baseUrl) {
-  if (!html) throw new Error("当前网页没有可分析的正文");
+  if (!html) throw new Error(ui("当前网页没有可分析的正文"));
   const [{ result }] = await chrome.scripting.executeScript({
     target: { tabId },
-    func: (capturedHtml, pageUrl) => {
-      if (typeof TurndownService === "undefined") throw new Error("Markdown 转换器未载入");
+    func: async (capturedHtml, pageUrl) => {
+      await ShizuoI18n.ready;
+      if (typeof TurndownService === "undefined") throw new Error(ui("Markdown 转换器未载入"));
       const service = new TurndownService({
         headingStyle: "atx",
         codeBlockStyle: "fenced",
@@ -210,16 +218,16 @@ async function convertCapturedHtmlToMarkdown(tabId, html, baseUrl) {
 }
 
 async function captureFullPage(request) {
-  return runExclusive(request.tabId, "整页截图", async () => {
+  return runExclusive(request.tabId, ui("整页截图"), async () => {
     const tab = await validateSourceTab(request);
     const [activeTab] = await chrome.tabs.query({ active: true, windowId: tab.windowId });
     if (activeTab?.id !== tab.id) {
-      throw new Error("截图期间请保持原网页为当前标签页");
+      throw new Error(ui("截图期间请保持原网页为当前标签页"));
     }
 
     await chrome.scripting.executeScript({
       target: { tabId: tab.id },
-      files: ["app/content/content-capture.js"]
+      files: ["app/core/i18n-en.js", "app/core/i18n-en-extended.js", "app/core/i18n.js", "app/content/content-capture.js"]
     });
 
     console.info("[capture-screenshot] starting scroll capture", { tabId: tab.id });
@@ -244,7 +252,7 @@ async function captureFullPage(request) {
           windowId: tab.windowId
         });
         if (currentActive?.id !== tab.id) {
-          throw new Error("截图被中断：请在截图完成前保持原网页为当前标签页");
+          throw new Error(ui("截图被中断：请在截图完成前保持原网页为当前标签页"));
         }
 
         const dataUrl = await chrome.tabs.captureVisibleTab(tab.windowId, {
@@ -274,7 +282,7 @@ async function captureFullPage(request) {
         // captureVisibleTab 每秒最多调用两次。
         await wait(550);
       }
-      if (!tileCount) throw new Error("浏览器没有捕获到截图画面");
+      if (!tileCount) throw new Error(ui("浏览器没有捕获到截图画面"));
       stitched = await finishScreenshotStitchSession(session.sessionId, totalHeight);
       offscreenOpen = false;
     } finally {
@@ -318,21 +326,21 @@ async function captureFullPage(request) {
 
 async function validateSourceTab(request) {
   if (!Number.isInteger(request.tabId)) {
-    throw new Error("找不到当前网页，请关闭菜单后重试");
+    throw new Error(ui("找不到当前网页，请关闭菜单后重试"));
   }
   const tab = await chrome.tabs.get(request.tabId);
   if (!/^https?:/.test(tab.url || "")) {
-    throw new Error("当前页面不支持该操作");
+    throw new Error(ui("当前页面不支持该操作"));
   }
   if (request.expectedUrl && comparableUrl(tab.url) !== comparableUrl(request.expectedUrl)) {
-    throw new Error("网页已跳转，请重新打开工具菜单");
+    throw new Error(ui("网页已跳转，请重新打开工具菜单"));
   }
   return tab;
 }
 
 async function runExclusive(tabId, label, task) {
   if (activeTasks.has(tabId)) {
-    throw new Error(`该网页已有任务运行中，请等待完成后再执行${label}`);
+    throw new Error(ui("该网页已有任务运行中，请等待完成后再执行{0}", label));
   }
   activeTasks.add(tabId);
   try {
@@ -345,9 +353,10 @@ async function runExclusive(tabId, label, task) {
 async function callContentCapture(tabId, method, args = []) {
   const [{ result }] = await chrome.scripting.executeScript({
     target: { tabId },
-    func: (methodName, methodArgs) => {
+    func: async (methodName, methodArgs) => {
+      await ShizuoI18n.ready;
       const api = globalThis.__markdownifyCaptureApi;
-      if (!api?.[methodName]) throw new Error(`页面采集器不可用：${methodName}`);
+      if (!api?.[methodName]) throw new Error(ui("页面采集器不可用：{0}", methodName));
       return api[methodName](...methodArgs);
     },
     args: [method, args]
@@ -361,7 +370,7 @@ async function openScreenshotStitchSession(sessionId) {
     type: STITCH_INIT_REQUEST,
     sessionId
   });
-  if (!result?.ok) throw new Error(result?.error || "截图拼接器初始化失败");
+  if (!result?.ok) throw new Error(result?.error || ui("截图拼接器初始化失败"));
 }
 
 async function addScreenshotTile(sessionId, tile) {
@@ -370,7 +379,7 @@ async function addScreenshotTile(sessionId, tile) {
     sessionId,
     tile
   });
-  if (!result?.ok) throw new Error(result?.error || "截图分片保存失败");
+  if (!result?.ok) throw new Error(result?.error || ui("截图分片保存失败"));
 }
 
 async function finishScreenshotStitchSession(sessionId, totalHeight) {
@@ -381,7 +390,7 @@ async function finishScreenshotStitchSession(sessionId, totalHeight) {
       sessionId,
       totalHeight
     });
-    if (!result?.ok) throw new Error(result?.error || "截图拼接失败");
+    if (!result?.ok) throw new Error(result?.error || ui("截图拼接失败"));
     return result;
   } finally {
     await chrome.offscreen.closeDocument().catch(() => {});
@@ -406,7 +415,7 @@ async function createOffscreenDocument() {
     await chrome.offscreen.createDocument({
       url: "app/pages/offscreen/offscreen.html",
       reasons: ["BLOBS"],
-      justification: "拼接滚动页面截图并生成本地 PDF"
+      justification: ui("拼接滚动页面截图并生成本地 PDF")
     });
   } catch (error) {
     if (!/single offscreen document/i.test(error?.message || "")) throw error;
@@ -441,7 +450,7 @@ function buildScreenshotPdfFilename(title) {
   }
   safeTitle = truncateUtf8(safeTitle, 160).replace(/[. ]+$/g, "") || "webpage";
   const stamp = screenshotTimestamp();
-  return `拾作/${safeTitle}-${stamp}.pdf`;
+  return ui("拾作/{0}-{1}.pdf", safeTitle, stamp);
 }
 
 function truncateUtf8(value, maxBytes) {
@@ -474,7 +483,7 @@ async function downloadScreenshotPdf(dataUrl, title) {
     if (!/invalid filename/i.test(error?.message || "")) throw error;
 
     // 极端站点标题仍被平台拒绝时，使用纯 ASCII 文件名兜底，不让截图结果丢失。
-    const fallbackFilename = `拾作-${screenshotTimestamp()}.pdf`;
+    const fallbackFilename = ui("拾作-{0}.pdf", screenshotTimestamp());
     console.warn("[capture-screenshot] retrying with fallback filename", {
       rejectedFilename: filename,
       fallbackFilename

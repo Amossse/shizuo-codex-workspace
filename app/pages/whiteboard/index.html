@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en" data-language-loading>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="modules/whiteboard.css" />
   <link rel="stylesheet" href="../../../vendor/xterm/xterm.css" />
   <link rel="stylesheet" href="../../styles/paper-theme.css" />
+  <style>html[data-language-loading] body { visibility: hidden; }</style>
 </head>
 <body data-surface="whiteboard">
   <header id="topbar">
@@ -382,6 +383,8 @@
       <h2>AI 与连接</h2>
       <p>日常使用会自动连接；只有需要切换本地能力或排查问题时才调整这里。</p>
       <div class="ai-settings">
+        <label>语言<select id="languageSelect" data-language-select aria-label="Language / 语言"><option value="en">English</option><option value="zh-CN">简体中文</option></select></label>
+        <span id="languageNotice" class="ai-settings-note" role="status" aria-live="polite"></span>
         <label>默认 AI<select id="aiRuntimeSelect" aria-label="默认本地 AI"><option value="codex">Codex</option><option value="agy">AGY</option><option value="claude">Claude Code</option></select></label>
         <label>视频引擎<select id="selectionVideoEngine" aria-label="默认视频引擎"><option value="hyperframes">HyperFrames</option><option value="remotion">Remotion</option></select></label>
         <span class="ai-settings-note">拾作会沿用这里的默认值；普通提问、总结和创作无需重复选择。</span>
@@ -431,6 +434,10 @@
       <div class="dialog-actions"><button class="button" id="closeProvenance" type="button">关闭</button></div>
     </div>
   </dialog>
+  <script src="../../core/i18n-en.js"></script>
+  <script src="../../core/i18n-en-extended.js"></script>
+  <script src="../../core/i18n.js"></script>
+  <script src="../../core/i18n-page.js"></script>
   <script src="../../../vendor/markdown/marked.umd.js"></script>
   <script src="../../../vendor/markdown/purify.min.js"></script>
   <script src="../../../vendor/xterm/xterm.js"></script>

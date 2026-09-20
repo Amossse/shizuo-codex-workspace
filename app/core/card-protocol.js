@@ -1,28 +1,29 @@
 (function initPageDockCardProtocol(global) {
   "use strict";
+  const ui = (text, ...values) => globalThis.ShizuoI18n ? globalThis.ShizuoI18n.t(text, ...values) : text.replace(/\{(\d+)\}/g, (match, i) => i < values.length ? String(values[i]) : match);
 
   const VERSION = 1;
   const PERMISSIONS = Object.freeze({
-    "network-read": { label: "访问网络", risk: "standard" },
-    "page-content-read": { label: "读取页面内容", risk: "sensitive" },
-    "local-file-read": { label: "读取本地文件", risk: "sensitive" },
-    "local-folder-read": { label: "读取本地文件夹", risk: "sensitive" },
-    "local-shell": { label: "执行本地命令", risk: "dangerous" },
-    "codex-run": { label: "运行 Codex", risk: "sensitive" }
+    "network-read": { get label() { return ui("访问网络"); }, risk: "standard" },
+    "page-content-read": { get label() { return ui("读取页面内容"); }, risk: "sensitive" },
+    "local-file-read": { get label() { return ui("读取本地文件"); }, risk: "sensitive" },
+    "local-folder-read": { get label() { return ui("读取本地文件夹"); }, risk: "sensitive" },
+    "local-shell": { get label() { return ui("执行本地命令"); }, risk: "dangerous" },
+    "codex-run": { get label() { return ui("运行 Codex"); }, risk: "sensitive" }
   });
   const TYPES = Object.freeze({
-    text: { label: "文字", accepts: ["text/plain", "text/markdown"], outputs: ["text/plain"] },
-    document: { label: "文档", accepts: ["text/plain", "text/markdown", "text/code"], outputs: ["text/markdown", "text/plain"] },
-    code: { label: "代码", accepts: ["text/plain", "text/code", "application/json"], outputs: ["text/code", "text/plain"] },
-    image: { label: "图片", accepts: [], outputs: ["image/*"] },
-    video: { label: "视频", accepts: [], outputs: ["video/*"] },
-    link: { label: "链接", accepts: [], outputs: ["text/uri-list", "text/plain"] },
-    page: { label: "页面", accepts: [], outputs: ["text/uri-list", "text/plain"], permissions: ["network-read", "page-content-read"] },
-    file: { label: "文件", accepts: [], outputs: ["application/x-pagedock-file", "text/plain"], permissions: ["local-file-read"] },
-    folder: { label: "文件夹", accepts: [], outputs: ["application/x-pagedock-folder", "text/plain"], permissions: ["local-folder-read"] },
-    task: { label: "任务", accepts: ["text/plain", "text/markdown", "text/code", "text/uri-list", "image/*", "application/x-pagedock-file", "application/x-pagedock-folder"], outputs: ["text/markdown", "text/plain", "image/*", "video/*"], permissions: ["codex-run"] },
+    text: { get label() { return ui("文字"); }, accepts: ["text/plain", "text/markdown"], outputs: ["text/plain"] },
+    document: { get label() { return ui("文档"); }, accepts: ["text/plain", "text/markdown", "text/code"], outputs: ["text/markdown", "text/plain"] },
+    code: { get label() { return ui("代码"); }, accepts: ["text/plain", "text/code", "application/json"], outputs: ["text/code", "text/plain"] },
+    image: { get label() { return ui("图片"); }, accepts: [], outputs: ["image/*"] },
+    video: { get label() { return ui("视频"); }, accepts: [], outputs: ["video/*"] },
+    link: { get label() { return ui("链接"); }, accepts: [], outputs: ["text/uri-list", "text/plain"] },
+    page: { get label() { return ui("页面"); }, accepts: [], outputs: ["text/uri-list", "text/plain"], permissions: ["network-read", "page-content-read"] },
+    file: { get label() { return ui("文件"); }, accepts: [], outputs: ["application/x-pagedock-file", "text/plain"], permissions: ["local-file-read"] },
+    folder: { get label() { return ui("文件夹"); }, accepts: [], outputs: ["application/x-pagedock-folder", "text/plain"], permissions: ["local-folder-read"] },
+    task: { get label() { return ui("任务"); }, accepts: ["text/plain", "text/markdown", "text/code", "text/uri-list", "image/*", "application/x-pagedock-file", "application/x-pagedock-folder"], outputs: ["text/markdown", "text/plain", "image/*", "video/*"], permissions: ["codex-run"] },
     // 控制台可以作为输出来源，但连线不会把素材静默送入 Shell，避免数据连接变成隐式命令执行。
-    terminal: { label: "控制台", accepts: [], outputs: ["text/plain", "application/x-pagedock-terminal"], permissions: ["local-shell"] }
+    terminal: { get label() { return ui("控制台"); }, accepts: [], outputs: ["text/plain", "application/x-pagedock-terminal"], permissions: ["local-shell"] }
   });
 
   function uniqueStrings(values) {
@@ -84,11 +85,11 @@
   }
 
   function connect(source, target, contentType) {
-    if (!source?.id || !target?.id || source.id === target.id) throw new Error("请选择两个不同的卡片");
+    if (!source?.id || !target?.id || source.id === target.id) throw new Error(ui("请选择两个不同的卡片"));
     const sourceDefinition = definition(source.type);
     const targetDefinition = definition(target.type);
     const resolvedType = contentType || sourceDefinition.outputs.find(type => accepts(targetDefinition.accepts, type));
-    if (!resolvedType) throw new Error(`${targetDefinition.label}卡片不能接收${sourceDefinition.label}卡片的内容`);
+    if (!resolvedType) throw new Error(ui("{0}卡片不能接收{1}卡片的内容", targetDefinition.label, sourceDefinition.label));
     const card = normalizeMeta(target);
     if (!card.inputs.some(connection => connection.sourceId === source.id)) {
       card.inputs.push(normalizeConnection({
@@ -132,7 +133,7 @@
 
   function grant(item, permission) {
     const card = normalizeMeta(item);
-    if (!card.permissions.requested.includes(permission)) throw new Error("卡片未声明该权限");
+    if (!card.permissions.requested.includes(permission)) throw new Error(ui("卡片未声明该权限"));
     card.permissions.granted = uniqueStrings([...card.permissions.granted, permission]);
     item.card = card;
     return item;

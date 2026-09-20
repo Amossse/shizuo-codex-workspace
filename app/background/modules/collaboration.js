@@ -56,7 +56,7 @@ function scheduleExternalCollaborationCleanup() {
 function markExternalCodexConnected(remote = {}) {
   const scope = remote.lan ? "lan" : "local";
   const clientType = remote.clientType === "human" ? "human" : "codex";
-  const fallbackName = clientType === "human" ? "协作者" : "Codex";
+  const fallbackName = clientType === "human" ? ui("协作者") : "Codex";
   const clientName = boundedRemoteText(remote.clientName || fallbackName, 80).replace(/[\r\n\t]/g, " ").trim() || fallbackName;
   const clientId = String(remote.clientId || `${scope}:${String(remote.address || "unknown")}:${clientName}`);
   const client = { id: clientId, name: clientName, type: clientType, scope, boardId: String(remote.boardId || ""), lastSeenAt: Date.now() };
@@ -144,11 +144,11 @@ const EXTERNAL_CODEX_TASK_PHASES = new Set(["started", "running", "waiting_appro
 async function reportExternalCodexTask(params, capabilities, assertBoardScope) {
   await ensureCollaborationState();
   const client = capabilities.remoteClient;
-  if (!client?.id) throw new Error("缺少 Codex 接入者身份");
+  if (!client?.id) throw new Error(ui("缺少 Codex 接入者身份"));
   const taskId = boundedRemoteText(params.taskId, 120).replace(/[\r\n\t]/g, " ").trim();
-  if (!taskId) throw new Error("任务状态缺少 taskId");
+  if (!taskId) throw new Error(ui("任务状态缺少 taskId"));
   const phase = String(params.phase || "");
-  if (!EXTERNAL_CODEX_TASK_PHASES.has(phase)) throw new Error("不支持的 Codex 任务状态");
+  if (!EXTERNAL_CODEX_TASK_PHASES.has(phase)) throw new Error(ui("不支持的 Codex 任务状态"));
   const boardId = String(params.boardId || capabilities.boardScopeId || "");
   assertBoardScope(boardId);
   const id = `${client.id}:${taskId}`;
@@ -160,7 +160,7 @@ async function reportExternalCodexTask(params, capabilities, assertBoardScope) {
     return { task: { ...previous }, ignored: true };
   }
   if (["completed", "failed", "cancelled"].includes(previous.phase) && !["completed", "failed", "cancelled"].includes(phase)) {
-    throw new Error("已结束的 Codex 任务不能重新进入运行态，请使用新的 taskId");
+    throw new Error(ui("已结束的 Codex 任务不能重新进入运行态，请使用新的 taskId"));
   }
   const rawProgress = Number(params.progress);
   const progress = params.progress !== undefined && params.progress !== null && Number.isFinite(rawProgress)
@@ -173,7 +173,7 @@ async function reportExternalCodexTask(params, capabilities, assertBoardScope) {
     taskId,
     boardId,
     client: { id: client.id, name: client.name, type: client.type, scope: client.scope },
-    title: boundedRemoteText(params.title, 160) || previous.title || "Codex 任务",
+    title: boundedRemoteText(params.title, 160) || previous.title || ui("Codex 任务"),
     phase,
     message: boundedRemoteText(params.message, 1_000),
     progress,
@@ -201,33 +201,33 @@ async function reportExternalCodexTask(params, capabilities, assertBoardScope) {
 }
 
 const EXTERNAL_METHOD_LABELS = Object.freeze({
-  "boards.list": "查看白板列表",
-  "boards.get": "读取白板",
-  "boards.create": "创建白板",
-  "cards.create": "创建卡片",
-  "cards.update": "更新卡片",
-  "cards.connect": "连接卡片",
-  "cards.stream": "渐进生成卡片",
-  "cards.search": "搜索白板卡片",
-  "collaboration.list": "查看协作消息",
-  "collaboration.send": "发送协作消息",
-  "collaboration.presence": "更新协作位置",
-  "collaboration.watch": "等待协作事件",
-  "collaboration.task": "上报任务状态",
-  "cards.delete": "删除卡片"
+  "boards.list": ui("查看白板列表"),
+  "boards.get": ui("读取白板"),
+  "boards.create": ui("创建白板"),
+  "cards.create": ui("创建卡片"),
+  "cards.update": ui("更新卡片"),
+  "cards.connect": ui("连接卡片"),
+  "cards.stream": ui("渐进生成卡片"),
+  "cards.search": ui("搜索白板卡片"),
+  "collaboration.list": ui("查看协作消息"),
+  "collaboration.send": ui("发送协作消息"),
+  "collaboration.presence": ui("更新协作位置"),
+  "collaboration.watch": ui("等待协作事件"),
+  "collaboration.task": ui("上报任务状态"),
+  "cards.delete": ui("删除卡片")
 });
 
 function externalOperationSummary(method, params = {}) {
-  if (method === "boards.create") return boundedRemoteText(params.name || "新白板", 80);
+  if (method === "boards.create") return boundedRemoteText(params.name || ui("新白板"), 80);
   if (method === "cards.create") {
     const card = params.card && typeof params.card === "object" ? params.card : {};
-    return boundedRemoteText(card.text || card.alt || card.src || card.type || "新卡片", 100).replace(/\s+/g, " ");
+    return boundedRemoteText(card.text || card.alt || card.src || card.type || ui("新卡片"), 100).replace(/\s+/g, " ");
   }
-  if (method === "cards.update") return `更新 ${Object.keys(params.patch || {}).slice(0, 6).join("、") || "卡片内容"}`;
-  if (method === "cards.connect") return "建立卡片内容连线";
+  if (method === "cards.update") return ui("更新 {0}", Object.keys(params.patch || {}).slice(0, 6).join("、") || ui("卡片内容"));
+  if (method === "cards.connect") return ui("建立卡片内容连线");
   if (method === "cards.stream") return boundedRemoteText(params.text, 100).replace(/\s+/g, " ");
   if (method === "collaboration.send") return boundedRemoteText(params.text, 100).replace(/\s+/g, " ");
-  if (method === "cards.delete") return `删除 ${(params.cardIds || []).length || 1} 张卡片`;
+  if (method === "cards.delete") return ui("删除 {0} 张卡片", (params.cardIds || []).length || 1);
   return "";
 }
 
@@ -242,7 +242,7 @@ function recordExternalCodexActivity(message, client, phase, details = {}) {
     ...previous,
     requestId,
     method,
-    label: EXTERNAL_METHOD_LABELS[method] || "操作白板",
+    label: EXTERNAL_METHOD_LABELS[method] || ui("操作白板"),
     summary: externalOperationSummary(method, params),
     phase,
     sequence: nextCollaborationSequence(),
@@ -279,7 +279,7 @@ function requestExternalMutationApproval(message, client) {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
       externalApprovalRequests.delete(approvalId);
-      reject(new Error("等待白板用户确认超时"));
+      reject(new Error(ui("等待白板用户确认超时")));
     }, EXTERNAL_CODEX_APPROVAL_TIMEOUT_MS);
     externalApprovalRequests.set(approvalId, { resolve, reject, timer, requestId: message.requestId, approval });
     broadcastCodexEvent({
@@ -291,7 +291,9 @@ function requestExternalMutationApproval(message, client) {
 
 function boundedRemoteText(value, limit = 50_000) {
   const text = String(value || "");
-  return text.length > limit ? `${text.slice(0, limit)}\n\n[内容已截断]` : text;
+  return text.length > limit ? ui(`{0}
+
+[内容已截断]`, text.slice(0, limit)) : text;
 }
 
 function remoteItemSnapshot(item) {
@@ -388,7 +390,7 @@ function remoteCardInput(params) {
   const type = allowedTypes.includes(input.type) ? input.type : "text";
   const src = boundedRemoteText(input.src, 200_000);
   if ((type === "image" || type === "link" || type === "page") && !src && !input.text) {
-    throw new Error("卡片缺少可展示的内容或地址");
+    throw new Error(ui("卡片缺少可展示的内容或地址"));
   }
   return {
     type,
@@ -426,7 +428,7 @@ async function notifyRemoteBoardChange(boardIds, itemId, reason) {
 async function handlePluginRpc(method, params = {}, capabilities = {}) {
   const boardScopeId = String(capabilities.boardScopeId || "");
   const assertBoardScope = boardId => {
-    if (boardScopeId && String(boardId || "") !== boardScopeId) throw new Error("此接入者仅获授权访问当前共享白板");
+    if (boardScopeId && String(boardId || "") !== boardScopeId) throw new Error(ui("此接入者仅获授权访问当前共享白板"));
   };
   if (method === "boards.list") {
     return (await PageDockDB.listBoards()).filter(board => !boardScopeId || String(board.id) === boardScopeId).map(board => remoteBoardSnapshot(board));
@@ -434,7 +436,7 @@ async function handlePluginRpc(method, params = {}, capabilities = {}) {
   if (method === "boards.get") {
     assertBoardScope(params.boardId);
     const board = await PageDockDB.getBoard(String(params.boardId || ""), { includeArchived: Boolean(params.includeArchived) });
-    if (!board) throw new Error("白板不存在");
+    if (!board) throw new Error(ui("白板不存在"));
     return remoteBoardSnapshot(board, params);
   }
   if (method === "cards.asset") {
@@ -442,9 +444,9 @@ async function handlePluginRpc(method, params = {}, capabilities = {}) {
     assertBoardScope(boardId);
     const board = await PageDockDB.getBoard(boardId);
     const item = board?.items?.find(entry => String(entry.id) === String(params.cardId || ""));
-    if (!item) throw new Error("卡片不存在");
+    if (!item) throw new Error(ui("卡片不存在"));
     const dataUrl = String(item.src || "");
-    if (!dataUrl.startsWith("data:")) throw new Error("卡片没有内嵌资源");
+    if (!dataUrl.startsWith("data:")) throw new Error(ui("卡片没有内嵌资源"));
     return { dataUrl };
   }
   if (method === "cards.search") {
@@ -454,8 +456,8 @@ async function handlePluginRpc(method, params = {}, capabilities = {}) {
     });
   }
   if (method === "boards.create") {
-    if (boardScopeId) throw new Error("当前邀请不能创建其他白板");
-    const board = await PageDockDB.createBoard(boundedRemoteText(params.name, 80) || "新白板");
+    if (boardScopeId) throw new Error(ui("当前邀请不能创建其他白板"));
+    const board = await PageDockDB.createBoard(boundedRemoteText(params.name, 80) || ui("新白板"));
     await notifyRemoteBoardChange([board.id], "", "codex-bridge-board-create");
     return remoteBoardSnapshot(board);
   }
@@ -471,12 +473,12 @@ async function handlePluginRpc(method, params = {}, capabilities = {}) {
     assertBoardScope(boardId);
     const itemId = String(params.cardId || "");
     const board = await PageDockDB.getBoard(boardId, { includeArchived: true });
-    if (!board) throw new Error("白板不存在");
+    if (!board) throw new Error(ui("白板不存在"));
     const baseBoard = structuredClone(board);
     const item = board.items.find(entry => String(entry.id) === itemId);
-    if (!item) throw new Error("卡片不存在");
+    if (!item) throw new Error(ui("卡片不存在"));
     if (capabilities.requireVersion && Number(params.expectedUpdatedAt) !== Number(item.updatedAt)) {
-      throw new Error("卡片已被其他协作者更新，请重新读取后再修改");
+      throw new Error(ui("卡片已被其他协作者更新，请重新读取后再修改"));
     }
     const patch = params.patch && typeof params.patch === "object" ? params.patch : {};
     for (const key of ["text", "alt", "pageContent", "documentLanguage"]) {
@@ -493,7 +495,7 @@ async function handlePluginRpc(method, params = {}, capabilities = {}) {
       baseBoard,
       preserveArchived: true,
       actor: capabilities.remoteClient,
-      reason: "Codex 更新卡片"
+      reason: ui("Codex 更新卡片")
     });
     await notifyRemoteBoardChange([boardId], itemId, "codex-bridge-card-update");
     return remoteItemSnapshot(saved.items.find(entry => String(entry.id) === itemId));
@@ -502,13 +504,13 @@ async function handlePluginRpc(method, params = {}, capabilities = {}) {
     const boardId = String(params.boardId || "");
     assertBoardScope(boardId);
     const board = await PageDockDB.getBoard(boardId, { includeArchived: true });
-    if (!board) throw new Error("白板不存在");
+    if (!board) throw new Error(ui("白板不存在"));
     const baseBoard = structuredClone(board);
     const source = board.items.find(entry => String(entry.id) === String(params.sourceCardId || ""));
     const target = board.items.find(entry => String(entry.id) === String(params.targetCardId || ""));
-    if (!source || !target) throw new Error("来源或目标卡片不存在");
+    if (!source || !target) throw new Error(ui("来源或目标卡片不存在"));
     if (capabilities.requireVersion && Number(params.expectedTargetUpdatedAt) !== Number(target.updatedAt)) {
-      throw new Error("目标卡片已被其他协作者更新，请重新读取后再连接");
+      throw new Error(ui("目标卡片已被其他协作者更新，请重新读取后再连接"));
     }
     PageDockCardProtocol.connect(source, target, params.contentType ? String(params.contentType) : undefined);
     target.updatedAt = Date.now();
@@ -516,7 +518,7 @@ async function handlePluginRpc(method, params = {}, capabilities = {}) {
       baseBoard,
       preserveArchived: true,
       actor: capabilities.remoteClient,
-      reason: "Codex 连接卡片"
+      reason: ui("Codex 连接卡片")
     });
     await notifyRemoteBoardChange([boardId], target.id, "codex-bridge-card-connect");
     return remoteItemSnapshot(saved.items.find(entry => String(entry.id) === String(target.id)));
@@ -526,12 +528,12 @@ async function handlePluginRpc(method, params = {}, capabilities = {}) {
     assertBoardScope(boardId);
     const itemId = String(params.cardId || "");
     const board = await PageDockDB.getBoard(boardId, { includeArchived: true });
-    if (!board) throw new Error("白板不存在");
+    if (!board) throw new Error(ui("白板不存在"));
     const baseBoard = structuredClone(board);
     const item = board.items.find(entry => String(entry.id) === itemId);
-    if (!item) throw new Error("卡片不存在");
+    if (!item) throw new Error(ui("卡片不存在"));
     if (capabilities.requireVersion && Number(params.expectedUpdatedAt) !== Number(item.updatedAt)) {
-      throw new Error("卡片已被其他协作者更新，请重新读取后再生成");
+      throw new Error(ui("卡片已被其他协作者更新，请重新读取后再生成"));
     }
     const incoming = boundedRemoteText(params.text, 30_000);
     const prefix = params.mode === "append" ? String(item.text || "") : "";
@@ -546,7 +548,7 @@ async function handlePluginRpc(method, params = {}, capabilities = {}) {
       baseBoard,
       preserveArchived: true,
       actor: capabilities.remoteClient,
-      reason: "Codex 渐进生成卡片"
+      reason: ui("Codex 渐进生成卡片")
     });
     await notifyRemoteBoardChange([boardId], itemId, "codex-bridge-card-stream");
     broadcastCodexEvent({ type: "external-card-stream", boardId, cardId: itemId, text: finalText, progress: 1, done: true });
@@ -580,7 +582,7 @@ async function handlePluginRpc(method, params = {}, capabilities = {}) {
       sequence: nextCollaborationSequence(),
       createdAt: Date.now()
     };
-    if (!message.text.trim()) throw new Error("消息内容不能为空");
+    if (!message.text.trim()) throw new Error(ui("消息内容不能为空"));
     externalCollaborationMessages.push(message);
     externalCollaborationMessages = externalCollaborationMessages.slice(-200);
     await persistCollaborationState();
@@ -609,7 +611,7 @@ async function handlePluginRpc(method, params = {}, capabilities = {}) {
     return reportExternalCodexTask(params, capabilities, assertBoardScope);
   }
   if (method === "cards.delete") {
-    if (!capabilities.allowDestructive) throw new Error("桥接未开启删除权限");
+    if (!capabilities.allowDestructive) throw new Error(ui("桥接未开启删除权限"));
     const boardId = String(params.boardId || "");
     assertBoardScope(boardId);
     const itemIds = (Array.isArray(params.cardIds) ? params.cardIds : [params.cardId]).map(String).filter(Boolean).slice(0, 100);
@@ -617,7 +619,7 @@ async function handlePluginRpc(method, params = {}, capabilities = {}) {
     await notifyRemoteBoardChange([boardId], "", "codex-bridge-card-delete");
     return { deleted };
   }
-  throw new Error(`不支持的插件操作：${method}`);
+  throw new Error(ui("不支持的插件操作：{0}", method));
 }
 
 async function respondToPluginRequest(port, message) {
@@ -643,13 +645,13 @@ async function respondToPluginRequest(port, message) {
         x: hasPointer ? Number(rawX) : null,
         y: hasPointer ? Number(rawY) : null,
         hasPointer,
-        state: EXTERNAL_METHOD_LABELS[method] || "操作白板",
+        state: EXTERNAL_METHOD_LABELS[method] || ui("操作白板"),
         updatedAt: Date.now()
       });
     }
     if (mutating) {
       const policy = externalClientPolicies[client.id] || (client.type === "human" ? "edit" : "ask");
-      if (policy === "read") throw new Error("此接入者当前为只读权限");
+      if (policy === "read") throw new Error(ui("此接入者当前为只读权限"));
       if (policy !== "edit" && !externalSessionGrants.has(client.id)) await requestExternalMutationApproval(message, client);
     }
     if (!passiveActivity) recordExternalCodexActivity(message, client, "running");

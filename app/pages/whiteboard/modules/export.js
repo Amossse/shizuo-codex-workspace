@@ -16,7 +16,7 @@ async function exportCurrentBoard() {
     new Blob([JSON.stringify(payload)], { type: "application/json" }),
     `${safeFilename(board.name)}-${timestamp()}.pagedock`
   );
-  setStatus("已导出当前白板");
+  setStatus(ui("已导出当前白板"));
 }
 
 async function backupAllBoards() {
@@ -24,9 +24,9 @@ async function backupAllBoards() {
   const payload = await db.exportAll();
   downloadBlob(
     new Blob([JSON.stringify(payload)], { type: "application/json" }),
-    `拾作-backup-${timestamp()}.pagedock`
+    ui("拾作-backup-{0}.pagedock", timestamp())
   );
-  setStatus("已备份全部白板");
+  setStatus(ui("已备份全部白板"));
 }
 
 function wrapCanvasText(context, text, x, y, maxWidth, lineHeight, maxLines) {
@@ -62,7 +62,7 @@ function loadCanvasImage(src) {
 }
 
 async function renderBoardCanvas() {
-  if (!boardItems.length) throw new Error("当前白板没有可导出的内容");
+  if (!boardItems.length) throw new Error(ui("当前白板没有可导出的内容"));
   const minX = Math.max(0, Math.min(...boardItems.map(item => item.x)) - 48);
   const minY = Math.max(0, Math.min(...boardItems.map(item => item.y)) - 48);
   const maxX = Math.max(...boardItems.map(item => item.x + item.width)) + 48;
@@ -139,7 +139,7 @@ async function renderBoardCanvas() {
         context.drawImage(image, x + (item.width - width) / 2, y + 36 + (contentHeight - height) / 2, width, height);
       } else {
         context.fillStyle = "#818b98";
-        context.fillText("图片无法离线导出", x + 16, y + 58);
+        context.fillText(ui("图片无法离线导出"), x + 16, y + 58);
       }
     } else if (item.type === "video") {
       context.fillStyle = "#15191f";
@@ -149,7 +149,7 @@ async function renderBoardCanvas() {
       context.fillText("▶", x + item.width / 2 - 12, y + item.height / 2);
       context.fillStyle = "#aeb8c5";
       context.font = "12px sans-serif";
-      context.fillText("视频请在拾作白板中播放", x + 16, y + item.height - 18);
+      context.fillText(ui("视频请在拾作白板中播放"), x + 16, y + item.height - 18);
     } else if (item.type === "page") {
       context.fillStyle = "#f7f3ed";
       context.fillRect(x + 10, y + 40, item.width - 20, Math.max(80, item.height - 60));
@@ -158,7 +158,7 @@ async function renderBoardCanvas() {
       wrapCanvasText(context, item.src, x + 18, y + 64, item.width - 36, 21, 3);
       context.fillStyle = "#68727f";
       context.font = "12px sans-serif";
-      context.fillText("网页请在拾作白板中浏览", x + 18, y + 128);
+      context.fillText(ui("网页请在拾作白板中浏览"), x + 18, y + 128);
     } else if (item.type === "terminal") {
       context.fillStyle = "#211d1a";
       context.fillRect(x + 10, y + 40, item.width - 20, Math.max(80, item.height - 60));
@@ -212,7 +212,7 @@ async function renderBoardCanvas() {
     if (item.source?.url) {
       context.fillStyle = "#778391";
       context.font = "10px sans-serif";
-      context.fillText(`来源：${item.source.title || item.source.url}`.slice(0, 90), x + 12, y + item.height - 10);
+      context.fillText(ui("来源：{0}", item.source.title || item.source.url).slice(0, 90), x + 12, y + item.height - 10);
     }
   }
   return canvas;
@@ -220,7 +220,7 @@ async function renderBoardCanvas() {
 
 function canvasBlob(canvas, type, quality) {
   return new Promise((resolve, reject) => {
-    canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("画布导出失败")), type, quality);
+    canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error(ui("画布导出失败"))), type, quality);
   });
 }
 
@@ -255,7 +255,7 @@ function buildJpegPdf(jpegBytes, pixelWidth, pixelHeight) {
 }
 
 async function exportBoardImage(type) {
-  setStatus(type === "png" ? "正在生成 PNG…" : "正在生成 PDF…");
+  setStatus(type === "png" ? ui("正在生成 PNG…") : ui("正在生成 PDF…"));
   try {
     const canvas = await renderBoardCanvas();
     if (type === "png") {
@@ -265,10 +265,10 @@ async function exportBoardImage(type) {
       const pdf = buildJpegPdf(new Uint8Array(await jpeg.arrayBuffer()), canvas.width, canvas.height);
       downloadBlob(pdf, `${safeFilename(currentBoard.name)}-${timestamp()}.pdf`);
     }
-    setStatus(`已导出 ${type.toUpperCase()}`);
+    setStatus(ui("已导出 {0}", type.toUpperCase()));
   } catch (error) {
     console.error("[pagedock-export] failed", error);
-    setStatus(error?.message || "导出失败", true);
+    setStatus(error?.message || ui("导出失败"), true);
   }
 }
 
@@ -282,24 +282,24 @@ async function importSelectedFile() {
     notifyDataChanged(imported.map(board => board.id), "import-boards");
     if (imported.length === 1) await openBoard(imported[0].id);
     else await renderHome();
-    setStatus(`已导入 ${imported.length} 个白板`);
+    setStatus(ui("已导入 {0} 个白板", imported.length));
   } catch (error) {
     console.error("[pagedock-import] failed", error);
-    setStatus(error?.message || "导入失败，请检查文件后重试", true);
+    setStatus(error?.message || ui("导入失败，请检查文件后重试"), true);
   }
 }
 
 async function deleteCurrentBoard() {
   if (!currentBoard) return;
   if (currentBoard.id === db.INBOX_ID) {
-    if (!confirm("收件箱会保留为默认入口。确定清空其中全部内容吗？")) return;
+    if (!confirm(ui("收件箱会保留为默认入口。确定清空其中全部内容吗？"))) return;
     const removed = await db.clearInbox();
     notifyDataChanged([db.INBOX_ID], "clear-inbox");
     await openBoard(db.INBOX_ID, false);
-    setStatus(removed ? `已清空收件箱（${removed} 项）` : "收件箱已经为空");
+    setStatus(removed ? ui("已清空收件箱（{0} 项）", removed) : ui("收件箱已经为空"));
     return;
   }
-  if (!confirm(`确定删除“${currentBoard.name}”吗？此操作无法撤销。`)) return;
+  if (!confirm(ui("确定删除“{0}”吗？此操作无法撤销。", currentBoard.name))) return;
   await db.deleteBoard(currentBoard.id);
   notifyDataChanged([currentBoard.id], "delete-board");
   await renderHome();

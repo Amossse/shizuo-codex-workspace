@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en" data-language-loading>
 <head>
   <meta charset="utf-8" />
   <title>拾作</title>
@@ -171,6 +171,9 @@
       font-size: var(--text-xs);
     }
     #status:empty { display: none; }
+    .language-setting { display: flex; justify-content: space-between; gap: 8px; margin-top: 12px; font-size: 12px; }
+    .language-setting select { max-width: 130px; font: inherit; }
+    #languageNotice { font-size: 12px; line-height: 1.5; margin-top: 6px; }
     #status.error { color: var(--color-danger); }
     @media (hover: hover) and (pointer: fine) {
       #savePage:hover,
@@ -194,6 +197,7 @@
       summary:active { transform: none; }
     }
   </style>
+  <style>html[data-language-loading] body { visibility: hidden; }</style>
 </head>
 <body data-surface="popup">
   <div class="popup-brand"><img src="../../../icons/icon32.png" alt="" /><div class="popup-brand-copy"><h1>拾作</h1><span>收集、理解、创作</span></div></div>
@@ -211,6 +215,12 @@
   </div>
   <button id="openWorkspace" type="button">打开拾作</button>
   <div id="status" role="status" aria-live="polite"></div>
+  <label class="language-setting">Language / 语言 <select data-language-select aria-label="Language / 语言"><option value="en">English</option><option value="zh-CN">简体中文</option></select></label>
+  <div id="languageNotice" role="status" aria-live="polite"></div>
+  <script src="../../core/i18n-en.js"></script>
+  <script src="../../core/i18n-en-extended.js"></script>
+  <script src="../../core/i18n.js"></script>
+  <script src="../../core/i18n-page.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

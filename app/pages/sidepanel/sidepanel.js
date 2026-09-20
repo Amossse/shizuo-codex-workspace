@@ -31,7 +31,7 @@ function setBatchBusy(busy) {
 }
 
 function labelForItem(item) {
-  return item.text || item.alt || item.source?.title || item.src || "未命名内容";
+  return item.text || item.alt || item.source?.title || item.src || ui("未命名内容");
 }
 
 function openBoard(boardId) {
@@ -58,8 +58,8 @@ function updateSelectionUi() {
   selectedIds = new Set([...selectedIds].filter(id => currentItems.some(item => item.id === id)));
   const count = selectedIds.size;
   batchBarEl.classList.toggle("hidden", !count);
-  selectedCountEl.textContent = `已选 ${count} 项`;
-  selectAllEl.textContent = currentItems.length && count === currentItems.length ? "取消全选" : "全选";
+  selectedCountEl.textContent = ui("已选 {0} 项", count);
+  selectAllEl.textContent = currentItems.length && count === currentItems.length ? ui("取消全选") : ui("全选");
   document.getElementById("moveSelected").disabled = !count || showArchived || !targetBoardEl.value;
   document.getElementById("archiveSelected").hidden = showArchived;
   document.getElementById("restoreSelected").hidden = !showArchived;
@@ -79,7 +79,7 @@ function createInboxItem(item) {
   const checkbox = document.createElement("input");
   checkbox.className = "item-check";
   checkbox.type = "checkbox";
-  checkbox.setAttribute("aria-label", `选择 ${labelForItem(item)}`);
+  checkbox.setAttribute("aria-label", ui("选择 {0}", labelForItem(item)));
   checkbox.addEventListener("click", event => event.stopPropagation());
   checkbox.addEventListener("change", () => {
     if (checkbox.checked) selectedIds.add(item.id);
@@ -95,7 +95,7 @@ function createInboxItem(item) {
   footer.className = "item-footer";
   const source = document.createElement("span");
   source.textContent = item.source?.title || item.source?.url
-    || (item.type === "image" ? "图片" : item.type === "video" ? "视频" : "手动添加");
+    || (item.type === "image" ? ui("图片") : item.type === "video" ? ui("视频") : ui("手动添加"));
   footer.appendChild(source);
   if (/^https?:\/\//i.test(item.source?.url || "")) {
     const link = document.createElement("a");
@@ -103,7 +103,7 @@ function createInboxItem(item) {
     link.href = item.source.url;
     link.target = "_blank";
     link.rel = "noopener noreferrer";
-    link.textContent = "打开来源 ↗";
+    link.textContent = ui("打开来源 ↗");
     link.title = item.source.url;
     link.addEventListener("click", event => event.stopPropagation());
     footer.appendChild(link);
@@ -130,7 +130,7 @@ function renderBoardTargets() {
   if (!selectable.length) {
     const option = document.createElement("option");
     option.value = "";
-    option.textContent = "暂无目标白板";
+    option.textContent = ui("暂无目标白板");
     targetBoardEl.appendChild(option);
   } else {
     selectable.forEach(board => {
@@ -144,6 +144,7 @@ function renderBoardTargets() {
 }
 
 async function render() {
+  await ShizuoI18n.ready;
   if (rendering) await rendering;
   rendering = (async () => {
     const [items, boards] = await Promise.all([
@@ -153,12 +154,12 @@ async function render() {
     currentItems = items;
     currentBoards = boards;
     inboxListEl.replaceChildren();
-    inboxCountEl.textContent = `${items.length} 项${showArchived ? "已归档" : "待整理"}`;
+    inboxCountEl.textContent = ui("{0} 项{1}", items.length, showArchived ? ui("已归档") : ui("待整理"));
     items.forEach(item => inboxListEl.appendChild(createInboxItem(item)));
     if (!items.length) {
       inboxListEl.appendChild(emptyState(showArchived
-        ? "还没有已归档内容"
-        : "右键网页中的文字、图片或链接即可收集"));
+        ? ui("还没有已归档内容")
+        : ui("右键网页中的文字、图片或链接即可收集")));
     }
 
     renderBoardTargets();
@@ -183,7 +184,7 @@ async function runBatch(action, reason, boardIds) {
     await render();
   } catch (error) {
     console.error(`[pagedock-sidepanel] ${reason} failed`, error);
-    setNotice(error?.message || "批量操作失败，请重试", true);
+    setNotice(error?.message || ui("批量操作失败，请重试"), true);
   } finally {
     setBatchBusy(false);
     updateSelectionUi();
@@ -208,7 +209,7 @@ async function addQuickText() {
     notifyDataChanged([db.INBOX_ID], "quick-add");
     await render();
   } catch (error) {
-    setNotice(error?.message || "内容未能保存，请重试", true);
+    setNotice(error?.message || ui("内容未能保存，请重试"), true);
   } finally {
     button.disabled = false;
     button.dataset.state = "default";
@@ -225,14 +226,14 @@ quickTextEl.addEventListener("keydown", event => {
 document.getElementById("openCodex").addEventListener("click", async event => {
   const button = event.currentTarget;
   button.disabled = true;
-  button.textContent = "读取中…";
+  button.textContent = ui("读取中…");
   setNotice();
   try {
     const response = await chrome.runtime.sendMessage({ type: CODEX_PAGE_CONTEXT_REQUEST });
-    if (!response?.ok) throw new Error(response?.error || "无法读取当前网页");
+    if (!response?.ok) throw new Error(response?.error || ui("无法读取当前网页"));
     await chrome.storage.local.set({
       [CODEX_PAGE_ATTACHMENT_KEY]: {
-        title: String(response.title || "当前网页").slice(0, 200),
+        title: String(response.title || ui("当前网页")).slice(0, 200),
         url: String(response.url || "").slice(0, 2000),
         content: String(response.content || "").slice(0, 80_000),
         createdAt: Date.now()
@@ -241,10 +242,10 @@ document.getElementById("openCodex").addEventListener("click", async event => {
     await chrome.tabs.create({ url: chrome.runtime.getURL("app/pages/whiteboard/index.html?codex=page") });
   } catch (error) {
     console.error("[pagedock-sidepanel] attach page to Codex failed", error);
-    setNotice(error?.message || "无法读取当前网页，请刷新页面后重试", true);
+    setNotice(error?.message || ui("无法读取当前网页，请刷新页面后重试"), true);
   } finally {
     button.disabled = false;
-    button.textContent = "问 Codex";
+    button.textContent = ui("问 Codex");
   }
 });
 document.getElementById("activeTab").addEventListener("click", async () => {
@@ -301,21 +302,23 @@ document.getElementById("restoreSelected").addEventListener("click", () => {
   runBatch(ids => db.setItemsArchived(ids, false), "restore-items", [db.INBOX_ID]);
 });
 document.getElementById("deleteSelected").addEventListener("click", () => {
-  if (!confirm(`确定永久删除选中的 ${selectedIds.size} 项吗？此操作无法撤销。`)) return;
+  if (!confirm(ui("确定永久删除选中的 {0} 项吗？此操作无法撤销。", selectedIds.size))) return;
   runBatch(ids => db.deleteItems(db.INBOX_ID, ids), "delete-items", [db.INBOX_ID]);
 });
 chrome.runtime.onMessage.addListener(message => {
   if (message?.type === "pagedock-data-changed" && message.source !== messageSource) {
-    render().catch(error => setNotice(error?.message || "收件箱刷新失败", true));
+    render().catch(error => setNotice(error?.message || ui("收件箱刷新失败"), true));
   }
 });
 window.addEventListener("focus", () => {
-  render().catch(error => setNotice(error?.message || "收件箱刷新失败", true));
+  render().catch(error => setNotice(error?.message || ui("收件箱刷新失败"), true));
 });
 
-document.getElementById("versionMeta").textContent = `收件箱 · v${extensionVersion}`;
-db.ensureInbox().then(render).catch(error => {
+ShizuoI18n.ready.then(() => {
+  document.getElementById("versionMeta").textContent = ui("收件箱 · v{0}", extensionVersion);
+  return db.ensureInbox();
+}).then(render).catch(error => {
   console.error("[pagedock-sidepanel] load failed", error);
-  inboxListEl.replaceChildren(emptyState("收件箱载入失败"));
-  setNotice(error?.message || "收件箱载入失败，请重新打开侧栏", true);
+  inboxListEl.replaceChildren(emptyState(ui("收件箱载入失败")));
+  setNotice(error?.message || ui("收件箱载入失败，请重新打开侧栏"), true);
 });

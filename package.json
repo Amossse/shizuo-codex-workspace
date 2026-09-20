@@ -38,7 +38,7 @@
     "url": "https://github.com/Amossse/shizuo-codex-workspace/issues"
   },
   "scripts": {
-    "test": "node scripts/verify.mjs && node scripts/release-contract-test.mjs && node scripts/runtime-utils-test.mjs && node scripts/install-contract-test.mjs && node scripts/bridge-auth-test.mjs && node scripts/board-domain-test.mjs && node scripts/onboarding-contract.mjs && node scripts/page-chat-contract.mjs && node scripts/task-state-contract.mjs && node scripts/session-preview-contract.mjs && node scripts/native-process-stream-test.mjs && node scripts/terminal-output-stress.mjs && node scripts/external-bridge-test.mjs",
+    "test": "node scripts/i18n-test.mjs && node scripts/verify.mjs && node scripts/release-contract-test.mjs && node scripts/runtime-utils-test.mjs && node scripts/install-contract-test.mjs && node scripts/bridge-auth-test.mjs && node scripts/board-domain-test.mjs && node scripts/onboarding-contract.mjs && node scripts/page-chat-contract.mjs && node scripts/task-state-contract.mjs && node scripts/session-preview-contract.mjs && node scripts/native-process-stream-test.mjs && node scripts/terminal-output-stress.mjs && node scripts/external-bridge-test.mjs",
     "pack": "node scripts/package-release.mjs",
     "update-vendor": "echo 'See CONTRIBUTING.md → Refreshing vendored dependencies'"
   },

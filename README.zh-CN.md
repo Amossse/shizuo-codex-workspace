@@ -18,6 +18,8 @@
 
 ## 快速开始
 
+新安装默认使用英文，已有安装保留中文。在扩展弹窗或「更多 → AI 与连接」中选择 English / 简体中文，重新打开页面后生效。切换不会中断当前任务或翻译已收集的内容；AI 回答跟随提问语言，不强制跟随界面。
+
 ### 1. 安装扩展
 
 1. 下载并解压[最新发布包](https://github.com/Amossse/shizuo-codex-workspace/releases/latest)。

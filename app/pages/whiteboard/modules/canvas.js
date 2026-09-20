@@ -49,14 +49,14 @@ function itemElement(id) {
 function setItemFocusButtonState(button, active) {
   if (!button) return;
   button.dataset.active = String(active);
-  button.setAttribute("aria-label", active ? "退出全屏" : "全屏查看");
-  button.title = active ? "退出全屏 (Esc)" : "全屏查看";
+  button.setAttribute("aria-label", active ? ui("退出全屏") : ui("全屏查看"));
+  button.title = active ? ui("退出全屏 (Esc)") : ui("全屏查看");
 }
 
 function setItemCloseButtonState(button, focused) {
   if (!button) return;
-  button.setAttribute("aria-label", focused ? "退出全屏" : "删除卡片");
-  button.title = focused ? "退出全屏" : "删除卡片";
+  button.setAttribute("aria-label", focused ? ui("退出全屏") : ui("删除卡片"));
+  button.title = focused ? ui("退出全屏") : ui("删除卡片");
 }
 
 function enterItemFocus(item, element) {
@@ -138,20 +138,21 @@ function cardTextOutput(item) {
     return latest?.text || item.taskResult || item.text || "";
   }
   if (item.type === "terminal") return item.terminalOutput || item.text || "";
-  if (item.type === "file") return item.localPreview || `${item.localName || "文件"}${item.localMime ? ` (${item.localMime})` : ""}`;
-  if (item.type === "folder") return (item.localEntries || []).map(entry => `${entry.kind === "directory" ? "[目录]" : "[文件]"} ${entry.name}`).join("\n");
+  if (item.type === "file") return item.localPreview || `${item.localName || ui("文件")}${item.localMime ? ` (${item.localMime})` : ""}`;
+  if (item.type === "folder") return (item.localEntries || []).map(entry => `${entry.kind === "directory" ? ui("[目录]") : ui("[文件]")} ${entry.name}`).join("\n");
   if (item.type === "page") {
-    return [item.text, item.src, item.pageContent ? `页面正文：\n${item.pageContent}` : ""].filter(Boolean).join("\n\n");
+    return [item.text, item.src, item.pageContent ? ui(`页面正文：
+{0}`, item.pageContent) : ""].filter(Boolean).join("\n\n");
   }
   if (item.type === "link") return [item.text, item.src].filter(Boolean).join("\n");
-  if (item.type === "image") return [item.alt || "图片", item.source?.url].filter(Boolean).join("\n");
-  if (item.type === "video") return [item.alt || "视频", item.src].filter(Boolean).join("\n");
+  if (item.type === "image") return [item.alt || ui("图片"), item.source?.url].filter(Boolean).join("\n");
+  if (item.type === "video") return [item.alt || ui("视频"), item.src].filter(Boolean).join("\n");
   return item.text || "";
 }
 
 function pagePermissionOrigin(value) {
   const url = new URL(String(value || ""));
-  if (!["http:", "https:"].includes(url.protocol)) throw new Error("页面卡地址不是可读取的 HTTP(S) 网页");
+  if (!["http:", "https:"].includes(url.protocol)) throw new Error(ui("页面卡地址不是可读取的 HTTP(S) 网页"));
   return `${url.protocol}//${url.host}/*`;
 }
 
@@ -171,7 +172,7 @@ async function hydratePageCardsForCodex(items, onProgress = () => {}) {
       updatePermissionChip(item);
     });
     const hosts = pages.map(item => new URL(item.src).host).join("、");
-    throw new Error(`未允许读取 ${hosts} 的页面内容，Codex 尚未收到正文`);
+    throw new Error(ui("未允许读取 {0} 的页面内容，Codex 尚未收到正文", hosts));
   }
   for (const item of pages) {
     cardProtocol.grant(item, "page-content-read");
@@ -181,7 +182,7 @@ async function hydratePageCardsForCodex(items, onProgress = () => {}) {
 
   for (let index = 0; index < pages.length; index += 1) {
     const item = pages[index];
-    onProgress(pages.length > 1 ? `正在读取页面 ${index + 1}/${pages.length}` : "正在读取页面内容");
+    onProgress(pages.length > 1 ? ui("正在读取页面 {0}/{1}", index + 1, pages.length) : ui("正在读取页面内容"));
     const response = await chrome.runtime.sendMessage({
       type: PAGE_CARD_CONTEXT_REQUEST,
       url: item.src
@@ -193,12 +194,12 @@ async function hydratePageCardsForCodex(items, onProgress = () => {}) {
         updatePermissionChip(item);
         item.updatedAt = Date.now();
         scheduleSave();
-        throw new Error(`页面跳转到了 ${response.requiredHost || "另一个站点"}，请点击重试并允许读取`);
+        throw new Error(ui("页面跳转到了 {0}，请点击重试并允许读取", response.requiredHost || ui("另一个站点")));
       }
-      throw new Error(response?.error || `无法读取页面：${itemLabel(item)}`);
+      throw new Error(response?.error || ui("无法读取页面：{0}", itemLabel(item)));
     }
     const content = String(response.content || "").trim();
-    if (!content) throw new Error(`页面“${itemLabel(item)}”没有提取到可分析内容`);
+    if (!content) throw new Error(ui("页面“{0}”没有提取到可分析内容", itemLabel(item)));
     item.pageContent = content.slice(0, 600_000);
     item.pageContentUrl = String(response.url || item.src);
     item.pageContentMode = String(response.mode || "");
@@ -234,10 +235,10 @@ function connectSelectedItems() {
     renderConnections();
     scheduleSave();
     commitHistory();
-    setStatus(`已连接：${itemTypeLabel(source)} → ${itemTypeLabel(target)}`);
+    setStatus(ui("已连接：{0} → {1}", itemTypeLabel(source), itemTypeLabel(target)));
     console.info("[pagedock-card] cards connected", { sourceId: source.id, targetId: target.id, targetType: target.type });
   } catch (error) {
-    setStatus(error?.message || "卡片连接失败", true);
+    setStatus(error?.message || ui("卡片连接失败"), true);
   }
 }
 
@@ -398,8 +399,8 @@ function updateEmptyState() {
   emptyStateEl.classList.toggle("hidden", boardItems.length > 0);
   optimizeLayoutEl.disabled = boardItems.length < 2;
   optimizeLayoutEl.title = boardItems.length < 2
-    ? "至少添加 2 个模块后才能优化布局"
-    : "按模块关系自动分层并减少连线交叉";
+    ? ui("至少添加 2 个模块后才能优化布局")
+    : ui("按模块关系自动分层并减少连线交叉");
 }
 
 function updateSelectionUi() {
@@ -412,18 +413,18 @@ function updateSelectionUi() {
   document.getElementById("alignTop").disabled = !canAlign;
   document.getElementById("connectItems").disabled = selectedIds.size !== 2;
   document.getElementById("connectItems").title = selectedIds.size === 2
-    ? "按选择顺序连接：第一张卡片输出到第二张卡片"
-    : "请选择两张卡片";
+    ? ui("按选择顺序连接：第一张卡片输出到第二张卡片")
+    : ui("请选择两张卡片");
   document.getElementById("groupItems").disabled = !canAlign;
   document.getElementById("ungroupItems").disabled = ![...selectedIds]
     .some(id => itemById(id)?.groupId);
-  selectionActionCountEl.textContent = `已选 ${selection.length} 项`;
+  selectionActionCountEl.textContent = ui("已选 {0} 项", selection.length);
   askSelectionWithCodexEl.disabled = !selection.length;
-  askSelectionWithCodexEl.title = "基于所选内容继续提问或创作";
+  askSelectionWithCodexEl.title = ui("基于所选内容继续提问或创作");
   extractKnowledgeCardEl.disabled = !selection.length || codexAtCapacity() || Boolean(standaloneWhiteboardTask());
   extractKnowledgeCardEl.title = selection.some(item => item.type === "folder")
-    ? "文件夹仅按当前目录索引提炼，不会读取未明确打开的文件正文"
-    : "把所选内容提炼为可编辑、可搜索的知识卡";
+    ? ui("文件夹仅按当前目录索引提炼，不会读取未明确打开的文件正文")
+    : ui("把所选内容提炼为可编辑、可搜索的知识卡");
   selectionActionsEl.classList.toggle("hidden", !selection.length);
   if (!selection.length) document.getElementById("selectionMoreMenu").open = false;
   updateCodexSelectionContext();
@@ -472,7 +473,7 @@ function appendSource(element, item) {
   const source = document.createElement("div");
   source.className = "source-line";
   const label = document.createElement("span");
-  label.textContent = "来源";
+  label.textContent = ui("来源");
   const link = document.createElement("a");
   link.href = item.source.url;
   link.target = "_blank";
