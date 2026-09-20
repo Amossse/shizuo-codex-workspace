@@ -1,7 +1,7 @@
 // Module: local AI chat state, progress, and message delivery.
 function codexChatElapsedText(task) {
   const seconds = Math.max(0, Math.floor((Date.now() - task.startedAt) / 1000));
-  return `${seconds} 秒`;
+  return ui("{0} 秒", seconds);
 }
 
 function refreshCodexChatLoadingTime(task) {
@@ -13,31 +13,31 @@ function refreshCodexChatLoadingTime(task) {
 
 function updateCodexChatProgress(task, progressText) {
   if (!task || codexChatTask !== task) return;
-  task.progressText = String(progressText || `${aiRuntimeLabel()} 正在处理…`);
+  task.progressText = String(progressText || ui("{0} 正在处理…", aiRuntimeLabel()));
   setCodexChatStatus(task.progressText, "loading");
   renderCodexChatMessages();
   syncLocalPluginCodexTask(task, "running", { message: task.progressText });
 }
 
-function friendlyCodexProgress(message, fallback = "正在处理任务") {
+function friendlyCodexProgress(message, fallback = ui("正在处理任务")) {
   const stages = {
-    thinking: "正在理解问题并组织回答",
-    working: "正在处理任务",
-    "running-command": "正在运行检查或命令",
-    "using-tool": "正在调用工具",
-    "updating-files": "正在更新文件",
-    searching: "正在检索资料",
-    planning: "正在规划执行步骤",
-    "reading-page": "正在读取页面内容",
-    "building-video": "正在组装画面",
-    "checking-video": "正在组装画面",
-    "retrying-video-check": "正在组装画面",
-    "repairing-video": "正在组装画面",
-    "repairing-render": "正在组装画面",
-    "rendering-video": "正在导出视频",
-    "packaging-video": "正在导出视频",
-    "generating-image": `${aiRuntimeLabel()} 正在自由绘图`,
-    "packaging-image": "正在将图片添加到白板"
+    thinking: ui("正在理解问题并组织回答"),
+    working: ui("正在处理任务"),
+    "running-command": ui("正在运行检查或命令"),
+    "using-tool": ui("正在调用工具"),
+    "updating-files": ui("正在更新文件"),
+    searching: ui("正在检索资料"),
+    planning: ui("正在规划执行步骤"),
+    "reading-page": ui("正在读取页面内容"),
+    "building-video": ui("正在组装画面"),
+    "checking-video": ui("正在组装画面"),
+    "retrying-video-check": ui("正在组装画面"),
+    "repairing-video": ui("正在组装画面"),
+    "repairing-render": ui("正在组装画面"),
+    "rendering-video": ui("正在导出视频"),
+    "packaging-video": ui("正在导出视频"),
+    "generating-image": ui("{0} 正在自由绘图", aiRuntimeLabel()),
+    "packaging-image": ui("正在将图片添加到白板")
   };
   return String(message?.label || stages[String(message?.stage || "")] || fallback);
 }
@@ -46,7 +46,7 @@ function normalizeTaskEvent(event) {
   return {
     id: String(event?.id || db.makeId("task-event")),
     stage: String(event?.stage || "working").slice(0, 80),
-    label: String(event?.label || "正在处理任务").slice(0, 300),
+    label: String(event?.label || ui("正在处理任务")).slice(0, 300),
     detail: String(event?.detail || "").slice(0, 1_500),
     status: ["running", "success", "error", "cancelled"].includes(event?.status) ? event.status : "running",
     createdAt: Number(event?.createdAt) || Date.now()
@@ -78,9 +78,9 @@ function taskElapsedText(startedAt, completedAt = 0) {
   if (!startedAt) return "";
   const elapsed = Math.max(0, (completedAt || Date.now()) - startedAt);
   const seconds = Math.floor(elapsed / 1000);
-  if (seconds < 60) return `${seconds} 秒`;
+  if (seconds < 60) return ui("{0} 秒", seconds);
   const minutes = Math.floor(seconds / 60);
-  return minutes < 60 ? `${minutes} 分 ${seconds % 60} 秒` : `${Math.floor(minutes / 60)} 小时 ${minutes % 60} 分`;
+  return minutes < 60 ? ui("{0} 分 {1} 秒", minutes, seconds % 60) : ui("{0} 小时 {1} 分", Math.floor(minutes / 60), minutes % 60);
 }
 
 function createTaskProcess(item, active) {
@@ -93,7 +93,7 @@ function createTaskProcess(item, active) {
   const latest = events.at(-1);
   const label = document.createElement("span");
   label.className = "task-process-summary";
-  label.textContent = active ? (item.taskProgress || latest?.label || "正在处理任务") : `过程记录 · ${events.length} 步`;
+  label.textContent = active ? (item.taskProgress || latest?.label || ui("正在处理任务")) : ui("过程记录 · {0} 步", events.length);
   const elapsed = document.createElement("time");
   elapsed.className = "task-process-elapsed";
   elapsed.dataset.startedAt = String(item.taskStartedAt || 0);
@@ -151,7 +151,7 @@ function recordTaskProgress(item, message, fallback) {
 
 function startCodexChatProgress(task) {
   task.startedAt = Date.now();
-  task.progressText = "正在准备会话上下文…";
+  task.progressText = ui("正在准备会话上下文…");
   task.progressTimer = setInterval(() => refreshCodexChatLoadingTime(task), 1000);
   updateCodexChatProgress(task, task.progressText);
 }
@@ -176,10 +176,10 @@ function setCodexChatOpen(open) {
 
 function updateCodexChatTarget() {
   if (!codexChatTargetEl) return;
-  const context = codexAttachedPage ? "已附加网页 · " : "";
+  const context = codexAttachedPage ? ui("已附加网页 · ") : "";
   codexChatTargetEl.textContent = currentBoard
-    ? `${context}回答可添加到：${currentBoard.name}`
-    : "回答可保存到收件箱";
+    ? ui("{0}回答可添加到：{1}", context, currentBoard.name)
+    : ui("回答可保存到收件箱");
 }
 
 function updateCodexChatControls() {
@@ -187,10 +187,10 @@ function updateCodexChatControls() {
   const atCapacity = !running && codexAtCapacity();
   codexChatSendEl.disabled = !codexChatReady || running || atCapacity || !codexChatInputEl.value.trim();
   codexChatSendEl.title = !codexChatReady
-    ? "连接 Codex 后可发送"
+    ? ui("连接 Codex 后可发送")
     : atCapacity
     ? codexCapacityReason()
-    : running ? "当前回答完成后可继续发送" : "发送给 Codex";
+    : running ? ui("当前回答完成后可继续发送") : ui("发送给 Codex");
   codexChatSendEl.dataset.state = running ? "loading" : "default";
   codexChatStopEl.hidden = !running;
   codexChatStopEl.disabled = Boolean(codexChatTask?.cancelRequested);
@@ -208,9 +208,9 @@ function updateCodexSelectionContext() {
   if (!codexSelectionContextEl) return;
   const hasPage = Boolean(codexAttachedPage?.content);
   codexSelectionContextEl.hidden = !hasPage;
-  codexSelectionCountEl.textContent = `已附加网页：${codexAttachedPage?.title || "当前网页"}`;
+  codexSelectionCountEl.textContent = ui("已附加网页：{0}", codexAttachedPage?.title || ui("当前网页"));
   codexSelectionClearEl.disabled = Boolean(codexChatTask);
-  summarizeSelectionTextEl.textContent = "总结网页";
+  summarizeSelectionTextEl.textContent = ui("总结网页");
   summarizeSelectionTextEl.disabled = Boolean(codexChatTask) || codexAtCapacity() || !hasPage;
   summarizeSelectionImagesEl.hidden = true;
   summarizeSelectionVideoEl.hidden = true;
@@ -243,7 +243,7 @@ function extractKnowledgeCardFromSelection() {
   selectionMoreMenuEl.open = false;
   const placeholder = addBoardItem({
     type: "document",
-    text: "正在理解所选内容…",
+    text: ui("正在理解所选内容…"),
     documentLanguage: "markdown",
     x: aiResultPoint(selection).x,
     y: aiResultPoint(selection).y,
@@ -329,7 +329,9 @@ async function addCodexChatAnswerToBoard(message, button) {
   button.disabled = true;
   button.dataset.state = "loading";
   try {
-    const text = `Codex 会话\n\n${message.text}`;
+    const text = ui(`Codex 会话
+
+{0}`, message.text);
     if (currentBoard) {
       const lineEstimate = text.split("\n").length + Math.ceil(text.length / 34);
       addBoardItem({
@@ -354,15 +356,15 @@ async function addCodexChatAnswerToBoard(message, button) {
   } catch (error) {
     button.disabled = false;
     button.dataset.state = "error";
-    button.textContent = "添加失败，重试";
-    setCodexChatStatus(error?.message || "添加到白板失败", "error");
+    button.textContent = ui("添加失败，重试");
+    setCodexChatStatus(error?.message || ui("添加到白板失败"), "error");
   }
 }
 
 function createCodexMessageAddedStatus(message) {
   const status = document.createElement("span");
   status.className = "codex-message-added";
-  status.textContent = message.addedTarget === "inbox" ? "✓ 已保存" : "✓ 已添加";
+  status.textContent = message.addedTarget === "inbox" ? ui("✓ 已保存") : ui("✓ 已添加");
   return status;
 }
 
@@ -372,7 +374,7 @@ function createCodexChatMessageElement(message) {
   article.dataset.messageId = message.id;
   const label = document.createElement("div");
   label.className = "codex-message-label";
-  label.textContent = message.role === "user" ? "你" : message.role === "error" ? "错误" : "Codex";
+  label.textContent = message.role === "user" ? ui("你") : message.role === "error" ? ui("错误") : "Codex";
   const body = document.createElement("div");
   body.className = "codex-message-body";
   if (message.role === "assistant") renderTaskMarkdown(body, message.text);
@@ -391,7 +393,7 @@ function createCodexChatMessageElement(message) {
       const add = document.createElement("button");
       add.className = "codex-message-action";
       add.type = "button";
-      add.textContent = currentBoard ? "+ 放到白板" : "+ 保存到收件箱";
+      add.textContent = currentBoard ? ui("+ 放到白板") : ui("+ 保存到收件箱");
       add.addEventListener("click", () => addCodexChatAnswerToBoard(message, add));
       actions.appendChild(add);
     }
@@ -417,7 +419,7 @@ function createCodexChatLoadingElement(task) {
   spinner.setAttribute("aria-hidden", "true");
   const stage = document.createElement("span");
   stage.className = "codex-loading-stage";
-  stage.textContent = task.progressText || "Codex 正在处理…";
+  stage.textContent = task.progressText || ui("Codex 正在处理…");
   const elapsed = document.createElement("span");
   elapsed.className = "codex-loading-time";
   elapsed.setAttribute("aria-hidden", "true");
@@ -425,7 +427,7 @@ function createCodexChatLoadingElement(task) {
   row.append(spinner, stage, elapsed);
   const hint = document.createElement("div");
   hint.className = "codex-loading-hint";
-  hint.textContent = "回答生成中，你可以随时停止";
+  hint.textContent = ui("回答生成中，你可以随时停止");
   body.append(row, hint);
   const content = document.createElement("div");
   content.className = "codex-message-content";
@@ -456,7 +458,7 @@ function codexChatConversationContext(currentMessageId) {
   let context = codexChatMessages
     .filter(message => message.id !== currentMessageId && message.role !== "error")
     .slice(-16)
-    .map(message => `${message.role === "user" ? "用户" : aiRuntimeLabel()}：\n${message.text}`)
+    .map(message => `${message.role === "user" ? ui("用户") : aiRuntimeLabel()}：\n${message.text}`)
     .join("\n\n---\n\n");
   if (context.length > MAX_CODEX_CHAT_CONTEXT_CHARS) {
     context = context.slice(context.length - MAX_CODEX_CHAT_CONTEXT_CHARS);
@@ -465,29 +467,29 @@ function codexChatConversationContext(currentMessageId) {
 }
 
 async function connectCodexChat() {
-  setCodexChatStatus("正在连接…", "loading");
+  setCodexChatStatus(ui("正在连接…"), "loading");
   try {
     const response = await chrome.runtime.sendMessage({ type: CODEX_STATUS_REQUEST, runtime: aiRuntime });
-    if (!response?.ok) throw new Error(response?.error || "无法连接本地桥接");
+    if (!response?.ok) throw new Error(response?.error || ui("无法连接本地桥接"));
     lastCodexStatusSnapshot = response;
     codexChatReady = Boolean(response.ready);
     codexConnectionHint = codexChatReady
       ? ""
       : (response.health?.nativeHost
-        ? `${aiRuntimeLabel()} CLI 不可用，请确认已安装并在终端完成登录`
-        : "本地桥接未连接：请在 chrome://extensions 重新加载拾作；首次安装请先在扩展目录运行 ./install.sh --core");
+        ? ui("{0} CLI 不可用，请确认已安装并在终端完成登录", aiRuntimeLabel())
+        : ui("本地桥接未连接：请在 chrome://extensions 重新加载拾作；首次安装请先在扩展目录运行 ./install.sh --core"));
     updateCodexTaskSnapshot(response);
     updateExternalCodexStatus(response);
     setCodexChatStatus(
       codexChatReady
-        ? (codexRunningTaskIds().size ? `${codexRunningTaskIds().size} 个任务执行中` : "已连接")
+        ? (codexRunningTaskIds().size ? ui("{0} 个任务执行中", codexRunningTaskIds().size) : ui("已连接"))
         : codexConnectionHint,
       codexChatReady ? (codexRunningTaskIds().size ? "loading" : "success") : "error"
     );
   } catch (error) {
     codexChatReady = false;
     lastCodexStatusSnapshot = null;
-    codexConnectionHint = "本地桥接未连接：请在 chrome://extensions 重新加载拾作；首次安装请先在扩展目录运行 ./install.sh --core";
+    codexConnectionHint = ui("本地桥接未连接：请在 chrome://extensions 重新加载拾作；首次安装请先在扩展目录运行 ./install.sh --core");
     console.warn("[pagedock-codex-chat] local bridge unavailable", { reason: error?.message || String(error) });
     setCodexChatStatus(codexConnectionHint, "error");
   }
@@ -533,8 +535,8 @@ async function sendCodexChatMessage() {
   try {
     const materialContext = codexAttachedPage?.content
       ? [
-        `网页：${codexAttachedPage.title || "当前网页"}`,
-        codexAttachedPage.url ? `来源：${codexAttachedPage.url}` : "",
+        ui("网页：{0}", codexAttachedPage.title || ui("当前网页")),
+        codexAttachedPage.url ? ui("来源：{0}", codexAttachedPage.url) : "",
         codexAttachedPage.content
       ].filter(Boolean).join("\n\n")
       : "";
@@ -546,20 +548,20 @@ async function sendCodexChatMessage() {
       mode: aiRuntime === "agy" ? "conversation" : "coding",
       prompt,
       page: {
-        title: codexAttachedPage?.title || (currentBoard ? `${currentBoard.name} · ${aiRuntimeLabel()} 会话` : `拾作 · ${aiRuntimeLabel()} 会话`),
+        title: codexAttachedPage?.title || (currentBoard ? ui("{0} · {1} 会话", currentBoard.name, aiRuntimeLabel()) : ui("拾作 · {0} 会话", aiRuntimeLabel())),
         url: codexAttachedPage?.url || "",
         content: [materialContext, conversationContext].filter(Boolean).join("\n\n---\n\n")
       },
       images: []
     });
-    if (!response?.ok) throw new Error(response?.error || `${aiRuntimeLabel()} 会话启动失败`);
+    if (!response?.ok) throw new Error(response?.error || ui("{0} 会话启动失败", aiRuntimeLabel()));
   } catch (error) {
     stopCodexChatProgress(task);
     codexChatTask = undefined;
-    const errorMessage = error?.message || `${aiRuntimeLabel()} 会话启动失败`;
+    const errorMessage = error?.message || ui("{0} 会话启动失败", aiRuntimeLabel());
     appendCodexChatMessage("error", errorMessage);
     syncLocalPluginCodexTask(task, "failed", { message: errorMessage });
-    setCodexChatStatus("发送失败", "error");
+    setCodexChatStatus(ui("发送失败"), "error");
     updateCodexChatControls();
     updateSelectionUi();
   }
@@ -570,42 +572,42 @@ function handleCodexChatEvent(message) {
   if (!task || message?.id !== task.id) {
     const count = codexRunningTaskIds().size;
     setCodexChatStatus(
-      codexChatReady ? (count ? `${count} 个任务执行中` : "已连接") : "连接不可用",
+      codexChatReady ? (count ? ui("{0} 个任务执行中", count) : ui("已连接")) : ui("连接不可用"),
       codexChatReady ? (count ? "loading" : "success") : "error"
     );
     updateCodexChatControls();
     return;
   }
   if (message.type === "started") {
-    updateCodexChatProgress(task, "正在理解问题并组织回答…");
+    updateCodexChatProgress(task, ui("正在理解问题并组织回答…"));
     return;
   }
   if (message.type === "progress") {
-    updateCodexChatProgress(task, friendlyCodexProgress(message, "正在处理会话"));
+    updateCodexChatProgress(task, friendlyCodexProgress(message, ui("正在处理会话")));
     return;
   }
   if (message.type === "done") {
     stopCodexChatProgress(task);
     codexChatTask = undefined;
-    const answer = message.answer || `${aiRuntimeLabel()} 没有返回内容`;
+    const answer = message.answer || ui("{0} 没有返回内容", aiRuntimeLabel());
     appendCodexChatMessage("assistant", answer);
-    syncLocalPluginCodexTask(task, "completed", { message: "回答已生成", result: answer });
+    syncLocalPluginCodexTask(task, "completed", { message: ui("回答已生成"), result: answer });
     console.info("[pagedock-codex-chat] conversation completed", { taskId: task.id });
-    setCodexChatStatus("已完成 · 可继续追问", "success");
+    setCodexChatStatus(ui("已完成 · 可继续追问"), "success");
     if (codexChatPanelEl.hidden) codexChatLauncherEl.dataset.hasUpdate = "true";
   } else if (message.type === "cancelled") {
     stopCodexChatProgress(task);
     codexChatTask = undefined;
-    syncLocalPluginCodexTask(task, "cancelled", { message: "任务已停止" });
+    syncLocalPluginCodexTask(task, "cancelled", { message: ui("任务已停止") });
     renderCodexChatMessages();
-    setCodexChatStatus("已停止 · 可继续提问");
+    setCodexChatStatus(ui("已停止 · 可继续提问"));
   } else if (message.type === "error") {
     stopCodexChatProgress(task);
     codexChatTask = undefined;
-    const errorMessage = message.error || `${aiRuntimeLabel()} 会话失败`;
+    const errorMessage = message.error || ui("{0} 会话失败", aiRuntimeLabel());
     appendCodexChatMessage("error", errorMessage);
     syncLocalPluginCodexTask(task, "failed", { message: errorMessage });
-    setCodexChatStatus("执行失败", "error");
+    setCodexChatStatus(ui("执行失败"), "error");
   } else {
     return;
   }

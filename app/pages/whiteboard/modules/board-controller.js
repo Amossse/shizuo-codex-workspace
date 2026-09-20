@@ -277,7 +277,7 @@ async function saveBoardNow() {
   const baseBoard = clone(boardReference);
   const snapshot = {
     ...clone(boardReference),
-    name: boardNameEl.value.trim() || boardReference.name || "未命名白板",
+    name: boardNameEl.value.trim() || boardReference.name || ui("未命名白板"),
     items: clone(boardItems),
     viewport: {
       zoom,
@@ -293,15 +293,15 @@ async function saveBoardNow() {
       lastStorageEstimateAt = Date.now();
       const estimate = await navigator.storage.estimate();
       if (estimate.quota && estimate.usage / estimate.quota > 0.9) {
-        setStatus("本地存储空间接近上限，建议先备份并清理大型视频或图片", true);
+        setStatus(ui("本地存储空间接近上限，建议先备份并清理大型视频或图片"), true);
         console.warn("[pagedock-storage] quota pressure", { usage: estimate.usage, quota: estimate.quota });
       }
     }
     operation = enqueueBoardWrite(boardId, () => db.commitBoardSnapshot(snapshot, {
       baseBoard,
       preserveArchived: boardId === db.INBOX_ID,
-      actor: { id: "owner", name: "白板用户" },
-      reason: "编辑白板"
+      actor: { id: "owner", name: ui("白板用户") },
+      reason: ui("编辑白板")
     }));
     saveInFlight = operation;
     const saved = await operation;
@@ -331,8 +331,8 @@ async function saveBoardNow() {
   } catch (error) {
     console.error("[pagedock-board] save failed", error);
     setStatus(error?.code === "BOARD_CONFLICT"
-      ? "检测到协作冲突：已保留当前编辑，请重新打开白板后合并"
-      : "白板未能保存，请检查存储空间后重试", true);
+      ? ui("检测到协作冲突：已保留当前编辑，请重新打开白板后合并")
+      : ui("白板未能保存，请检查存储空间后重试"), true);
     return null;
   } finally {
     if (saveInFlight === operation) saveInFlight = undefined;
@@ -471,10 +471,10 @@ function restoreRunningTasksForBoard(board) {
       item.taskRunId = "";
       item.taskCompletedAt = Date.now();
       item.taskError = item.taskWorkflowRole === "controller"
-        ? "页面刷新中断了工作流调度，已有内容已保留，请点击重试继续执行"
-        : "任务连接已中断，原始内容已经保留，可以重新执行";
+        ? ui("页面刷新中断了工作流调度，已有内容已保留，请点击重试继续执行")
+        : ui("任务连接已中断，原始内容已经保留，可以重新执行");
       item.text = String(item.text || lastUserMessage?.text || "");
-      appendTaskEvent(item, { stage: "interrupted", label: "任务连接已中断", status: "error" });
+      appendTaskEvent(item, { stage: "interrupted", label: ui("任务连接已中断"), status: "error" });
       continue;
     }
     const task = {
@@ -498,8 +498,8 @@ function restoreRunningTasksForBoard(board) {
     };
     if (workflowPlanning || ["text", "image", "image-gen", "video", "video-post"].includes(item.taskLastMode)) whiteboardCodexTasks.set(runId, task);
     else boardCardCodexTasks.set(runId, task);
-    item.taskProgress = item.taskProgress || "正在恢复任务进度";
-    appendTaskEvent(item, { stage: "resumed", label: "已恢复任务连接", status: "running" });
+    item.taskProgress = item.taskProgress || ui("正在恢复任务进度");
+    appendTaskEvent(item, { stage: "resumed", label: ui("已恢复任务连接"), status: "running" });
     console.info("[pagedock-task] resumed", { taskId: runId, itemId: item.id, mode: item.taskLastMode });
   }
 }
@@ -561,7 +561,7 @@ async function openBoard(boardId, updateUrl = true) {
   selectedIds.clear();
   setView("board");
   if (updateUrl) history.pushState({}, "", `${location.pathname}?board=${encodeURIComponent(board.id)}`);
-  document.title = `${board.name} · 拾作`;
+  document.title = ui("{0} · 拾作", board.name);
   boardNameEl.value = board.name;
   renderAllItems();
   setZoom(board.viewport?.zoom || 1, false);
@@ -698,7 +698,7 @@ function handleCopy(event) {
   event.clipboardData.setData(CLIPBOARD_TYPE, JSON.stringify(copied));
   event.clipboardData.setData("text/plain", copied.map(itemLabel).join("\n\n"));
   event.preventDefault();
-  setStatus(`已复制 ${copied.length} 项`);
+  setStatus(ui("已复制 {0} 项", copied.length));
 }
 
 function startMarquee(event) {

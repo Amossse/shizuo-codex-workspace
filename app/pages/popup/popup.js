@@ -15,7 +15,7 @@ function formatLabel(type) {
 }
 
 function renderPreferredFormat() {
-  savePageButton.textContent = `保存当前页 · ${formatLabel(preferredCaptureType)}`;
+  savePageButton.textContent = ui("保存当前页 · {0}", formatLabel(preferredCaptureType));
   saveMarkdownButton.setAttribute("aria-checked", String(preferredCaptureType === "capture-markdown"));
   savePdfButton.setAttribute("aria-checked", String(preferredCaptureType === "capture-screenshot"));
 }
@@ -43,26 +43,26 @@ async function runCapture(type, remember = false) {
   }
   formatMenuEl.open = false;
   setBusy(true);
-  setStatus(type === "capture-markdown" ? "正在解析完整页面…" : "正在滚动并生成 PDF…");
+  setStatus(type === "capture-markdown" ? ui("正在解析完整页面…") : ui("正在滚动并生成 PDF…"));
 
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab?.id) throw new Error("找不到当前网页");
+    if (!tab?.id) throw new Error(ui("找不到当前网页"));
     const result = await chrome.runtime.sendMessage({
       type,
       tabId: tab.id,
       expectedUrl: tab.url
     });
-    if (!result?.ok) throw new Error(result?.error || "操作失败");
+    if (!result?.ok) throw new Error(result?.error || ui("操作失败"));
 
     if (type === "capture-markdown") {
       const amount = result.blockCount
-        ? `${result.blockCount} 个内容块`
-        : `${result.textLength || 0} 字`;
-      setStatus(`已解析 ${amount}`);
+        ? ui("{0} 个内容块", result.blockCount)
+        : ui("{0} 字", result.textLength || 0);
+      setStatus(ui("已解析 {0}", amount));
     } else {
-      const warning = result.reachedEnd ? "" : "（无限滚动页可能未到终点）";
-      setStatus(`已生成 1 个高清 PDF（${result.pageCount} 页）${warning}`);
+      const warning = result.reachedEnd ? "" : ui("（无限滚动页可能未到终点）");
+      setStatus(ui("已生成 1 个高清 PDF（{0} 页）{1}", result.pageCount, warning));
     }
     setTimeout(() => window.close(), 800);
   } catch (error) {
@@ -76,7 +76,7 @@ saveMarkdownButton.addEventListener("click", () => runCapture("capture-markdown"
 savePdfButton.addEventListener("click", () => runCapture("capture-screenshot", true));
 openWorkspaceButton.addEventListener("click", async () => {
   setBusy(true);
-  setStatus("正在打开拾作…");
+  setStatus(ui("正在打开拾作…"));
   try {
     await chrome.tabs.create({ url: WHITEBOARD_URL });
     window.close();
@@ -95,7 +95,7 @@ document.addEventListener("keydown", event => {
   formatMenuSummaryEl.focus();
 });
 
-chrome.storage.local.get(SAVE_FORMAT_KEY).then(stored => {
+ShizuoI18n.ready.then(() => chrome.storage.local.get(SAVE_FORMAT_KEY)).then(stored => {
   const value = stored[SAVE_FORMAT_KEY];
   if (["capture-markdown", "capture-screenshot"].includes(value)) preferredCaptureType = value;
   renderPreferredFormat();

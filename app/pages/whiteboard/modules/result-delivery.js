@@ -12,7 +12,9 @@ async function addWhiteboardAiResult(task, answer) {
   if (task.mode === "knowledge") {
     const item = {
       type: "document",
-      text: String(answer || "# 知识卡\n\n未识别到可提炼的内容").trim(),
+      text: String(answer || ui(`# 知识卡
+
+未识别到可提炼的内容`)).trim(),
       documentLanguage: "markdown",
       x: task.point.x,
       y: task.point.y,
@@ -45,14 +47,14 @@ async function addWhiteboardAiResult(task, answer) {
   if (["video", "video-post"].includes(task.mode)) {
     const artifact = task.videoArtifact;
     if (!artifact?.ready || !artifact.chunks?.length || artifact.chunks.some(chunk => !chunk)) {
-      throw new Error("视频文件回传不完整，请重试");
+      throw new Error(ui("视频文件回传不完整，请重试"));
     }
     const src = `data:${artifact.mimeType || "video/mp4"};base64,${artifact.chunks.join("")}`;
     const filename = safeFilename(artifact.filename || `${task.boardName}-AI-Video.mp4`);
     const item = {
       type: "video",
       src,
-      alt: task.mode === "video-post" ? `Kokoro 口播视频：${task.boardName}` : `AI 视频：${task.boardName}`,
+      alt: task.mode === "video-post" ? ui("Kokoro 口播视频：{0}", task.boardName) : ui("AI 视频：{0}", task.boardName),
       filename: filename.endsWith(".mp4") ? filename : `${filename}.mp4`,
       x: task.point.x,
       y: task.point.y,
@@ -75,10 +77,10 @@ async function addWhiteboardAiResult(task, answer) {
   if (task.mode === "image-gen") {
     const artifact = task.imageArtifact;
     if (!artifact?.ready || !artifact.chunks?.length || artifact.chunks.some(chunk => !chunk)) {
-      throw new Error("AI 自由绘图文件回传不完整，请重试");
+      throw new Error(ui("AI 自由绘图文件回传不完整，请重试"));
     }
     const src = `data:${artifact.mimeType || "image/png"};base64,${artifact.chunks.join("")}`;
-    const alt = `Codex AI 自由绘图：${safeFilename(artifact.filename || task.boardName)}`;
+    const alt = ui("Codex AI 自由绘图：{0}", safeFilename(artifact.filename || task.boardName));
     task.imageArtifact = undefined;
     if (currentBoard?.id === task.boardId) {
       const selectResult = taskMatchesCurrentSelection(task);
@@ -111,7 +113,7 @@ async function addWhiteboardAiResult(task, answer) {
     const visual = await renderVisualSummary(task, answer);
     if (currentBoard?.id === task.boardId) {
       const selectResult = taskMatchesCurrentSelection(task);
-      await addImageSource(visual.dataUrl, `Codex 图片：${visual.title}`, task.point, null, selectResult, relationSourceIds, {
+      await addImageSource(visual.dataUrl, ui("Codex 图片：{0}", visual.title), task.point, null, selectResult, relationSourceIds, {
         generationContext: task.contextSnapshot,
         provenance
       });
@@ -121,7 +123,7 @@ async function addWhiteboardAiResult(task, answer) {
     await db.addItem(task.boardId, {
       type: "image",
       src: visual.dataUrl,
-      alt: `Codex 图片：${visual.title}`,
+      alt: ui("Codex 图片：{0}", visual.title),
       x: task.point.x,
       y: task.point.y,
       width,
@@ -133,7 +135,9 @@ async function addWhiteboardAiResult(task, answer) {
     notifyDataChanged([task.boardId], "whiteboard-ai-visual-result");
     return;
   }
-  const text = `Codex 总结\n\n${String(answer || "Codex 没有返回内容").trim()}`;
+  const text = ui(`Codex 总结
+
+{0}`, String(answer || ui("Codex 没有返回内容")).trim());
   const lineEstimate = text.split("\n").length + Math.ceil(text.length / 34);
   const item = {
     type: "text",
@@ -166,7 +170,7 @@ function handleWhiteboardCodexEvent(message) {
       controller.taskMessages = task.messagesBefore;
       controller.text = task.userPrompt;
       controller.taskStatus = "error";
-      controller.taskError = error?.message || "动态工作流规划失败";
+      controller.taskError = error?.message || ui("动态工作流规划失败");
       controller.taskProgress = "";
       controller.taskRunId = "";
       controller.taskCompletedAt = Date.now();
@@ -179,18 +183,18 @@ function handleWhiteboardCodexEvent(message) {
   if (message.type === "artifact-start" && task.mode === "image-gen" && message.artifactType === "image") {
     const totalChunks = Number(message.totalChunks) || 0;
     if (totalChunks < 1 || totalChunks > MAX_CODEX_IMAGE_CHUNKS) {
-      updateWhiteboardCodexStatus(task, "生成图片过大，无法回传到白板");
+      updateWhiteboardCodexStatus(task, ui("生成图片过大，无法回传到白板"));
       return;
     }
     task.imageArtifact = {
       mimeType: String(message.mimeType || "image/png"),
-      filename: String(message.filename || "拾作-AI-Image.png"),
+      filename: String(message.filename || ui("拾作-AI-Image.png")),
       size: Number(message.size) || 0,
       chunks: new Array(totalChunks),
       received: 0,
       ready: false
     };
-    updateWhiteboardCodexStatus(task, "正在将图片添加到白板");
+    updateWhiteboardCodexStatus(task, ui("正在将图片添加到白板"));
     return;
   }
   if (message.type === "artifact-chunk" && message.artifactType === "image" && task.imageArtifact) {
@@ -199,29 +203,29 @@ function handleWhiteboardCodexEvent(message) {
     if (!task.imageArtifact.chunks[index]) task.imageArtifact.received += 1;
     task.imageArtifact.chunks[index] = String(message.data || "");
     const percent = Math.round(task.imageArtifact.received / task.imageArtifact.chunks.length * 100);
-    updateWhiteboardCodexStatus(task, `正在将图片添加到白板 · ${percent}%`);
+    updateWhiteboardCodexStatus(task, ui("正在将图片添加到白板 · {0}%", percent));
     return;
   }
   if (message.type === "artifact-done" && message.artifactType === "image" && task.imageArtifact) {
     task.imageArtifact.ready = task.imageArtifact.received === task.imageArtifact.chunks.length;
-    updateWhiteboardCodexStatus(task, "正在将图片添加到白板");
+    updateWhiteboardCodexStatus(task, ui("正在将图片添加到白板"));
     return;
   }
   if (message.type === "artifact-start" && ["video", "video-post"].includes(task.mode)) {
     const totalChunks = Number(message.totalChunks) || 0;
     if (totalChunks < 1 || totalChunks > MAX_CODEX_VIDEO_CHUNKS) {
-      updateWhiteboardCodexStatus(task, "视频文件过大，无法回传到白板");
+      updateWhiteboardCodexStatus(task, ui("视频文件过大，无法回传到白板"));
       return;
     }
     task.videoArtifact = {
       mimeType: String(message.mimeType || "video/mp4"),
-      filename: String(message.filename || "拾作-AI-Video.mp4"),
+      filename: String(message.filename || ui("拾作-AI-Video.mp4")),
       size: Number(message.size) || 0,
       chunks: new Array(totalChunks),
       received: 0,
       ready: false
     };
-    updateWhiteboardCodexStatus(task, "正在导出视频");
+    updateWhiteboardCodexStatus(task, ui("正在导出视频"));
     return;
   }
   if (message.type === "artifact-chunk" && task.videoArtifact) {
@@ -230,26 +234,26 @@ function handleWhiteboardCodexEvent(message) {
     if (!task.videoArtifact.chunks[index]) task.videoArtifact.received += 1;
     task.videoArtifact.chunks[index] = String(message.data || "");
     const percent = Math.round(task.videoArtifact.received / task.videoArtifact.chunks.length * 100);
-    updateWhiteboardCodexStatus(task, `正在导出视频 · ${percent}%`);
+    updateWhiteboardCodexStatus(task, ui("正在导出视频 · {0}%", percent));
     return;
   }
   if (message.type === "artifact-done" && task.videoArtifact) {
     task.videoArtifact.ready = task.videoArtifact.received === task.videoArtifact.chunks.length;
-    updateWhiteboardCodexStatus(task, "正在导出视频");
+    updateWhiteboardCodexStatus(task, ui("正在导出视频"));
     return;
   }
   if (message.type === "started" || message.type === "progress") {
     const taskItem = task.taskItemId && currentBoard?.id === task.boardId ? itemById(task.taskItemId) : null;
     if (taskItem) {
-      recordTaskProgress(taskItem, message, "正在理解素材");
+      recordTaskProgress(taskItem, message, ui("正在理解素材"));
       task.taskEvents = taskItem.taskEvents;
       task.status = taskItem.taskProgress;
     } else {
-      updateWhiteboardCodexStatus(task, friendlyCodexProgress(message, "正在理解素材"));
+      updateWhiteboardCodexStatus(task, friendlyCodexProgress(message, ui("正在理解素材")));
       if (task.taskItemId) {
         const event = normalizeTaskEvent({
           stage: message.stage,
-          label: friendlyCodexProgress(message, "正在理解素材"),
+          label: friendlyCodexProgress(message, ui("正在理解素材")),
           detail: message.detail,
           status: message.status,
           createdAt: message.createdAt
@@ -264,15 +268,15 @@ function handleWhiteboardCodexEvent(message) {
   }
   if (message.type === "done") {
     updateWhiteboardCodexStatus(task, ["video", "video-post"].includes(task.mode)
-      ? "正在导出视频"
+      ? ui("正在导出视频")
       : task.mode === "image-gen"
-        ? "正在将图片添加到白板"
-        : task.mode === "image" ? "正在生成图片…" : task.mode === "knowledge" ? "正在整理知识卡…" : "正在生成文字卡片…");
+        ? ui("正在将图片添加到白板")
+        : task.mode === "image" ? ui("正在生成图片…") : task.mode === "knowledge" ? ui("正在整理知识卡…") : ui("正在生成文字卡片…"));
     const linkedTaskResult = task.mode === "text"
-      ? String(message.answer || "Codex 没有返回内容")
+      ? String(message.answer || ui("Codex 没有返回内容"))
       : ["image", "image-gen"].includes(task.mode)
-        ? "图片已生成并添加到白板"
-        : task.mode === "video-post" ? "口播与字幕已添加到新视频" : "视频已生成并添加到白板";
+        ? ui("图片已生成并添加到白板")
+        : task.mode === "video-post" ? ui("口播与字幕已添加到新视频") : ui("视频已生成并添加到白板");
     const resultWork = task.taskItemId && task.mode === "text"
       ? Promise.resolve()
       : addWhiteboardAiResult(task, message.answer);
@@ -290,7 +294,7 @@ function handleWhiteboardCodexEvent(message) {
             taskGenerationScope: "latest",
             taskGenerationMessageId: "",
             taskCompletedAt: Date.now(),
-            taskEvents: [...(task.taskEvents || []), normalizeTaskEvent({ stage: "completed", label: "任务执行完成", status: "success" })].slice(-MAX_TASK_EVENTS)
+            taskEvents: [...(task.taskEvents || []), normalizeTaskEvent({ stage: "completed", label: ui("任务执行完成"), status: "success" })].slice(-MAX_TASK_EVENTS)
           })
         : undefined)
       .then(() => {
@@ -302,7 +306,7 @@ function handleWhiteboardCodexEvent(message) {
         });
         updateSelectionUi();
         updateCodexChatControls();
-        if (!task.taskItemId && task.mode === "knowledge") setStatus("知识卡已生成", false, "success");
+        if (!task.taskItemId && task.mode === "knowledge") setStatus(ui("知识卡已生成"), false, "success");
         task.finishTask?.({ status: "success", reason: "" });
       })
       .catch(error => {
@@ -314,26 +318,26 @@ function handleWhiteboardCodexEvent(message) {
             taskStatus: "error",
             taskMessages: task.messagesBefore,
             text: String(taskItem?.text || "").trim() ? taskItem.text : task.userPrompt,
-            taskError: error?.message || "AI 结果保存失败",
+            taskError: error?.message || ui("AI 结果保存失败"),
             taskProgress: "",
             taskRunId: "",
             taskCompletedAt: Date.now(),
-            taskEvents: [...(task.taskEvents || []), normalizeTaskEvent({ stage: "failed", label: "结果保存失败", detail: error?.message || "", status: "error" })].slice(-MAX_TASK_EVENTS)
+            taskEvents: [...(task.taskEvents || []), normalizeTaskEvent({ stage: "failed", label: ui("结果保存失败"), detail: error?.message || "", status: "error" })].slice(-MAX_TASK_EVENTS)
           }).catch(saveError => console.error("[pagedock-selection-task] failure save failed", saveError));
         }
-        if (!task.taskItemId) setStatus("结果保存失败", true);
-        finishKnowledgeCardPlaceholder(task, "error", error?.message || "知识卡保存失败，请重试");
+        if (!task.taskItemId) setStatus(ui("结果保存失败"), true);
+        finishKnowledgeCardPlaceholder(task, "error", error?.message || ui("知识卡保存失败，请重试"));
         updateSelectionUi();
         updateCodexChatControls();
-        task.finishTask?.({ status: "error", reason: error?.message || "AI 结果保存失败" });
+        task.finishTask?.({ status: "error", reason: error?.message || ui("AI 结果保存失败") });
       });
     return;
   }
   if (message.type === "error" || message.type === "cancelled") {
     whiteboardCodexTasks.delete(task.id);
     const status = message.type === "cancelled"
-      ? "已停止"
-      : (message.error || "AI 总结失败");
+      ? ui("已停止")
+      : (message.error || ui("AI 总结失败"));
     if (task.taskItemId) {
       const taskItem = currentBoard?.id === task.boardId ? itemById(task.taskItemId) : null;
       applyBoardCardTaskPatch(task, {
@@ -346,7 +350,7 @@ function handleWhiteboardCodexEvent(message) {
         taskCompletedAt: Date.now(),
         taskEvents: [...(task.taskEvents || []), normalizeTaskEvent({
           stage: message.type === "cancelled" ? "cancelled" : "failed",
-          label: message.type === "cancelled" ? "任务已停止" : "任务执行失败",
+          label: message.type === "cancelled" ? ui("任务已停止") : ui("任务执行失败"),
           detail: message.type === "error" ? status : "",
           status: message.type === "cancelled" ? "cancelled" : "error"
         })].slice(-MAX_TASK_EVENTS)

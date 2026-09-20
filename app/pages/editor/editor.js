@@ -89,7 +89,7 @@ function renderMarkdown(md) {
       ADD_ATTR: ["target", "rel"]
     });
   } catch (e) {
-    return `<pre class="preview-error">预览渲染失败：${e.message}</pre>`;
+    return ui(`<pre class="preview-error">预览渲染失败：{0}</pre>`, e.message);
   }
 }
 
@@ -209,6 +209,7 @@ function bootMonaco() {
 
 // ============== 主流程 ==============
 (async function main() {
+  await ShizuoI18n.ready;
   const {
     [CAPTURE_KEY]: cap,
     [DRAFT_KEY]: draft,
@@ -224,15 +225,15 @@ function bootMonaco() {
   // 元信息
   if (cap) {
     const tags = {
-      readability: "[正文]",
-      virtualized: "[完整页面]",
-      fallback: "[全页]"
+      readability: ui("[正文]"),
+      virtualized: ui("[完整页面]"),
+      fallback: ui("[全页]")
     };
-    const tag = tags[cap.mode] || "[页面]";
-    metaEl.textContent = `${tag} ${cap.title || cap.url || "未知"}`;
+    const tag = tags[cap.mode] || ui("[页面]");
+    metaEl.textContent = `${tag} ${cap.title || cap.url || ui("未知")}`;
     metaEl.title = cap.url || "";
   } else {
-    metaEl.textContent = "未捕获页面";
+    metaEl.textContent = ui("未捕获页面");
   }
 
   // HTML → MD
@@ -243,11 +244,11 @@ function bootMonaco() {
       markdown = td.turndown(cap.html);
       const header = [];
       if (cap.title)  header.push(`# ${cap.title}`);
-      if (cap.url)    header.push(`> 来源：<${cap.url}>`);
-      if (cap.byline) header.push(`> 作者：${cap.byline}`);
+      if (cap.url)    header.push(ui("> 来源：<{0}>", cap.url));
+      if (cap.byline) header.push(ui("> 作者：{0}", cap.byline));
       markdown = (header.join("\n\n") + "\n\n" + markdown).trim();
     } catch (e) {
-      markdown = `[HTML→MD 转换失败] ${e.message}`;
+      markdown = ui("[HTML→MD 转换失败] {0}", e.message);
     }
   } else if (draft?.text) {
     markdown = draft.text;
@@ -261,11 +262,11 @@ function bootMonaco() {
   updatePreview(markdown);
 
   // 加载 Monaco
-  setStatus("正在加载 Monaco…");
+  setStatus(ui("正在加载 Monaco…"));
   try {
     await bootMonaco();
   } catch (e) {
-    statusEl.textContent = "Monaco 加载失败: " + (e?.message || e);
+    statusEl.textContent = ui("Monaco 加载失败: ") + (e?.message || e);
     return;
   }
 
@@ -284,8 +285,8 @@ function bootMonaco() {
   });
   window.__editor = editor;
 
-  setStatus(`已载入 ${markdown.length} 字`);
-  setStat(`${cap?.mode || "draft"} · ${markdown.split("\n").length} 行`);
+  setStatus(ui("已载入 {0} 字", markdown.length));
+  setStat(ui("{0} · {1} 行", cap?.mode || "draft", markdown.split("\n").length));
 
   // 防抖：自动保存 + 更新预览
   let saveTimer, renderTimer;
@@ -302,8 +303,8 @@ function bootMonaco() {
       await chrome.storage.local.set({
         [DRAFT_KEY]: { text, updatedAt: Date.now() }
       });
-      setStatus("草稿已自动保存");
-      setStat(`${cap?.mode || "draft"} · ${text.split("\n").length} 行`);
+      setStatus(ui("草稿已自动保存"));
+      setStat(ui("{0} · {1} 行", cap?.mode || "draft", text.split("\n").length));
     }, 600);
   });
 

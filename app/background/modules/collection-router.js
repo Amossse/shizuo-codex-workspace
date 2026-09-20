@@ -1,15 +1,16 @@
 // Module: collection menus and Chrome event routing.
 async function registerContextMenus() {
+  await ShizuoI18n.ready;
   if (contextMenuRefresh) return contextMenuRefresh;
   contextMenuRefresh = (async () => {
     const boards = (await PageDockDB.listBoards())
       .filter(board => board.id !== PageDockDB.INBOX_ID)
       .slice(0, RECENT_BOARD_LIMIT);
     const collectionTypes = [
-      { type: "selection", title: "保存选中文字到拾作", contexts: ["selection"] },
-      { type: "image", title: "保存图片到拾作", contexts: ["image"] },
-      { type: "link", title: "保存链接到拾作", contexts: ["link"] },
-      { type: "page", title: "保存当前页面到拾作", contexts: ["page"] }
+      { type: "selection", title: ui("保存选中文字到拾作"), contexts: ["selection"] },
+      { type: "image", title: ui("保存图片到拾作"), contexts: ["image"] },
+      { type: "link", title: ui("保存链接到拾作"), contexts: ["link"] },
+      { type: "page", title: ui("保存当前页面到拾作"), contexts: ["page"] }
     ];
 
     await chrome.contextMenus.removeAll();
@@ -23,14 +24,14 @@ async function registerContextMenus() {
       chrome.contextMenus.create({
         id: `${parentId}|${PageDockDB.INBOX_ID}`,
         parentId,
-        title: "保存到收件箱",
+        title: ui("保存到收件箱"),
         contexts: entry.contexts
       });
       for (const board of boards) {
         chrome.contextMenus.create({
           id: `${parentId}|${board.id}`,
           parentId,
-          title: `保存到：${board.name}`,
+          title: ui("保存到：{0}", board.name),
           contexts: entry.contexts
         });
       }
@@ -47,6 +48,7 @@ async function registerContextMenus() {
 }
 
 chrome.runtime.onInstalled.addListener(async () => {
+  await ShizuoI18n.ready;
   await PageDockDB.ensureInbox();
   await registerContextMenus();
   await recoverInterruptedScheduledTasks();
@@ -94,7 +96,7 @@ chrome.runtime.onMessage.addListener(message => {
 });
 
 /* 兼容开发者模式下直接重新载入 service worker。 */
-PageDockDB.ensureInbox().then(registerContextMenus).catch(error => {
+ShizuoI18n.ready.then(() => PageDockDB.ensureInbox()).then(registerContextMenus).catch(error => {
   console.error("[pagedock-context-menu] initial registration failed", error);
 });
 recoverInterruptedScheduledTasks()
@@ -102,6 +104,12 @@ recoverInterruptedScheduledTasks()
   .catch(error => console.warn("[pagedock-scheduler] initial sync failed", error));
 armCodexAutoConnectAlarm();
 ensureCodexAutoConnection("initial");
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && changes[ShizuoI18n.KEY]) {
+    registerContextMenus().catch(error => console.warn("[shizuo-i18n] Menu refresh failed", error?.name));
+  }
+});
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   collectContextMenuItem(info, tab).catch(error => {
@@ -127,20 +135,20 @@ async function collectContextMenuItem(info, tab) {
     item = {
       type: "image",
       src: await cacheImageSource(info.srcUrl),
-      alt: tab?.title || "网页图片",
+      alt: tab?.title || ui("网页图片"),
       source
     };
   } else if (collectionType === "link") {
     item = {
       type: "link",
-      text: info.linkText || info.linkUrl || "网页链接",
+      text: info.linkText || info.linkUrl || ui("网页链接"),
       src: info.linkUrl || "",
       source
     };
   } else {
     item = { type: "link", text: tab?.title || source.url, src: source.url, source };
   }
-  if (!item.text && !item.src) throw new Error("没有可保存的网页内容");
+  if (!item.text && !item.src) throw new Error(ui("没有可保存的网页内容"));
   const saved = await PageDockDB.addItem(targetBoardId, item);
   chrome.runtime.sendMessage({
     type: "pagedock-data-changed",
@@ -159,10 +167,10 @@ async function collectContextMenuItem(info, tab) {
 // 页面快捷菜单只允许保存用户刚刚选中的文本，并始终以发送方标签页作为来源。
 async function saveSelectionToInbox(message, sender) {
   const text = String(message?.text || "").trim().slice(0, 20_000);
-  if (!text) throw new Error("没有可保存的选中文字");
+  if (!text) throw new Error(ui("没有可保存的选中文字"));
   const source = {
     url: sender?.tab?.url || "",
-    title: sender?.tab?.title || "当前页面",
+    title: sender?.tab?.title || ui("当前页面"),
     capturedAt: Date.now()
   };
   const saved = await PageDockDB.addItem(PageDockDB.INBOX_ID, { type: "text", text, source });
@@ -186,7 +194,7 @@ async function cacheImageSource(sourceUrl) {
     const response = await fetch(sourceUrl);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const blob = await response.blob();
-    if (!blob.type.startsWith("image/")) throw new Error("目标不是图片");
+    if (!blob.type.startsWith("image/")) throw new Error(ui("目标不是图片"));
     const bytes = new Uint8Array(await blob.arrayBuffer());
     let binary = "";
     const chunkSize = 0x8000;
@@ -292,7 +300,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   const approvalId = String(message.approvalId || "");
   const pending = externalApprovalRequests.get(approvalId);
   if (!pending) {
-    sendResponse({ ok: false, error: "此操作确认已失效" });
+    sendResponse({ ok: false, error: ui("此操作确认已失效") });
     return;
   }
   externalApprovalRequests.delete(approvalId);
@@ -301,7 +309,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message.allowMode === "session" && pending.approval?.client?.id) externalSessionGrants.add(pending.approval.client.id);
     pending.resolve();
   }
-  else pending.reject(new Error("白板用户拒绝了此操作"));
+  else pending.reject(new Error(ui("白板用户拒绝了此操作")));
   console.info("[shizuo-bridge] external mutation approval settled", {
     requestId: pending.requestId,
     allowed: message.allow === true
@@ -314,7 +322,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   const clientId = String(message.clientId || "");
   const policy = ["read", "ask", "edit"].includes(message.policy) ? message.policy : "ask";
   if (!clientId) {
-    sendResponse({ ok: false, error: "缺少接入者" });
+    sendResponse({ ok: false, error: ui("缺少接入者") });
     return;
   }
   ensureCollaborationState().then(() => {

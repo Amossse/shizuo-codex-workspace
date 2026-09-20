@@ -49,9 +49,9 @@ assert.match(board, /completePreparingTaskCancellation/, "tasks must remain canc
 assert.match(database, /\btaskSchedule\b/, "scheduled task rules must persist with their task card");
 assert.match(database, /\btaskWorkflowLens\b/, "workflow growth lenses must persist with their task card");
 assert.match(database, /\btaskWorkflowInstruction\b[\s\S]{0,180}\btaskWorkflowRunId\b/, "scheduled workflows must persist immutable step instructions and run epochs");
-assert.match(board, /className = "task-workflow-lens"[\s\S]{0,900}\["strategy", "格局"\]/, "task cards must expose all four workflow growth lenses");
+assert.match(board, /className = "task-workflow-lens"[\s\S]{0,900}\["strategy", ui\("格局"\)\]/, "task cards must expose all four workflow growth lenses");
 assert.match(board, /PageDockBoardDomain\.workflowPlanningPrompt\(prompt, lens\.id\)/, "dynamic workflow planning must use the shared growth-lens contract");
-assert.match(board, /title:\s*`\$\{currentBoard\.name\} · 动态工作流`[\s\S]{0,180}content:\s*sourceItems\.length\s*\?\s*selectionContextForCodex\(sourceItems\)\s*:\s*prompt/, "prompt-only dynamic workflows must provide analyzable planning content");
+assert.match(board, /title:\s*ui\("\{0\} · 动态工作流", currentBoard\.name\)[\s\S]{0,180}content:\s*sourceItems\.length\s*\?\s*selectionContextForCodex\(sourceItems\)\s*:\s*prompt/, "prompt-only dynamic workflows must provide analyzable planning content");
 assert.match(background, /taskWorkflowLens:\s*PageDockBoardDomain\.workflowLens/, "collaborators must receive the workflow growth lens");
 assert.match(background, /function runScheduledTask\(/, "the extension background must execute due task-card schedules without an open board tab");
 assert.match(background, /function runScheduledWorkflow\(/, "the extension background must plan and execute a complete workflow without an open board tab");
@@ -192,10 +192,10 @@ assert.match(html, /id="extractKnowledgeCard"[^>]*>提炼知识卡<\/button>/, "
 assert.match(board, /runWhiteboardCodex\("knowledge", null, \{ sourceIds, resultItemId: placeholder\.id \}\)/, "knowledge extraction must analyze the current explicit selection inside its result container");
 assert.match(board, /function extractKnowledgeCardFromSelection\([\s\S]{0,900}addBoardItem\([\s\S]{0,500}knowledgeState:\s*"loading"[\s\S]{0,500}resultItemId:\s*placeholder\.id/, "knowledge extraction must create its loading result container immediately");
 assert.match(html, /\.knowledge-card-loading\s*\{[^}]*display:\s*grid/s, "the pending knowledge card must expose a visible loading treatment");
-assert.match(board, /setStatus\("知识卡已生成", false, "success"\)/, "a completed knowledge card must explicitly clear the global busy spinner");
+assert.match(board, /setStatus\(ui\("知识卡已生成"\), false, "success"\)/, "a completed knowledge card must explicitly clear the global busy spinner");
 assert.match(html, /#status\[data-state="success"\]/, "the global status must expose a non-loading success state");
 assert.match(board, /knowledge:[^\n]+总字数不超过 500 个中文字符[^\n]+禁止重复、空话、背景铺垫和“未识别”占位章节/, "knowledge extraction must enforce a concise, evidence-first content contract");
-assert.match(board, /const taskOutput = item\.type === "task" \? cardTextOutput\(item\)\.trim\(\) : ""[\s\S]{0,180}最新回答：\$\{taskOutput\.slice\(0, 40_000\)\}/, "knowledge extraction must receive the task card's latest visible Codex answer instead of its completion receipt");
+assert.match(board, /const taskOutput = item\.type === "task" \? cardTextOutput\(item\)\.trim\(\) : ""[\s\S]{0,180}最新回答：\{0\}`\s*, taskOutput\.slice\(0, 40_000\)\)/, "knowledge extraction must receive the task card's latest visible Codex answer instead of its completion receipt");
 assert.match(board, /knowledge:[^\n]+若输入是任务卡，以“最新回答”为主体，忽略任务标题、状态和执行回执/, "knowledge extraction must prioritize task content over execution metadata");
 assert.match(board, /const isKnowledgeCard = item\.provenance\?\.operation === "codex-generate-knowledge"[\s\S]{0,3500}setPreview\(isKnowledgeCard\)/, "generated knowledge cards must open in reading mode by default");
 assert.match(html, /\.knowledge-card-preview > h1\s*\{[^}]*font-size:\s*20px/s, "knowledge cards must expose a compact visual hierarchy");
@@ -211,7 +211,7 @@ assert.match(html, /\.task-create-option\s*\{[^}]*grid-template-columns:\s*28px 
 assert.match(board, /taskReplyMessageId = message\.id/, "each Codex answer must be quotable for the next turn");
 assert.match(board, /existingConversation\.length\s*\? \[\]/, "follow-up turns must not silently reinject the original source cards");
 assert.match(board, /const shortcutUserMessage = taskItem && mode === "text"/, "image and video creation must not become conversation turns");
-assert.match(board, /\["image-gen", "AI 自由绘图"/, "task creation must expose direct Codex image generation separately from templates");
+assert.match(board, /\["image-gen", ui\("AI 自由绘图"\)/, "task creation must expose direct Codex image generation separately from templates");
 assert.match(board, /artifactType === "image"/, "canvas tasks must receive direct image-gen artifacts");
 assert.match(board, /function taskInsertionPoint\([\s\S]{0,320}topGutter = 48 \/ zoom/, "new task cards must keep a visible top gutter at every canvas zoom level");
 assert.match(board, /addTaskItem\(taskInsertionPoint\(\)\)/, "the toolbar must use the task-specific safe insertion point");

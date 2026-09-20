@@ -8,6 +8,8 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ### Changed
 
+- Default new installations to English, preserve Chinese for existing installations, and add a persistent English / 简体中文 preference in the popup and AI settings; reopened pages use the chosen language without interrupting current tasks
+- Localize extension pages, page assistant, collection menus and task feedback; preserve collected content and follow the user's question language in AI responses
 - Focus the home page and onboarding on collecting research, asking questions, and returning to saved answers; defer image shortcuts to advanced task settings
 - Document a three-article comparison walkthrough and clarify that pasting a URL saves a link rather than importing article text
 - Group extension runtime files under `app/` by responsibility, leaving the repository root for extension entrypoints, installation, and open-source governance

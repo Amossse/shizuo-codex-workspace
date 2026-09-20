@@ -8,13 +8,13 @@ async function settleExternalApproval(approval, allow, buttons, allowMode = "onc
       allow,
       allowMode
     });
-    if (!response?.ok) throw new Error(response?.error || "操作确认失败");
+    if (!response?.ok) throw new Error(response?.error || ui("操作确认失败"));
     externalCodexApprovals.delete(String(approval.id || ""));
     renderExternalCollaboration();
-    setStatus(allow ? (allowMode === "session" ? `本次会话已允许 ${approval.client?.name || "Codex"} 编辑` : `已允许 ${approval.client?.name || "Codex"} 执行一次`) : "已拒绝外部修改");
+    setStatus(allow ? (allowMode === "session" ? ui("本次会话已允许 {0} 编辑", approval.client?.name || "Codex") : ui("已允许 {0} 执行一次", approval.client?.name || "Codex")) : ui("已拒绝外部修改"));
   } catch (error) {
     buttons.forEach(button => { button.disabled = false; });
-    setStatus(error?.message || "操作确认失败", true);
+    setStatus(error?.message || ui("操作确认失败"), true);
   }
 }
 
@@ -38,24 +38,24 @@ function renderExternalCollaboration() {
   }
   collaborationPanelEl.hidden = !visible;
   boardCollaborationEl.disabled = !available;
-  boardCollaborationEl.textContent = visible ? "收起协作" : `协作与会话${unread ? ` · ${unread}` : ""}`;
+  boardCollaborationEl.textContent = visible ? ui("收起协作") : ui("协作与会话{0}", unread ? ` · ${unread}` : "");
   homeCollaborationEl.disabled = !available;
-  homeCollaborationEl.textContent = visible ? "收起协作" : `协作与会话${unread ? ` · ${unread}` : ""}`;
+  homeCollaborationEl.textContent = visible ? ui("收起协作") : ui("协作与会话{0}", unread ? ` · ${unread}` : "");
   if (!visible) return;
   collaborationSessionsEl.hidden = !localCodexSessionsAvailable;
   if (localCodexSessionsAvailable && collaborationSessionsEl.open) void loadLocalCodexSessions();
   const activeNames = externalCodexClients.map(client => String(client.name || "Codex"));
-  const humanNames = externalCodexClients.filter(client => client.type === "human").map(client => String(client.name || "协作者"));
+  const humanNames = externalCodexClients.filter(client => client.type === "human").map(client => String(client.name || ui("协作者")));
   const humanConnected = humanNames.length > 0;
   const activeTasks = externalCodexTasks.filter(task => EXTERNAL_TASK_ACTIVE_PHASES.has(task.phase));
   const automaticTask = localCodexSessionStatus.active ? {
     id: `local-session:${localCodexSessionStatus.threadId || "active"}`,
     phase: "running",
-    title: localCodexSessionStatus.title || "Codex 正在工作",
+    title: localCodexSessionStatus.title || ui("Codex 正在工作"),
     message: localCodexSessionStatus.activeCount > 1
-      ? `${localCodexSessionStatus.activeCount} 个本地 Codex 任务正在执行`
-      : "正在执行本地 Codex 任务",
-    client: { id: "owner-local", name: "本地 Codex", scope: "local" },
+      ? ui("{0} 个本地 Codex 任务正在执行", localCodexSessionStatus.activeCount)
+      : ui("正在执行本地 Codex 任务"),
+    client: { id: "owner-local", name: ui("本地 Codex"), scope: "local" },
     createdAt: localCodexSessionStatus.startedAt,
     updatedAt: localCodexSessionStatus.updatedAt || localCodexSessionStatus.startedAt
   } : null;
@@ -67,19 +67,19 @@ function renderExternalCollaboration() {
   const primaryTask = pluginTask || automaticTask || activeTasks[0] || (!codexConnected ? externalCodexTasks[0] : null) || null;
   const primaryClientIsLocal = primaryTask?.client?.scope === "local" || primaryTask?.client?.id === "owner-local";
   collaborationAvatarEl.textContent = "C";
-  collaborationTitleEl.textContent = humanConnected ? "白板协作" : activeNames.length > 1 ? `${activeNames.length} 个 Codex` : "Codex 工作伙伴";
+  collaborationTitleEl.textContent = humanConnected ? ui("白板协作") : activeNames.length > 1 ? ui("{0} 个 Codex", activeNames.length) : ui("Codex 工作伙伴");
   collaborationClientsEl.textContent = visibleActiveTasks.length > 1
-    ? `${visibleActiveTasks.length} 个任务正在执行`
-    : primaryTask?.title || (humanConnected ? `${humanNames.join("、")} 正在协作` : codexConnected ? "已连接，随时待命" : "等待接入");
-  collaborationLiveEl.textContent = primaryClientIsLocal ? "本机" : externalCodexScope === "lan" ? "内网" : codexConnected ? "本机" : "历史";
+    ? ui("{0} 个任务正在执行", visibleActiveTasks.length)
+    : primaryTask?.title || (humanConnected ? ui("{0} 正在协作", humanNames.join("、")) : codexConnected ? ui("已连接，随时待命") : ui("等待接入"));
+  collaborationLiveEl.textContent = primaryClientIsLocal ? ui("本机") : externalCodexScope === "lan" ? ui("内网") : codexConnected ? ui("本机") : ui("历史");
 
   const petState = externalTaskPetState(primaryTask);
   collaborationPetStageEl.dataset.state = petState;
   collaborationPetStatusEl.textContent = externalPetStatusText(petState, codexConnected);
-  collaborationPetTitleEl.textContent = primaryTask?.title || (humanConnected ? "协作者已加入白板" : codexConnected ? "随时可以开始" : "等待 Codex 接入");
-  collaborationPetMessageEl.textContent = primaryTask ? externalTaskSummary(primaryTask, codexConnected) : humanConnected ? "对方可以实时查看白板，修改仍受你的权限设置控制" : externalTaskSummary(primaryTask, codexConnected);
+  collaborationPetTitleEl.textContent = primaryTask?.title || (humanConnected ? ui("协作者已加入白板") : codexConnected ? ui("随时可以开始") : ui("等待 Codex 接入"));
+  collaborationPetMessageEl.textContent = primaryTask ? externalTaskSummary(primaryTask, codexConnected) : humanConnected ? ui("对方可以实时查看白板，修改仍受你的权限设置控制") : externalTaskSummary(primaryTask, codexConnected);
   collaborationPetMetaEl.textContent = primaryTask
-    ? [primaryClientIsLocal ? "本地 Codex" : (primaryTask.client?.name || "Codex"), formatTime(primaryTask.updatedAt || primaryTask.createdAt)].filter(Boolean).join(" · ")
+    ? [primaryClientIsLocal ? ui("本地 Codex") : (primaryTask.client?.name || "Codex"), formatTime(primaryTask.updatedAt || primaryTask.createdAt)].filter(Boolean).join(" · ")
     : "";
   const progress = Number(primaryTask?.progress);
   const hasProgress = primaryTask?.progress !== null && primaryTask?.progress !== undefined && Number.isFinite(progress);
@@ -97,14 +97,14 @@ function renderExternalCollaboration() {
   collaborationClientControlsEl.replaceChildren();
   const manageableClients = externalCodexClients.filter(client => client.scope !== "local" && client.id !== "owner-local");
   collaborationConnectionsEl.hidden = !manageableClients.length;
-  collaborationConnectionCountEl.textContent = manageableClients.length ? `${manageableClients.length} 个` : "";
+  collaborationConnectionCountEl.textContent = manageableClients.length ? ui("{0} 个", manageableClients.length) : "";
   manageableClients.forEach(client => {
     const row = document.createElement("div");
     row.className = "collaboration-client-row";
     const name = document.createElement("span");
     name.textContent = client.name || "Codex";
     const policy = document.createElement("select");
-    [["read", "只读"], ["ask", "每次询问"], ["edit", "可编辑"]].forEach(([value, label]) => {
+    [["read", ui("只读")], ["ask", ui("每次询问")], ["edit", ui("可编辑")]].forEach(([value, label]) => {
       const option = document.createElement("option");
       option.value = value;
       option.textContent = label;
@@ -113,27 +113,27 @@ function renderExternalCollaboration() {
     policy.value = externalClientPolicies[client.id] || (client.type === "human" ? "edit" : "ask");
     policy.addEventListener("change", async () => {
       const response = await chrome.runtime.sendMessage({ type: BRIDGE_CLIENT_POLICY_REQUEST, clientId: client.id, policy: policy.value });
-      if (!response?.ok) setStatus(response?.error || "权限更新失败", true);
+      if (!response?.ok) setStatus(response?.error || ui("权限更新失败"), true);
       else externalClientPolicies = { ...externalClientPolicies, [client.id]: policy.value };
     });
     const revoke = document.createElement("button");
     revoke.type = "button";
     revoke.className = "collaboration-client-revoke";
-    revoke.textContent = "撤销";
-    revoke.title = `撤销 ${client.name || "Codex"} 的连接令牌`;
+    revoke.textContent = ui("撤销");
+    revoke.title = ui("撤销 {0} 的连接令牌", client.name || "Codex");
     revoke.addEventListener("click", async () => {
       revoke.disabled = true;
       try {
         const response = await chrome.runtime.sendMessage({ type: BRIDGE_CLIENT_REVOKE_REQUEST, clientId: client.id });
-        if (!response?.ok) throw new Error(response?.error || "撤销失败");
+        if (!response?.ok) throw new Error(response?.error || ui("撤销失败"));
         externalCodexClients = externalCodexClients.filter(entry => entry.id !== client.id);
         externalCodexPresence.delete(client.id);
         renderExternalCollaboration();
         renderRemotePresence();
-        setStatus(`已撤销 ${client.name || "Codex"} 的连接`);
+        setStatus(ui("已撤销 {0} 的连接", client.name || "Codex"));
       } catch (error) {
         revoke.disabled = false;
-        setStatus(error?.message || "撤销接入者失败", true);
+        setStatus(error?.message || ui("撤销接入者失败"), true);
       }
     });
     row.append(name, policy, revoke);
@@ -145,22 +145,22 @@ function renderExternalCollaboration() {
     const card = document.createElement("section");
     card.className = "collaboration-approval";
     const title = document.createElement("strong");
-    title.textContent = `${approval.client?.name || "Codex"} 请求${approval.label || "修改白板"}`;
+    title.textContent = ui("{0} 请求{1}", approval.client?.name || "Codex", approval.label || ui("修改白板"));
     const summary = document.createElement("span");
-    summary.textContent = approval.summary || "此操作会修改拾作白板";
+    summary.textContent = approval.summary || ui("此操作会修改拾作白板");
     const actions = document.createElement("div");
     actions.className = "collaboration-approval-actions";
     const reject = document.createElement("button");
     reject.type = "button";
-    reject.textContent = "拒绝";
+    reject.textContent = ui("拒绝");
     const allow = document.createElement("button");
     allow.type = "button";
     allow.className = "allow";
-    allow.textContent = "允许一次";
+    allow.textContent = ui("允许一次");
     const allowSession = document.createElement("button");
     allowSession.type = "button";
     allowSession.className = "allow";
-    allowSession.textContent = "本次会话允许";
+    allowSession.textContent = ui("本次会话允许");
     const buttons = [reject, allow, allowSession];
     reject.addEventListener("click", () => settleExternalApproval(approval, false, buttons));
     allow.addEventListener("click", () => settleExternalApproval(approval, true, buttons));
@@ -172,11 +172,11 @@ function renderExternalCollaboration() {
 
   collaborationActivityListEl.replaceChildren();
   collaborationActivityEl.hidden = !externalCodexActivities.length;
-  collaborationActivityCountEl.textContent = externalCodexActivities.length ? `${Math.min(10, externalCodexActivities.length)} 条` : "";
+  collaborationActivityCountEl.textContent = externalCodexActivities.length ? ui("{0} 条", Math.min(10, externalCodexActivities.length)) : "";
   if (!externalCodexActivities.length) {
     const empty = document.createElement("div");
     empty.className = "collaboration-activity-title";
-    empty.textContent = "接入后的读取和修改会实时显示在这里";
+    empty.textContent = ui("接入后的读取和修改会实时显示在这里");
     collaborationActivityListEl.appendChild(empty);
   } else externalCodexActivities.slice(0, 10).forEach(activity => {
     const row = document.createElement("button");
@@ -191,8 +191,8 @@ function renderExternalCollaboration() {
     const title = document.createElement("strong");
     const activityIsLocal = activity.client?.scope === "local" || activity.client?.id === "owner-local";
     title.textContent = activityIsLocal
-      ? activity.label || "操作白板"
-      : `${activity.client?.name || "Codex"} · ${activity.label || "操作白板"}`;
+      ? activity.label || ui("操作白板")
+      : `${activity.client?.name || "Codex"} · ${activity.label || ui("操作白板")}`;
     const detail = document.createElement("span");
     detail.textContent = [externalActivityPhaseText(activity), activity.summary].filter(Boolean).join(" · ");
     const time = document.createElement("span");

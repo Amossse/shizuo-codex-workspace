@@ -73,6 +73,7 @@ details.menu.start .menu-panel { right: auto; left: 0; }
 .home-shell { width: min(1440px, calc(100% - 80px)); margin: 0 auto; padding: 48px 0 80px; }
 .hero { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: end; padding-bottom: 28px; }
 .hero h1 { margin: 0; color: var(--color-ink); font-size: clamp(30px, 4vw, 48px); letter-spacing: -.04em; white-space: nowrap; }
+html[lang="en"] .hero h1 { white-space: normal; text-wrap: balance; }
 .hero p { max-width: 680px; margin: 12px 0 0; color: var(--color-neutral); font-size: 16px; line-height: 1.65; }
 .hero-actions { display: flex; gap: 8px; justify-self: start; }
 .home-journey { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 0 auto 32px; }

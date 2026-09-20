@@ -1,15 +1,15 @@
 {
   "manifest_version": 3,
-  "name": "拾作",
-  "short_name": "拾作",
+  "name": "Shizuo",
+  "short_name": "Shizuo",
   "version": "2.24.5",
   "minimum_chrome_version": "116",
-  "description": "收集网页资料，交给 Codex 总结和对比。材料与回答保存在一起，方便核查来源、继续追问。",
+  "description": "Collect web research, ask AI about it, and keep answers beside their sources for follow-up questions.",
   "author": "拾作 Contributors",
   "permissions": ["activeTab", "scripting", "storage", "downloads", "offscreen", "contextMenus", "sidePanel", "nativeMessaging", "alarms"],
   "optional_host_permissions": ["http://*/*", "https://*/*"],
   "action": {
-    "default_title": "拾作 — 带着资料问 AI",
+    "default_title": "Shizuo — Ask AI with your sources",
     "default_popup": "app/pages/popup/popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
@@ -29,7 +29,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["app/content/content-codex.js"],
+      "js": ["app/core/i18n-en.js", "app/core/i18n-en-extended.js", "app/core/i18n.js", "app/content/content-codex.js"],
       "run_at": "document_idle",
       "all_frames": false
     }

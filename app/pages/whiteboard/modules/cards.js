@@ -6,7 +6,7 @@ function createItemElement(item) {
   element.dataset.id = item.id;
   element.tabIndex = 0;
   element.setAttribute("role", "group");
-  element.setAttribute("aria-label", `${itemTypeLabel(item)}卡片`);
+  element.setAttribute("aria-label", ui("{0}卡片", itemTypeLabel(item)));
   element.style.left = `${item.x}px`;
   element.style.top = `${item.y}px`;
   element.style.width = `${item.width || 320}px`;
@@ -17,7 +17,7 @@ function createItemElement(item) {
   handle.className = "item-handle";
   handle.tabIndex = 0;
   handle.setAttribute("role", "button");
-  handle.setAttribute("aria-label", "拖动卡片，方向键可微调位置");
+  handle.setAttribute("aria-label", ui("拖动卡片，方向键可微调位置"));
   const grip = document.createElement("span");
   grip.className = "grip";
   grip.textContent = "⠿";
@@ -30,17 +30,17 @@ function createItemElement(item) {
     permissionChip.className = "permission-chip";
     permissionChip.dataset.state = permission.state;
     permissionChip.dataset.risk = permission.risk;
-    permissionChip.textContent = permission.state === "granted" ? `已允许 · ${permission.label}` : `需允许 · ${permission.label}`;
+    permissionChip.textContent = permission.state === "granted" ? ui("已允许 · {0}", permission.label) : ui("需允许 · {0}", permission.label);
     permissionChip.title = permission.state === "granted"
-      ? `此卡片已获得：${permission.label}`
-      : `只会在你主动操作时请求：${permission.label}`;
+      ? ui("此卡片已获得：{0}", permission.label)
+      : ui("只会在你主动操作时请求：{0}", permission.label);
   }
   const source = document.createElement("button");
   source.className = "item-source";
   source.type = "button";
   source.textContent = "↗";
-  source.title = "查看卡片来源与版本";
-  source.setAttribute("aria-label", "查看卡片来源与版本");
+  source.title = ui("查看卡片来源与版本");
+  source.setAttribute("aria-label", ui("查看卡片来源与版本"));
   source.addEventListener("pointerdown", event => event.stopPropagation());
   source.addEventListener("click", () => openProvenance(item));
   const focus = document.createElement("button");
@@ -78,7 +78,7 @@ function createItemElement(item) {
     content.className = "image-content";
     const image = document.createElement("img");
     image.src = item.src;
-    image.alt = item.alt || "白板图片";
+    image.alt = item.alt || ui("白板图片");
     image.loading = "lazy";
     image.decoding = "async";
     content.appendChild(image);
@@ -90,18 +90,18 @@ function createItemElement(item) {
     video.src = item.src;
     video.controls = true;
     video.preload = "metadata";
-    video.setAttribute("aria-label", item.alt || "AI 生成视频");
+    video.setAttribute("aria-label", item.alt || ui("AI 生成视频"));
     const download = document.createElement("a");
     download.className = "video-download";
     download.href = item.src;
-    download.download = item.filename || `${safeFilename(item.alt || "拾作-AI-Video")}.mp4`;
-    download.textContent = "下载 MP4";
+    download.download = item.filename || `${safeFilename(item.alt || ui("拾作-AI-Video"))}.mp4`;
+    download.textContent = ui("下载 MP4");
     const narrate = document.createElement("button");
     narrate.className = "video-narrate";
     narrate.type = "button";
-    narrate.textContent = "添加口播与字幕";
+    narrate.textContent = ui("添加口播与字幕");
     narrate.addEventListener("click", () => {
-      const narration = window.prompt("输入口播文案。拾作会按句生成字幕，并使用本地 Kokoro 配音。", "");
+      const narration = window.prompt(ui("输入口播文案。拾作会按句生成字幕，并使用本地 Kokoro 配音。"), "");
       if (!String(narration || "").trim()) return;
       const task = addTaskItem(aiResultPoint([item]), {
         text: String(narration).trim(),
@@ -135,19 +135,19 @@ function createItemElement(item) {
     } else {
       open.setAttribute("aria-disabled", "true");
     }
-    open.textContent = pageSrc === "about:blank" ? "网页地址不可用" : pageSrc;
-    open.title = "在新标签页打开";
+    open.textContent = pageSrc === "about:blank" ? ui("网页地址不可用") : pageSrc;
+    open.title = ui("在新标签页打开");
     const refresh = document.createElement("button");
     refresh.className = "page-refresh";
     refresh.type = "button";
     refresh.textContent = "↻";
-    refresh.title = "重新加载页面";
-    refresh.setAttribute("aria-label", "重新加载页面");
+    refresh.title = ui("重新加载页面");
+    refresh.setAttribute("aria-label", ui("重新加载页面"));
     refresh.disabled = pageSrc === "about:blank";
     const frame = document.createElement("iframe");
     frame.className = "page-frame";
     frame.src = pageSrc;
-    frame.title = item.text || item.src || "白板页面";
+    frame.title = item.text || item.src || ui("白板页面");
     frame.loading = "lazy";
     frame.referrerPolicy = "strict-origin-when-cross-origin";
     // 标题栏仍负责拖拽；网页交互只发生在正文 iframe 中，并限制可用浏览器能力。
@@ -167,7 +167,7 @@ function createItemElement(item) {
     link.href = item.src || item.source?.url || "#";
     link.target = "_blank";
     link.rel = "noopener noreferrer";
-    link.textContent = item.text || item.source?.title || item.src || "打开链接";
+    link.textContent = item.text || item.source?.title || item.src || ui("打开链接");
     link.addEventListener("pointerdown", event => event.stopPropagation());
     element.appendChild(link);
   } else if (item.type === "document") {
@@ -185,8 +185,8 @@ function createItemElement(item) {
     content.className = "text-content";
     content.setAttribute("contenteditable", "plaintext-only");
     content.spellcheck = true;
-    content.dataset.placeholder = "输入文字…";
-    content.setAttribute("aria-label", "白板文字内容");
+    content.dataset.placeholder = ui("输入文字…");
+    content.setAttribute("aria-label", ui("白板文字内容"));
     content.textContent = item.text || "";
     content.addEventListener("input", () => {
       item.text = content.innerText;
@@ -509,7 +509,7 @@ async function snapshotFolderFromDropEntry(entry) {
   }
   return {
     type: "folder",
-    localName: entry.name || "文件夹",
+    localName: entry.name || ui("文件夹"),
     localKind: "directory",
     localPermissionState: "granted",
     localEntries: entries.map(child => ({
@@ -546,7 +546,7 @@ async function addDroppedHandle(handle, point) {
     return addLocalHandleCard(handle, "file", point);
   }
   if (handle.kind === "directory") return addLocalHandleCard(handle, "folder", point);
-  throw new Error("不支持的本地项目类型");
+  throw new Error(ui("不支持的本地项目类型"));
 }
 
 async function addDroppedItems(dataTransfer, point) {
@@ -587,17 +587,17 @@ async function addDroppedItems(dataTransfer, point) {
         addDroppedLocalSnapshot(await snapshotFolderFromDropEntry(descriptor.entry), itemPoint);
       } else {
         const file = descriptor.entry?.isFile ? await fileFromDropEntry(descriptor.entry) : descriptor.file;
-        if (!file) throw new Error("无法读取拖入的文件");
+        if (!file) throw new Error(ui("无法读取拖入的文件"));
         await addDroppedFile(file, itemPoint);
       }
       added += 1;
     } catch (error) {
-      failures.push(error?.message || "读取失败");
+      failures.push(error?.message || ui("读取失败"));
       console.warn("[shizuo-drop] local item failed", { index, reason: error?.message || String(error) });
     }
   }
-  if (failures.length) setStatus(`已添加 ${added} 项，${failures.length} 项读取失败`, true);
-  else if (added) setStatus(`已添加 ${added} 项到白板`);
+  if (failures.length) setStatus(ui("已添加 {0} 项，{1} 项读取失败", added, failures.length), true);
+  else if (added) setStatus(ui("已添加 {0} 项到白板", added));
 }
 
 function addPageItem(value, point = insertionPoint()) {
@@ -684,7 +684,7 @@ async function applyBoardCardTaskPatch(task, patch) {
     await db.commitBoardSnapshot(board, {
       baseBoard,
       preserveArchived: task.boardId === db.INBOX_ID,
-      reason: "保存 Codex 任务结果"
+      reason: ui("保存 Codex 任务结果")
     });
   });
   notifyDataChanged([task.boardId], "codex-task-result");

@@ -6,7 +6,7 @@ async function runBoardCardTask(item, sourceItems = null) {
   const prompt = String(item?.text || previousPrompt || "").trim();
   if (!prompt || !currentBoard || item.type !== "task") {
     itemElement(item.id)?.querySelector(".task-prompt")?.focus();
-    return { status: "skipped", reason: "任务卡缺少提示词" };
+    return { status: "skipped", reason: ui("任务卡缺少提示词") };
   }
   if (!await ensureCodexReadyForTask(() => runBoardCardTask(item, sourceItems))) {
     // 保留输入和上下文，连接完成后由引导自动恢复，不产生一张无法行动的错误卡。
@@ -14,7 +14,7 @@ async function runBoardCardTask(item, sourceItems = null) {
     item.taskError = "";
     item.taskProgress = "";
     updateTaskItemElement(item);
-    return { status: "waiting", reason: "等待本地 Codex 连接" };
+    return { status: "waiting", reason: ui("等待本地 Codex 连接") };
   }
   item.taskLastMode = "coding";
   cardProtocol.grant(item, "codex-run");
@@ -44,20 +44,20 @@ async function runBoardCardTask(item, sourceItems = null) {
   const imageItems = selection.filter(source => source.type === "image" && source.src);
   const taskMode = aiRuntime === "agy" ? "conversation" : "coding";
   const initialProgress = selection.some(source => source.type === "page")
-    ? "正在分析页面"
+    ? ui("正在分析页面")
     : selection.some(source => ["file", "folder", "document", "code"].includes(source.type))
-      ? "正在理解任务和素材"
-      : "正在理解任务";
+      ? ui("正在理解任务和素材")
+      : ui("正在理解任务");
   if (imageItems.length > MAX_CODEX_IMAGES) {
     item.taskStatus = "error";
-    item.taskError = `单次最多分析 ${MAX_CODEX_IMAGES} 张图片，请减少圈选内容`;
+    item.taskError = ui("单次最多分析 {0} 张图片，请减少圈选内容", MAX_CODEX_IMAGES);
     updateTaskItemElement(item);
     scheduleSave();
     return { status: "error", reason: item.taskError };
   }
   const runningTask = boardCardTaskForItem(item.id);
   if (runningTask?.completion) return runningTask.completion;
-  if (preparingTaskItemIds.has(item.id) || whiteboardTaskForItem(item.id)) return { status: "busy", reason: "任务已在运行" };
+  if (preparingTaskItemIds.has(item.id) || whiteboardTaskForItem(item.id)) return { status: "busy", reason: ui("任务已在运行") };
   if (codexAtCapacity()) {
     item.taskStatus = "error";
     item.taskError = codexCapacityReason();
@@ -69,7 +69,7 @@ async function runBoardCardTask(item, sourceItems = null) {
   preparingTaskItemIds.add(item.id);
   item.taskStatus = "running";
   item.taskError = "";
-  item.taskProgress = selection.some(source => source.type === "page") ? "正在读取页面内容" : initialProgress;
+  item.taskProgress = selection.some(source => source.type === "page") ? ui("正在读取页面内容") : initialProgress;
   item.taskStartedAt = Date.now();
   item.taskCompletedAt = 0;
   item.taskEvents = [];
@@ -87,7 +87,7 @@ async function runBoardCardTask(item, sourceItems = null) {
     if (cancelled) return cancelled;
     preparingTaskItemIds.delete(item.id);
     item.taskStatus = "error";
-    item.taskError = error?.message || "页面内容读取失败";
+    item.taskError = error?.message || ui("页面内容读取失败");
     item.taskProgress = "";
     updateTaskItemElement(item);
     scheduleSave();
@@ -148,7 +148,7 @@ async function runBoardCardTask(item, sourceItems = null) {
   scheduleSave();
   try {
     if (!codexChatReady) await connectCodexChat();
-    if (!codexChatReady) throw new Error(codexConnectionHint || `${aiRuntimeLabel()} 未连接`);
+    if (!codexChatReady) throw new Error(codexConnectionHint || ui("{0} 未连接", aiRuntimeLabel()));
     item.taskProgress = initialProgress;
     updateTaskItemElement(item);
     const images = ["agy", "claude"].includes(aiRuntime) ? [] : await Promise.all(imageItems.map(imageDataForCodex));
@@ -161,18 +161,24 @@ async function runBoardCardTask(item, sourceItems = null) {
       mode: taskMode,
       prompt,
       page: {
-        title: `${task.boardName} · 任务`,
+        title: ui("{0} · 任务", task.boardName),
         url: "",
         content: [
-          selection.length ? `原始素材：\n\n${selectionContextForCodex(selection)}` : "",
-          ["agy", "claude"].includes(aiRuntime) && imageItems.length ? `说明：当前使用 ${aiRuntimeLabel()}，未传入图片像素；请不要声称看到了图片内容。` : "",
-          replyContextText ? `本轮明确引用的回答：\n\n${replyContextText}` : "",
-          conversationContext ? `任务卡历史对话：\n\n${conversationContext}` : ""
+          selection.length ? ui(`原始素材：
+
+{0}`, selectionContextForCodex(selection)) : "",
+          ["agy", "claude"].includes(aiRuntime) && imageItems.length ? ui("说明：当前使用 {0}，未传入图片像素；请不要声称看到了图片内容。", aiRuntimeLabel()) : "",
+          replyContextText ? ui(`本轮明确引用的回答：
+
+{0}`, replyContextText) : "",
+          conversationContext ? ui(`任务卡历史对话：
+
+{0}`, conversationContext) : ""
         ].filter(Boolean).join("\n\n---\n\n")
       },
       images
     });
-    if (!response?.ok) throw new Error(response?.error || `${aiRuntimeLabel()} 任务启动失败`);
+    if (!response?.ok) throw new Error(response?.error || ui("{0} 任务启动失败", aiRuntimeLabel()));
     return completion;
   } catch (error) {
     boardCardCodexTasks.delete(task.id);
@@ -180,11 +186,11 @@ async function runBoardCardTask(item, sourceItems = null) {
     item.taskReplyMessageId = task.replyMessageId;
     item.text = prompt;
     item.taskStatus = "error";
-    item.taskError = error?.message || `${aiRuntimeLabel()} 任务启动失败`;
+    item.taskError = error?.message || ui("{0} 任务启动失败", aiRuntimeLabel());
     item.taskProgress = "";
     item.taskRunId = "";
     item.taskCompletedAt = Date.now();
-    appendTaskEvent(item, { stage: "failed", label: "任务启动失败", detail: item.taskError, status: "error" });
+    appendTaskEvent(item, { stage: "failed", label: ui("任务启动失败"), detail: item.taskError, status: "error" });
     console.error("[pagedock-board-task] start failed", error);
     if (promptElement) promptElement.value = prompt;
     updateTaskItemElement(item);
@@ -231,23 +237,23 @@ async function runDynamicWorkflow(item) {
   task.workflowLens = lens.id;
   item.taskWorkflowRole = "controller";
   item.taskWorkflowLens = lens.id;
-  item.taskWorkflowTitle = "正在规划";
+  item.taskWorkflowTitle = ui("正在规划");
   item.taskStatus = "running";
-  item.taskProgress = "正在规划动态工作流";
+  item.taskProgress = ui("正在规划动态工作流");
   item.taskRunId = task.id;
   item.taskStartedAt = Date.now();
   item.taskCompletedAt = 0;
   item.taskMessages = task.conversationMessages;
   item.text = "";
   item.taskError = "";
-  item.taskEvents = [normalizeTaskEvent({ stage: "planning", label: "正在规划动态工作流", status: "running" })];
+  item.taskEvents = [normalizeTaskEvent({ stage: "planning", label: ui("正在规划动态工作流"), status: "running" })];
   task.taskEvents = item.taskEvents;
   whiteboardCodexTasks.set(task.id, task);
   updateTaskItemElement(item);
   scheduleSave();
   try {
     if (!codexChatReady) await connectCodexChat();
-    if (!codexChatReady) throw new Error(codexConnectionHint || `${aiRuntimeLabel()} 未连接`);
+    if (!codexChatReady) throw new Error(codexConnectionHint || ui("{0} 未连接", aiRuntimeLabel()));
     const response = await chrome.runtime.sendMessage({
       type: CODEX_RUN_REQUEST,
       id: task.id,
@@ -255,19 +261,19 @@ async function runDynamicWorkflow(item) {
       mode: "analysis",
       prompt: PageDockBoardDomain.workflowPlanningPrompt(prompt, lens.id),
       page: {
-        title: `${currentBoard.name} · 动态工作流`,
+        title: ui("{0} · 动态工作流", currentBoard.name),
         url: "",
         content: sourceItems.length ? selectionContextForCodex(sourceItems) : prompt
       },
       images: []
     });
-    if (!response?.ok) throw new Error(response?.error || "动态工作流规划失败");
+    if (!response?.ok) throw new Error(response?.error || ui("动态工作流规划失败"));
   } catch (error) {
     whiteboardCodexTasks.delete(task.id);
     item.taskMessages = messagesBefore;
     item.text = prompt;
     item.taskStatus = "error";
-    item.taskError = error?.message || "动态工作流规划失败";
+    item.taskError = error?.message || ui("动态工作流规划失败");
     item.taskProgress = "";
     item.taskRunId = "";
     item.taskCompletedAt = Date.now();
@@ -280,46 +286,46 @@ function parseDynamicWorkflowAnswer(answer) {
   const text = String(answer || "").trim();
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
-  if (start < 0 || end <= start) throw new Error("Codex 没有返回有效的工作流计划");
+  if (start < 0 || end <= start) throw new Error(ui("Codex 没有返回有效的工作流计划"));
   return PageDockBoardDomain.normalizeWorkflowPlan(JSON.parse(text.slice(start, end + 1)));
 }
 
 async function completeDynamicWorkflowPlan(task, answer) {
   const controller = currentBoard?.id === task.boardId ? itemById(task.taskItemId) : null;
-  if (!controller) throw new Error("已切换白板，动态工作流未创建");
+  if (!controller) throw new Error(ui("已切换白板，动态工作流未创建"));
   const plan = parseDynamicWorkflowAnswer(answer);
   const lens = PageDockBoardDomain.workflowLens(controller.taskWorkflowLens || task.workflowLens);
   whiteboardCodexTasks.delete(task.id);
   const stepCards = createDynamicWorkflowCards(controller, plan);
   controller.taskMessages = appendTaskMessage(task.conversationMessages, "assistant", [
-    `已按“${lens.label}”视角规划“${plan.title}”，共 ${plan.steps.length} 个执行容器：`,
+    ui("已按“{0}”视角规划“{1}”，共 {2} 个执行容器：", lens.label, plan.title, plan.steps.length),
     ...plan.steps.map((step, index) => `${index + 1}. ${step.title}（${taskWorkflowModeLabel(step.mode)}）`)
   ].join("\n"));
-  controller.taskResult = `动态工作流已规划，共 ${plan.steps.length} 个执行容器`;
+  controller.taskResult = ui("动态工作流已规划，共 {0} 个执行容器", plan.steps.length);
   controller.taskStatus = "running";
-  controller.taskProgress = "准备执行工作流";
+  controller.taskProgress = ui("准备执行工作流");
   controller.taskRunId = controller.taskWorkflowId;
-  controller.taskEvents = [...(controller.taskEvents || []), normalizeTaskEvent({ stage: "planned", label: "工作流规划完成", status: "success" })].slice(-MAX_TASK_EVENTS);
+  controller.taskEvents = [...(controller.taskEvents || []), normalizeTaskEvent({ stage: "planned", label: ui("工作流规划完成"), status: "success" })].slice(-MAX_TASK_EVENTS);
   updateTaskItemElement(controller);
-  if (!await saveBoardNow()) throw new Error("动态工作流未能保存，尚未开始执行");
+  if (!await saveBoardNow()) throw new Error(ui("动态工作流未能保存，尚未开始执行"));
   try {
     const completed = await executeWorkflowTasks(stepCards, controller);
     controller.taskStatus = "success";
     controller.taskProgress = "";
     controller.taskRunId = "";
     controller.taskCompletedAt = Date.now();
-    controller.taskResult = `工作流已完成，${completed} 个执行容器均已产出结果`;
-    controller.taskEvents = [...controller.taskEvents, normalizeTaskEvent({ stage: "completed", label: "动态工作流执行完成", status: "success" })].slice(-MAX_TASK_EVENTS);
+    controller.taskResult = ui("工作流已完成，{0} 个执行容器均已产出结果", completed);
+    controller.taskEvents = [...controller.taskEvents, normalizeTaskEvent({ stage: "completed", label: ui("动态工作流执行完成"), status: "success" })].slice(-MAX_TASK_EVENTS);
   } catch (error) {
     const cancelled = error?.code === "WORKFLOW_CANCELLED";
     controller.taskStatus = cancelled ? "cancelled" : "error";
     controller.taskProgress = "";
     controller.taskRunId = "";
     controller.taskCompletedAt = Date.now();
-    controller.taskError = cancelled ? "" : (error?.message || "动态工作流执行失败");
+    controller.taskError = cancelled ? "" : (error?.message || ui("动态工作流执行失败"));
     controller.taskEvents = [...controller.taskEvents, normalizeTaskEvent({
       stage: cancelled ? "cancelled" : "failed",
-      label: cancelled ? "工作流已停止" : "动态工作流执行失败",
+      label: cancelled ? ui("工作流已停止") : ui("动态工作流执行失败"),
       detail: controller.taskError,
       status: cancelled ? "cancelled" : "error"
     })].slice(-MAX_TASK_EVENTS);
@@ -391,7 +397,7 @@ function createDynamicWorkflowCards(controller, plan) {
 }
 
 async function runWorkflowTask(item) {
-  if (!item) return { status: "error", reason: "工作流执行容器已被删除" };
+  if (!item) return { status: "error", reason: ui("工作流执行容器已被删除") };
   const directSourceIds = [...new Set([...(item.taskSourceIds || []), ...(item.relationSourceIds || [])])];
   const generatedSourceIds = boardItems
     .filter(candidate => candidate.id !== item.id
@@ -410,26 +416,26 @@ async function runWorkflowTask(item) {
   else if (item.taskWorkflowMode === "image-gen") result = await runWhiteboardCodex("image-gen", item, { scope: "sources" });
   else if (item.taskWorkflowMode === "video") result = await runWhiteboardCodex("video", item, { scope: "sources" });
   else result = await runBoardCardTask(item, item.taskSourceIds.map(itemById).filter(Boolean));
-  return result?.status ? result : { status: "error", reason: item.taskError || "执行容器未能启动" };
+  return result?.status ? result : { status: "error", reason: item.taskError || ui("执行容器未能启动") };
 }
 
 async function executeWorkflowTasks(tasks, controller = null) {
   const boardId = currentBoard.id;
   const plan = PageDockBoardDomain.planWorkflow(tasks);
-  if (plan.cycles.length) throw new Error(`工作流存在循环依赖：${plan.cycles.join("、")}`);
+  if (plan.cycles.length) throw new Error(ui("工作流存在循环依赖：{0}", plan.cycles.join("、")));
   const run = controller ? { cancelRequested: false } : null;
   if (controller) dynamicWorkflowRuns.set(controller.id, run);
   console.info("[pagedock-workflow] started", { boardId, taskCount: tasks.length, waveCount: plan.waves.length });
   let completed = 0;
   try {
     for (const wave of plan.waves) {
-      if (currentBoard?.id !== boardId) throw new Error("已切换白板，工作流停止调度后续任务");
+      if (currentBoard?.id !== boardId) throw new Error(ui("已切换白板，工作流停止调度后续任务"));
       for (let offset = 0; offset < wave.length; offset += codexMaxConcurrentTasks) {
-        if (run?.cancelRequested) throw Object.assign(new Error("工作流已停止"), { code: "WORKFLOW_CANCELLED" });
+        if (run?.cancelRequested) throw Object.assign(new Error(ui("工作流已停止")), { code: "WORKFLOW_CANCELLED" });
         const batch = wave.slice(offset, offset + codexMaxConcurrentTasks);
         const activeTitles = batch.map(id => itemById(id)?.taskWorkflowTitle).filter(Boolean).join("、");
-        const progress = `正在执行 ${completed + 1}/${tasks.length}${activeTitles ? ` · ${activeTitles}` : ""}`;
-        setStatus(`正在运行工作流 ${completed + 1}/${tasks.length}`);
+        const progress = ui("正在执行 {0}/{1}{2}", completed + 1, tasks.length, activeTitles ? ` · ${activeTitles}` : "");
+        setStatus(ui("正在运行工作流 {0}/{1}", completed + 1, tasks.length));
         if (controller) {
           controller.taskProgress = progress;
           updateTaskItemElement(controller);
@@ -441,24 +447,24 @@ async function executeWorkflowTasks(tasks, controller = null) {
           if (run?.cancelRequested) break;
           results.push(await runWorkflowTask(itemById(id)));
         }
-        if (run?.cancelRequested) throw Object.assign(new Error("工作流已停止"), { code: "WORKFLOW_CANCELLED" });
+        if (run?.cancelRequested) throw Object.assign(new Error(ui("工作流已停止")), { code: "WORKFLOW_CANCELLED" });
         completed += batch.length;
         const failed = results.find(result => result?.status !== "success");
-        if (failed) throw new Error(failed.reason || "工作流任务执行失败");
+        if (failed) throw new Error(failed.reason || ui("工作流任务执行失败"));
       }
     }
   } finally {
     if (controller && dynamicWorkflowRuns.get(controller.id) === run) dynamicWorkflowRuns.delete(controller.id);
   }
-  setStatus(`工作流已完成 · ${completed} 个任务`);
+  setStatus(ui("工作流已完成 · {0} 个任务", completed));
   console.info("[pagedock-workflow] completed", { boardId, completed });
   return completed;
 }
 
 async function runCurrentWorkflow() {
-  if (!currentBoard) throw new Error("请先打开白板");
+  if (!currentBoard) throw new Error(ui("请先打开白板"));
   const tasks = boardItems.filter(item => item.type === "task" && item.taskWorkflowRole !== "controller");
-  if (!tasks.length) throw new Error("当前白板没有任务卡");
+  if (!tasks.length) throw new Error(ui("当前白板没有任务卡"));
   const runButton = document.getElementById("runWorkflow");
   runButton.disabled = true;
   exportMenuEl.open = false;
@@ -466,7 +472,7 @@ async function runCurrentWorkflow() {
     await executeWorkflowTasks(tasks);
   } catch (error) {
     console.error("[pagedock-workflow] stopped", { boardId: currentBoard?.id, reason: error?.message || String(error) });
-    setStatus(error?.message || "工作流执行失败", true);
+    setStatus(error?.message || ui("工作流执行失败"), true);
   } finally {
     runButton.disabled = false;
   }
@@ -476,16 +482,16 @@ function cancelBoardCardTask(item) {
   const task = boardCardTaskForItem(item.id);
   if (!task || task.cancelRequested) return;
   task.cancelRequested = true;
-  item.taskProgress = "正在停止…";
+  item.taskProgress = ui("正在停止…");
   updateTaskItemElement(item);
   chrome.runtime.sendMessage({ type: CODEX_CANCEL_REQUEST, id: task.id })
     .then(response => {
-      if (!response?.ok) throw new Error(response?.error || "停止任务失败");
+      if (!response?.ok) throw new Error(response?.error || ui("停止任务失败"));
     })
     .catch(error => {
       if (boardCardCodexTasks.get(task.id) !== task) return;
       task.cancelRequested = false;
-      item.taskProgress = error?.message || "停止任务失败";
+      item.taskProgress = error?.message || ui("停止任务失败");
       updateTaskItemElement(item);
     });
 }
@@ -493,13 +499,13 @@ function cancelBoardCardTask(item) {
 function cancelWhiteboardTask(task = standaloneWhiteboardTask()) {
   if (!task || task.cancelRequested) return;
   task.cancelRequested = true;
-  updateWhiteboardCodexStatus(task, "正在停止…");
+  updateWhiteboardCodexStatus(task, ui("正在停止…"));
   updateSelectionUi();
   chrome.runtime.sendMessage({
     type: CODEX_CANCEL_REQUEST,
     id: task.id
   }).then(response => {
-    if (!response?.ok) throw new Error(response?.error || "停止任务失败");
+    if (!response?.ok) throw new Error(response?.error || ui("停止任务失败"));
     const activeTaskIds = Array.isArray(response.activeTaskIds)
       ? response.activeTaskIds
       : response.activeTaskId ? [response.activeTaskId] : [];
@@ -512,17 +518,17 @@ function cancelWhiteboardTask(task = standaloneWhiteboardTask()) {
           taskProgress: "",
           taskRunId: "",
           taskCompletedAt: Date.now(),
-          taskEvents: [...(task.taskEvents || []), normalizeTaskEvent({ stage: "cancelled", label: "任务已停止", status: "cancelled" })].slice(-MAX_TASK_EVENTS)
+          taskEvents: [...(task.taskEvents || []), normalizeTaskEvent({ stage: "cancelled", label: ui("任务已停止"), status: "cancelled" })].slice(-MAX_TASK_EVENTS)
         }).catch(error => console.error("[pagedock-selection-task] cancel save failed", error));
       }
-      if (!task.taskItemId) setStatus("已停止");
+      if (!task.taskItemId) setStatus(ui("已停止"));
       updateSelectionUi();
       updateCodexChatControls();
     }
   }).catch(error => {
     if (whiteboardCodexTasks.get(task.id) !== task) return;
     task.cancelRequested = false;
-    updateWhiteboardCodexStatus(task, error?.message || "停止任务失败");
+    updateWhiteboardCodexStatus(task, error?.message || ui("停止任务失败"));
     updateSelectionUi();
     console.error("[pagedock-whiteboard-ai] cancel failed", error);
   });
@@ -533,14 +539,14 @@ function cancelTaskItem(item) {
   const workflow = dynamicWorkflowRuns.get(item.id);
   if (workflow && !workflow.cancelRequested) {
     workflow.cancelRequested = true;
-    item.taskProgress = "正在停止工作流…";
+    item.taskProgress = ui("正在停止工作流…");
     for (const stepId of item.taskWorkflowStepIds || []) cancelTaskItem(itemById(stepId));
     updateTaskItemElement(item);
     return;
   }
   if (preparingTaskItemIds.has(item.id)) {
     cancellingPreparedTaskItemIds.add(item.id);
-    item.taskProgress = "正在停止…";
+    item.taskProgress = ui("正在停止…");
     updateTaskItemElement(item);
     return;
   }
@@ -549,7 +555,7 @@ function cancelTaskItem(item) {
     : [item.taskRunId];
   const activePersistedRunIds = [...new Set(persistedRunIds.map(String).filter(id => id && codexActiveTaskIds.has(id)))];
   if (item.taskWorkflowRole === "controller" && item.taskStatus === "running" && String(item.taskRunId || "").startsWith("scheduled-")) {
-    item.taskProgress = "正在停止定时工作流…";
+    item.taskProgress = ui("正在停止定时工作流…");
     updateTaskItemElement(item);
     chrome.runtime.sendMessage({
       type: CODEX_CANCEL_REQUEST,
@@ -557,17 +563,17 @@ function cancelTaskItem(item) {
       boardId: currentBoard.id,
       controllerId: item.id
     }).catch(error => {
-      item.taskProgress = error?.message || "停止任务失败";
+      item.taskProgress = error?.message || ui("停止任务失败");
       updateTaskItemElement(item);
     });
     return;
   }
   if (activePersistedRunIds.length) {
-    item.taskProgress = "正在停止定时工作流…";
+    item.taskProgress = ui("正在停止定时工作流…");
     updateTaskItemElement(item);
     Promise.all(activePersistedRunIds.map(id => chrome.runtime.sendMessage({ type: CODEX_CANCEL_REQUEST, id })))
       .catch(error => {
-        item.taskProgress = error?.message || "停止任务失败";
+        item.taskProgress = error?.message || ui("停止任务失败");
         updateTaskItemElement(item);
       });
     return;
@@ -588,11 +594,11 @@ function completePreparingTaskCancellation(item) {
   item.taskProgress = "";
   item.taskRunId = "";
   item.taskCompletedAt = Date.now();
-  appendTaskEvent(item, { stage: "cancelled", label: "任务已停止", status: "cancelled" });
+  appendTaskEvent(item, { stage: "cancelled", label: ui("任务已停止"), status: "cancelled" });
   updateTaskItemElement(item);
   updateCodexChatControls();
   scheduleSave();
-  return { status: "cancelled", reason: "任务已停止" };
+  return { status: "cancelled", reason: ui("任务已停止") };
 }
 
 function retryTaskItem(item) {
@@ -605,7 +611,7 @@ function retryTaskItem(item) {
     }
     item.taskStatus = "running";
     item.taskError = "";
-    item.taskProgress = "正在重新执行工作流";
+    item.taskProgress = ui("正在重新执行工作流");
     item.taskRunId = item.taskWorkflowId;
     item.taskStartedAt = Date.now();
     item.taskCompletedAt = 0;
@@ -613,14 +619,14 @@ function retryTaskItem(item) {
     scheduleSave();
     executeWorkflowTasks(steps, item).then(completed => {
       item.taskStatus = "success";
-      item.taskResult = `工作流已完成，${completed} 个执行容器均已产出结果`;
+      item.taskResult = ui("工作流已完成，{0} 个执行容器均已产出结果", completed);
       item.taskProgress = "";
       item.taskRunId = "";
       item.taskCompletedAt = Date.now();
     }).catch(error => {
       const cancelled = error?.code === "WORKFLOW_CANCELLED";
       item.taskStatus = cancelled ? "cancelled" : "error";
-      item.taskError = cancelled ? "" : (error?.message || "动态工作流执行失败");
+      item.taskError = cancelled ? "" : (error?.message || ui("动态工作流执行失败"));
       item.taskProgress = "";
       item.taskRunId = "";
       item.taskCompletedAt = Date.now();
@@ -646,12 +652,12 @@ function handleBoardCardCodexEvent(message) {
   const item = currentBoard?.id === task.boardId ? itemById(task.itemId) : null;
   if (message.type === "started" || message.type === "progress") {
     if (item) {
-      recordTaskProgress(item, message, item.taskProgress || "正在处理任务");
+      recordTaskProgress(item, message, item.taskProgress || ui("正在处理任务"));
       task.taskEvents = item.taskEvents;
     } else {
       const event = normalizeTaskEvent({
         stage: message.stage,
-        label: friendlyCodexProgress(message, "正在处理任务"),
+        label: friendlyCodexProgress(message, ui("正在处理任务")),
         detail: message.detail,
         status: message.status,
         createdAt: message.createdAt
@@ -666,7 +672,7 @@ function handleBoardCardCodexEvent(message) {
   if (!["done", "error", "cancelled"].includes(message.type)) return;
 
   boardCardCodexTasks.delete(task.id);
-  const answer = String(message.answer || "Codex 没有返回内容");
+  const answer = String(message.answer || ui("Codex 没有返回内容"));
   const restoredPrompt = String(item?.text || "").trim() ? item.text : task.userPrompt;
   const patch = message.type === "done"
     ? {
@@ -677,7 +683,7 @@ function handleBoardCardCodexEvent(message) {
         taskProgress: "",
         taskRunId: "",
         taskCompletedAt: Date.now(),
-        taskEvents: [...(item?.taskEvents || task.taskEvents || []), normalizeTaskEvent({ stage: "completed", label: "任务执行完成", status: "success" })].slice(-MAX_TASK_EVENTS)
+        taskEvents: [...(item?.taskEvents || task.taskEvents || []), normalizeTaskEvent({ stage: "completed", label: ui("任务执行完成"), status: "success" })].slice(-MAX_TASK_EVENTS)
       }
     : message.type === "cancelled"
       ? {
@@ -689,29 +695,29 @@ function handleBoardCardCodexEvent(message) {
           taskProgress: "",
           taskRunId: "",
           taskCompletedAt: Date.now(),
-          taskEvents: [...(item?.taskEvents || task.taskEvents || []), normalizeTaskEvent({ stage: "cancelled", label: "任务已停止", status: "cancelled" })].slice(-MAX_TASK_EVENTS)
+          taskEvents: [...(item?.taskEvents || task.taskEvents || []), normalizeTaskEvent({ stage: "cancelled", label: ui("任务已停止"), status: "cancelled" })].slice(-MAX_TASK_EVENTS)
         }
       : {
           taskStatus: "error",
           taskMessages: task.messagesBefore,
           taskReplyMessageId: task.replyMessageId,
           text: restoredPrompt,
-          taskError: String(message.error || "Codex 任务失败"),
+          taskError: String(message.error || ui("Codex 任务失败")),
           taskProgress: "",
           taskRunId: "",
           taskCompletedAt: Date.now(),
-          taskEvents: [...(item?.taskEvents || task.taskEvents || []), normalizeTaskEvent({ stage: "failed", label: "任务执行失败", detail: String(message.error || ""), status: "error" })].slice(-MAX_TASK_EVENTS)
+          taskEvents: [...(item?.taskEvents || task.taskEvents || []), normalizeTaskEvent({ stage: "failed", label: ui("任务执行失败"), detail: String(message.error || ""), status: "error" })].slice(-MAX_TASK_EVENTS)
         };
   applyBoardCardTaskPatch(task, patch).then(async () => {
     const saved = currentBoard?.id === task.boardId ? await saveBoardNow() : true;
     task.finishTask?.({
       status: saved ? patch.taskStatus : "error",
-      reason: saved ? patch.taskError || "" : "任务结果未能保存"
+      reason: saved ? patch.taskError || "" : ui("任务结果未能保存")
     });
   }).catch(error => {
     console.error("[pagedock-board-task] result save failed", error);
-    setStatus(error?.message || "任务结果保存失败", true);
-    task.finishTask?.({ status: "error", reason: error?.message || "任务结果保存失败" });
+    setStatus(error?.message || ui("任务结果保存失败"), true);
+    task.finishTask?.({ status: "error", reason: error?.message || ui("任务结果保存失败") });
   });
   console.info("[pagedock-board-task] finished", { taskId: task.id, status: patch.taskStatus });
   updateCodexChatControls();

@@ -271,8 +271,8 @@ function setStatus(message, isError = false, state = "", durationMs = 2600) {
   statusEl.textContent = message;
   statusEl.title = message;
   const explicitState = ["busy", "success", "default"].includes(state) ? state : "";
-  const busy = !isError && (explicitState === "busy" || (!explicitState && /正在|保存中|载入|连接|准备|渲染|生成|接收|检查|修复|发送/.test(message)));
-  const success = !isError && (explicitState === "success" || (!explicitState && /已(?:保存|添加|生成|导出|导入|备份|复制|连接|恢复|设置)|工作流已完成/.test(message)));
+  const busy = !isError && (explicitState === "busy" || (!explicitState && /正在|保存中|载入|连接|准备|渲染|生成|接收|检查|修复|发送|^(?:Saving|Loading|Connecting|Preparing|Rendering|Generating|Receiving|Checking|Repairing|Sending|Reading|Running|Stopping)\b/i.test(message)));
+  const success = !isError && (explicitState === "success" || (!explicitState && /已(?:保存|添加|生成|导出|导入|备份|复制|连接|恢复|设置)|工作流已完成|^(?:Saved|Added|Generated|Exported|Imported|Backed up|Copied|Connected|Restored|Completed)\b/i.test(message)));
   statusEl.dataset.state = isError ? "error" : explicitState || (busy ? "busy" : success ? "success" : "default");
   // 系统级错误保持可见，直到下一次明确状态更新，避免用户来不及读完就消失。
   if (message && !busy && !isError) {
@@ -369,26 +369,26 @@ function formatTime(timestamp) {
   const date = new Date(timestamp);
   const today = new Date();
   if (date.toDateString() === today.toDateString()) {
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return date.toLocaleTimeString(ShizuoI18n.language, { hour: "2-digit", minute: "2-digit" });
   }
-  return date.toLocaleDateString([], { month: "short", day: "numeric" });
+  return date.toLocaleDateString(ShizuoI18n.language, { month: "short", day: "numeric" });
 }
 
 function itemLabel(item) {
-  if (["file", "folder"].includes(item.type)) return item.localName || item.text || (item.type === "folder" ? "文件夹" : "文件");
-  if (["document", "code"].includes(item.type)) return item.text || (item.type === "document" ? "未命名文档" : "未命名代码");
-  if (item.type === "image") return item.alt || item.source?.title || "图片";
-  if (item.type === "video") return item.alt || item.source?.title || "视频";
-  if (item.type === "page") return item.text || item.source?.title || item.src || "页面";
-  if (item.type === "terminal") return item.text || "控制台";
-  if (item.type === "link") return item.text || item.source?.title || item.src || "链接";
+  if (["file", "folder"].includes(item.type)) return item.localName || item.text || (item.type === "folder" ? ui("文件夹") : ui("文件"));
+  if (["document", "code"].includes(item.type)) return item.text || (item.type === "document" ? ui("未命名文档") : ui("未命名代码"));
+  if (item.type === "image") return item.alt || item.source?.title || ui("图片");
+  if (item.type === "video") return item.alt || item.source?.title || ui("视频");
+  if (item.type === "page") return item.text || item.source?.title || item.src || ui("页面");
+  if (item.type === "terminal") return item.text || ui("控制台");
+  if (item.type === "link") return item.text || item.source?.title || item.src || ui("链接");
   if (item.type === "task") {
     const lastUserMessage = [...normalizeTaskMessages(item.taskMessages, item)]
       .reverse()
       .find(message => message.role === "user");
-    return item.text || lastUserMessage?.text || "未填写任务";
+    return item.text || lastUserMessage?.text || ui("未填写任务");
   }
-  return item.text || item.source?.title || "文字";
+  return item.text || item.source?.title || ui("文字");
 }
 
 function itemIcon(item) {
@@ -406,18 +406,18 @@ function itemIcon(item) {
 }
 
 function itemTypeLabel(item) {
-  if (item.type === "file") return "文件";
-  if (item.type === "folder") return "文件夹";
-  if (item.type === "document" && item.provenance?.operation === "codex-generate-knowledge") return "知识卡";
-  if (item.type === "document") return "文档";
-  if (item.type === "code") return "代码";
-  if (item.type === "image") return "图片";
-  if (item.type === "video") return "视频";
-  if (item.type === "page") return "页面";
-  if (item.type === "terminal") return "控制台";
-  if (item.type === "link") return "链接";
-  if (item.type === "task") return "任务";
-  return "文字";
+  if (item.type === "file") return ui("文件");
+  if (item.type === "folder") return ui("文件夹");
+  if (item.type === "document" && item.provenance?.operation === "codex-generate-knowledge") return ui("知识卡");
+  if (item.type === "document") return ui("文档");
+  if (item.type === "code") return ui("代码");
+  if (item.type === "image") return ui("图片");
+  if (item.type === "video") return ui("视频");
+  if (item.type === "page") return ui("页面");
+  if (item.type === "terminal") return ui("控制台");
+  if (item.type === "link") return ui("链接");
+  if (item.type === "task") return ui("任务");
+  return ui("文字");
 }
 
 function permissionSummary(item) {
@@ -454,7 +454,7 @@ function codexAtCapacity() {
 
 function codexCapacityReason() {
   const count = codexRunningTaskIds().size;
-  return `已有 ${count} 个任务执行中，完成一个后可继续`;
+  return ui("已有 {0} 个任务执行中，完成一个后可继续", count);
 }
 
 function updateCodexTaskSnapshot(response) {
@@ -492,22 +492,22 @@ function standaloneWhiteboardTask() {
 }
 
 function safeFilename(value) {
-  return String(value || "拾作")
+  return String(value || ui("拾作"))
     .normalize("NFKC")
     .replace(/[\p{Cc}\p{Cf}\p{Cs}]/gu, "")
     .replace(/[<>:"/\\|?*]/g, "_")
     .replace(/\s+/g, " ")
     .trim()
-    .slice(0, 100) || "拾作";
+    .slice(0, 100) || ui("拾作");
 }
 
 function normalizedPageUrl(value) {
   const input = String(value || "").trim();
-  if (!input) throw new Error("请输入网页地址");
+  if (!input) throw new Error(ui("请输入网页地址"));
   // 页面卡仅允许远程网页，避免把本地文件或扩展内部地址带入白板。
   const candidate = /^[a-z][a-z\d+.-]*:/i.test(input) ? input : `https://${input}`;
   const url = new URL(candidate);
-  if (!["http:", "https:"].includes(url.protocol)) throw new Error("只支持 http 或 https 网页地址");
+  if (!["http:", "https:"].includes(url.protocol)) throw new Error(ui("只支持 http 或 https 网页地址"));
   return url.href;
 }
 

@@ -54,9 +54,9 @@ async function recoverInterruptedScheduledTasks() {
       const retryAt = Date.now() + 5 * 60_000;
       for (const item of interrupted) {
         const schedule = PageDockBoardDomain.normalizeTaskSchedule(item.taskSchedule);
-        if (schedule) item.taskSchedule = { ...schedule, enabled: true, retryAt, lastStatus: "error", lastError: "浏览器重启中断了定时执行" };
+        if (schedule) item.taskSchedule = { ...schedule, enabled: true, retryAt, lastStatus: "error", lastError: ui("浏览器重启中断了定时执行") };
         item.taskStatus = "error";
-        item.taskError = schedule ? "浏览器重启中断了定时执行，将在 5 分钟后重试" : "浏览器重启中断了工作流步骤";
+        item.taskError = schedule ? ui("浏览器重启中断了定时执行，将在 5 分钟后重试") : ui("浏览器重启中断了工作流步骤");
         item.taskProgress = "";
         item.taskRunId = "";
         item.taskCompletedAt = Date.now();
@@ -116,7 +116,7 @@ function mutateScheduledTask(boardId, itemId, reason, mutate, notify = true) {
 }
 
 async function failScheduledTask(boardId, itemId, error, retry = false) {
-  const message = String(error?.message || error || "定时任务启动失败");
+  const message = String(error?.message || error || ui("定时任务启动失败"));
   await mutateScheduledTask(boardId, itemId, "scheduled-task-start-failed", item => {
     const schedule = PageDockBoardDomain.normalizeTaskSchedule(item.taskSchedule) || {};
     item.taskSchedule = {
@@ -129,7 +129,7 @@ async function failScheduledTask(boardId, itemId, error, retry = false) {
       lastError: message
     };
     item.taskStatus = "error";
-    item.taskError = retry ? `${message}，将在 5 分钟后重试` : message;
+    item.taskError = retry ? ui("{0}，将在 5 分钟后重试", message) : message;
     item.taskProgress = "";
     item.taskRunId = "";
     item.taskCompletedAt = Date.now();
@@ -141,7 +141,7 @@ function parseScheduledWorkflowPlan(answer) {
   const text = String(answer || "").trim();
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
-  if (start < 0 || end <= start) throw new Error("Codex 没有返回有效的工作流计划");
+  if (start < 0 || end <= start) throw new Error(ui("Codex 没有返回有效的工作流计划"));
   return PageDockBoardDomain.normalizeWorkflowPlan(JSON.parse(text.slice(start, end + 1)));
 }
 
@@ -158,11 +158,15 @@ function scheduledWorkflowStepRequest(board, item) {
     .filter(candidate => candidate.type === "image" && /^data:image\/(png|jpe?g|webp);base64,/i.test(String(candidate.src || "")))
     .slice(0, 3)
     .map(candidate => candidate.src);
-  const instruction = String(item.taskWorkflowInstruction || item.text || item.taskWorkflowTitle || "执行工作流步骤").trim();
+  const instruction = String(item.taskWorkflowInstruction || item.text || item.taskWorkflowTitle || ui("执行工作流步骤")).trim();
   const prompts = {
     text: instruction,
-    "image-gen": `${instruction}\n\n视觉要求：使用明亮温暖的纸张手稿风格，突出内容、结构和关系；禁止暗黑科技风、无用眉标、来源脚注和水印。`,
-    video: `${instruction}\n\n制作解释型视频，只使用提供的内容作为事实依据，不要臆造。`
+    "image-gen": ui(`{0}
+
+视觉要求：使用明亮温暖的纸张手稿风格，突出内容、结构和关系；禁止暗黑科技风、无用眉标、来源脚注和水印。`, instruction),
+    video: ui(`{0}
+
+制作解释型视频，只使用提供的内容作为事实依据，不要臆造。`, instruction)
   };
   const preferredVideoMode = item.taskVideoEngine === "remotion" ? "remotion-video" : "hyperframes-video";
   const availableVideoMode = preferredVideoMode === "remotion-video"
@@ -173,7 +177,7 @@ function scheduledWorkflowStepRequest(board, item) {
       ? availableVideoMode
       : item.taskWorkflowMode === "image-gen" ? "image-gen" : item.taskWorkflowMode === "text" ? "analysis" : "coding",
     prompt: prompts[item.taskWorkflowMode] || instruction,
-    page: { title: `${board.name} · ${item.taskWorkflowTitle || "工作流步骤"}`, url: "", content: context || instruction },
+    page: { title: `${board.name} · ${item.taskWorkflowTitle || ui("工作流步骤")}`, url: "", content: context || instruction },
     images
   };
 }
@@ -182,7 +186,7 @@ function runScheduledNativeJob(payload, metadata) {
   const id = String(metadata.id || `scheduled-${metadata.kind}-${crypto.randomUUID()}`);
   return new Promise((resolve, reject) => {
     if (codexActiveTaskIds.size + terminalActiveTaskIds.size >= CODEX_MAX_CONCURRENT_TASKS) {
-      reject(new Error("本地任务并发已满"));
+      reject(new Error(ui("本地任务并发已满")));
       return;
     }
     const run = { ...metadata, id, resolve, reject, artifact: null };
@@ -202,11 +206,11 @@ function collectScheduledWorkflowArtifact(message, run) {
   if (message.type === "artifact-start") {
     const totalChunks = Number(message.totalChunks) || 0;
     const limit = message.artifactType === "video" ? SCHEDULED_VIDEO_CHUNK_LIMIT : SCHEDULED_IMAGE_CHUNK_LIMIT;
-    if (totalChunks < 1 || totalChunks > limit) throw new Error("工作流产物过大，无法回传到白板");
+    if (totalChunks < 1 || totalChunks > limit) throw new Error(ui("工作流产物过大，无法回传到白板"));
     run.artifact = {
       type: message.artifactType === "video" ? "video" : "image",
       mimeType: String(message.mimeType || (message.artifactType === "video" ? "video/mp4" : "image/png")),
-      filename: String(message.filename || "Codex 产物"),
+      filename: String(message.filename || ui("Codex 产物")),
       chunks: new Array(totalChunks),
       received: 0,
       ready: false
@@ -230,10 +234,10 @@ function collectScheduledWorkflowArtifact(message, run) {
 function commitScheduledWorkflowPlan(boardId, controllerId, plan, workflowRunId) {
   return queueScheduledBoardWrite(boardId, async () => {
     const board = await PageDockDB.getBoard(boardId, { includeArchived: true });
-    if (!board) throw new Error("定时工作流所在白板不存在");
+    if (!board) throw new Error(ui("定时工作流所在白板不存在"));
     const baseBoard = structuredClone(board);
     const controller = board.items.find(item => String(item.id) === String(controllerId));
-    if (!controller) throw new Error("定时工作流控制卡不存在");
+    if (!controller) throw new Error(ui("定时工作流控制卡不存在"));
     const now = Date.now();
     const workflowId = `workflow-${crypto.randomUUID()}`;
   // 仅保留上一轮已归档的工作流，防止周期任务无限堆积隐藏容器和媒体。
@@ -297,7 +301,7 @@ function commitScheduledWorkflowPlan(boardId, controllerId, plan, workflowRunId)
   controller.taskWorkflowTitle = plan.title;
   controller.taskWorkflowStepIds = plan.steps.map(step => stepByPlanId.get(step.id).id);
   controller.taskRunId = workflowRunId;
-  controller.taskProgress = "准备执行定时工作流";
+  controller.taskProgress = ui("准备执行定时工作流");
   controller.updatedAt = now;
     const saved = await PageDockDB.commitBoardSnapshot(board, { baseBoard, reason: "scheduled-workflow-planned" });
     chrome.runtime.sendMessage({ type: "pagedock-data-changed", boardIds: [boardId], itemId: controllerId, reason: "scheduled-workflow-planned", source: "task-scheduler" }).catch(() => {});
@@ -308,20 +312,20 @@ function commitScheduledWorkflowPlan(boardId, controllerId, plan, workflowRunId)
 function persistScheduledWorkflowBatch(boardId, controllerId, results) {
   return queueScheduledBoardWrite(boardId, async () => {
     const board = await PageDockDB.getBoard(boardId);
-    if (!board) throw new Error("定时工作流所在白板不存在");
+    if (!board) throw new Error(ui("定时工作流所在白板不存在"));
     const baseBoard = structuredClone(board);
     const now = Date.now();
   for (const result of results) {
     const item = board.items.find(candidate => String(candidate.id) === String(result.itemId));
-    if (!item) throw new Error("工作流执行容器已被删除");
+    if (!item) throw new Error(ui("工作流执行容器已被删除"));
     item.taskStatus = "success";
     item.taskProgress = "";
     item.taskRunId = "";
     item.taskCompletedAt = now;
-    item.taskResult = result.artifact ? `${result.artifact.type === "video" ? "视频" : "图片"}已生成并添加到白板` : String(result.answer || "Codex 没有返回内容");
+    item.taskResult = result.artifact ? ui("{0}已生成并添加到白板", result.artifact.type === "video" ? ui("视频") : ui("图片")) : String(result.answer || ui("Codex 没有返回内容"));
     item.taskMessages = [...(item.taskMessages || []), { id: crypto.randomUUID(), role: "assistant", kind: "conversation", text: item.taskResult, createdAt: now }].slice(-30);
     if (result.artifact) {
-      if (!result.artifact.ready || result.artifact.chunks.some(chunk => !chunk)) throw new Error(`${item.taskWorkflowTitle || "工作流步骤"}的产物回传不完整`);
+      if (!result.artifact.ready || result.artifact.chunks.some(chunk => !chunk)) throw new Error(ui("{0}的产物回传不完整", item.taskWorkflowTitle || ui("工作流步骤")));
       const isVideo = result.artifact.type === "video";
       board.items.push({
         id: crypto.randomUUID(),
@@ -350,7 +354,7 @@ function persistScheduledWorkflowBatch(boardId, controllerId, results) {
     }
   }
   const controller = board.items.find(item => String(item.id) === String(controllerId));
-  if (controller) controller.taskProgress = `定时工作流已完成 ${board.items.filter(item => item.taskWorkflowId === controller.taskWorkflowId && item.taskWorkflowRole === "step" && item.taskStatus === "success").length}/${controller.taskWorkflowStepIds.length}`;
+  if (controller) controller.taskProgress = ui("定时工作流已完成 {0}/{1}", board.items.filter(item => item.taskWorkflowId === controller.taskWorkflowId && item.taskWorkflowRole === "step" && item.taskStatus === "success").length, controller.taskWorkflowStepIds.length);
     await PageDockDB.commitBoardSnapshot(board, { baseBoard, reason: "scheduled-workflow-step-completed", preserveArchived: true });
     chrome.runtime.sendMessage({ type: "pagedock-data-changed", boardIds: [boardId], itemId: controllerId, reason: "scheduled-workflow-step-completed", source: "task-scheduler" }).catch(() => {});
   });
@@ -365,7 +369,7 @@ async function runScheduledWorkflow(board, controller, schedule, prompt) {
   scheduledWorkflowControllers.set(String(controllerId), workflowState);
   const assertNotCancelled = () => {
     if (!workflowState.cancelRequested) return;
-    const error = new Error("定时工作流已停止");
+    const error = new Error(ui("定时工作流已停止"));
     error.code = "WORKFLOW_CANCELLED";
     throw error;
   };
@@ -374,7 +378,7 @@ async function runScheduledWorkflow(board, controller, schedule, prompt) {
     item.taskSchedule = nextSchedule;
     item.taskStatus = "running";
     item.taskError = "";
-    item.taskProgress = "正在规划定时工作流";
+    item.taskProgress = ui("正在规划定时工作流");
     item.taskRunId = planningId;
     item.taskStartedAt = Date.now();
     item.taskCompletedAt = 0;
@@ -384,7 +388,7 @@ async function runScheduledWorkflow(board, controller, schedule, prompt) {
     const planning = await runScheduledNativeJob({
       mode: "analysis",
       prompt: PageDockBoardDomain.workflowPlanningPrompt(prompt, controller.taskWorkflowLens),
-      page: { title: `${board.name} · 定时工作流规划`, url: "", content: scheduledTaskContext(board, controller) || prompt },
+      page: { title: ui("{0} · 定时工作流规划", board.name), url: "", content: scheduledTaskContext(board, controller) || prompt },
       images: []
     }, { id: planningId, kind: "workflow-job", boardId, itemId: controllerId, controllerId, phase: "planning" });
     assertNotCancelled();
@@ -403,13 +407,13 @@ async function runScheduledWorkflow(board, controller, schedule, prompt) {
           const starting = ids.map(id => latest.items.find(item => item.id === cardByPlanId.get(id)?.id)).filter(Boolean);
           starting.forEach(item => {
             item.taskStatus = "running";
-            item.taskProgress = "定时工作流正在执行";
+            item.taskProgress = ui("定时工作流正在执行");
             item.taskRunId = jobIdByItem.get(item.id);
             item.taskStartedAt = Date.now();
             item.taskCompletedAt = 0;
           });
           const activeController = latest.items.find(item => item.id === controllerId);
-          if (activeController) activeController.taskProgress = `正在执行 ${completed + 1}/${plan.steps.length}`;
+          if (activeController) activeController.taskProgress = ui("正在执行 {0}/{1}", completed + 1, plan.steps.length);
           return PageDockDB.commitBoardSnapshot(latest, { baseBoard, reason: "scheduled-workflow-step-started", preserveArchived: true });
         });
         chrome.runtime.sendMessage({
@@ -447,7 +451,7 @@ async function runScheduledWorkflow(board, controller, schedule, prompt) {
       const activeSchedule = PageDockBoardDomain.normalizeTaskSchedule(item.taskSchedule);
       item.taskSchedule = activeSchedule ? { ...activeSchedule, lastRunAt: Date.now(), lastStatus: "success", lastError: "" } : null;
       item.taskStatus = "success";
-      item.taskResult = `定时工作流已完成，${completed} 个执行容器均已产出结果`;
+      item.taskResult = ui("定时工作流已完成，{0} 个执行容器均已产出结果", completed);
       item.taskError = "";
       item.taskProgress = "";
       item.taskRunId = "";
@@ -465,13 +469,13 @@ async function runScheduledWorkflow(board, controller, schedule, prompt) {
       const retry = /桥接|并发已满|disconnected/i.test(String(error?.message || error));
       item.taskSchedule = activeSchedule ? { ...activeSchedule, enabled: retry || activeSchedule.enabled, retryAt: retry ? Date.now() + 5 * 60_000 : 0, lastRunAt: Date.now(), lastStatus: cancelled ? "" : "error", lastError: cancelled ? "" : String(error?.message || error) } : null;
       item.taskStatus = cancelled ? "cancelled" : "error";
-      item.taskError = cancelled ? "" : `${String(error?.message || error || "定时工作流执行失败")}${retry ? "，将在 5 分钟后重试" : ""}`;
+      item.taskError = cancelled ? "" : `${String(error?.message || error || ui("定时工作流执行失败"))}${retry ? ui("，将在 5 分钟后重试") : ""}`;
       item.taskProgress = "";
       item.taskRunId = "";
       item.taskCompletedAt = Date.now();
       for (const step of activeBoard.items.filter(candidate => candidate.taskWorkflowId === item.taskWorkflowId && candidate.taskWorkflowRole === "step" && candidate.taskStatus === "running")) {
         step.taskStatus = cancelled ? "cancelled" : "error";
-        step.taskError = cancelled ? "" : "定时工作流已中断";
+        step.taskError = cancelled ? "" : ui("定时工作流已中断");
         step.taskProgress = "";
         step.taskRunId = "";
         step.taskCompletedAt = Date.now();
@@ -497,18 +501,18 @@ async function runScheduledTask(boardId, itemId) {
     return;
   }
   if (item.type !== "task" || item.taskWorkflowRole === "step") {
-    await failScheduledTask(boardId, itemId, "执行容器不能单独设置定时任务");
+    await failScheduledTask(boardId, itemId, ui("执行容器不能单独设置定时任务"));
     return;
   }
   const prompt = scheduledTaskPrompt(item);
   if (!prompt) {
-    await failScheduledTask(boardId, itemId, "定时任务缺少执行内容");
+    await failScheduledTask(boardId, itemId, ui("定时任务缺少执行内容"));
     return;
   }
   try {
     await connectCodexNative();
-    if (!runtimeReady()) throw new Error(`本机未找到 ${aiRuntimeName(aiRuntime)} CLI`);
-    if (codexActiveTaskIds.size + terminalActiveTaskIds.size >= CODEX_MAX_CONCURRENT_TASKS) throw new Error("本地任务并发已满");
+    if (!runtimeReady()) throw new Error(ui("本机未找到 {0} CLI", aiRuntimeName(aiRuntime)));
+    if (codexActiveTaskIds.size + terminalActiveTaskIds.size >= CODEX_MAX_CONCURRENT_TASKS) throw new Error(ui("本地任务并发已满"));
   } catch (error) {
     await failScheduledTask(boardId, itemId, error, true);
     return;
@@ -538,7 +542,7 @@ async function runScheduledTask(boardId, itemId) {
     taskItem.taskSchedule = nextSchedule;
     taskItem.taskStatus = "running";
     taskItem.taskError = "";
-    taskItem.taskProgress = "定时任务正在执行";
+    taskItem.taskProgress = ui("定时任务正在执行");
     taskItem.taskRunId = taskId;
     taskItem.taskLastMode = "coding";
     taskItem.taskStartedAt = Date.now();
@@ -555,7 +559,7 @@ async function runScheduledTask(boardId, itemId) {
       runtime: aiRuntime,
       mode: "coding",
       prompt,
-      page: { title: `${board.name} · 定时任务`, url: "", content: context },
+      page: { title: ui("{0} · 定时任务", board.name), url: "", content: context },
       images: []
     });
     console.info("[pagedock-scheduler] task started", { taskId, boardId, itemId, repeat: schedule.repeat });
@@ -582,7 +586,7 @@ async function handleScheduledCodexEvent(message, run) {
     codexActiveTaskIds.delete(String(message.id));
     if (message.type === "done") run.resolve({ answer: String(message.answer || ""), artifact: run.artifact });
     else {
-      const error = new Error(String(message.error || (message.type === "cancelled" ? "定时工作流已停止" : "定时工作流执行失败")));
+      const error = new Error(String(message.error || (message.type === "cancelled" ? ui("定时工作流已停止") : ui("定时工作流执行失败"))));
       if (message.type === "cancelled") error.code = "WORKFLOW_CANCELLED";
       run.reject(error);
     }
@@ -601,8 +605,8 @@ async function handleScheduledCodexEvent(message, run) {
   if (!["done", "error", "cancelled"].includes(message.type)) return;
   scheduledCodexRuns.delete(String(message.id));
   const success = message.type === "done";
-  const result = success ? String(message.answer || "Codex 没有返回内容") : "";
-  const error = success ? "" : String(message.error || (message.type === "cancelled" ? "定时任务已停止" : "定时任务执行失败"));
+  const result = success ? String(message.answer || ui("Codex 没有返回内容")) : "";
+  const error = success ? "" : String(message.error || (message.type === "cancelled" ? ui("定时任务已停止") : ui("定时任务执行失败")));
   await mutateScheduledTask(run.boardId, run.itemId, success ? "scheduled-task-completed" : "scheduled-task-failed", item => {
     const schedule = PageDockBoardDomain.normalizeTaskSchedule(item.taskSchedule);
     item.taskSchedule = schedule ? { ...schedule, lastRunAt: Date.now(), lastStatus: success ? "success" : "error", lastError: error } : null;

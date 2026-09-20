@@ -1,6 +1,7 @@
-(() => {
+(async () => {
   if (window.top !== window || globalThis.__shizuoCodexQuickEntry) return;
   globalThis.__shizuoCodexQuickEntry = true;
+  await ShizuoI18n.ready;
 
   const CODEX_STATUS_REQUEST = "pagedock-codex-status";
   const CODEX_RUN_REQUEST = "pagedock-codex-run";
@@ -123,20 +124,20 @@
   dock.className = "dock";
   dock.dataset.state = "loading";
   dock.dataset.collapsed = "false";
-  dock.innerHTML = `
+  dock.innerHTML = ui(`
     <div class="launcher">
       <button class="launcher-main" id="launcherMain" type="button" aria-label="打开 Codex 快捷入口">
         <span class="mark">C</span><span class="name">Codex</span><span class="connection" id="connection">自动连接中</span><span class="dot" aria-hidden="true"></span>
       </button>
       <button class="launcher-action" id="collapse" type="button" aria-label="向右收起 Codex 快捷入口" title="向右收起">›</button>
-    </div>`;
+    </div>`);
 
   const panel = document.createElement("aside");
   panel.className = "panel";
   panel.hidden = true;
   panel.setAttribute("role", "dialog");
-  panel.setAttribute("aria-label", "Codex 网页快捷面板");
-  panel.innerHTML = `
+  panel.setAttribute("aria-label", ui("Codex 网页快捷面板"));
+  panel.innerHTML = ui(`
     <header class="panel-head">
       <span class="mark">C</span>
       <div class="heading"><strong>问问 Codex</strong><span id="panelStatus">正在自动连接本地 Codex…</span></div>
@@ -159,20 +160,20 @@
         </span>
         <button class="stop" id="stop" type="button" hidden>停止</button><button class="send" id="send" type="button">发送</button>
       </div>
-    </div>`;
+    </div>`);
 
   const selectionMenu = document.createElement("div");
   selectionMenu.className = "selection-menu";
   selectionMenu.hidden = true;
   selectionMenu.setAttribute("role", "toolbar");
-  selectionMenu.setAttribute("aria-label", "选中文字快捷操作");
-  selectionMenu.innerHTML = `
+  selectionMenu.setAttribute("aria-label", ui("选中文字快捷操作"));
+  selectionMenu.innerHTML = ui(`
     <button data-action="ask" type="button">问问 Codex</button>
     <button data-action="translate" type="button">翻译中文</button>
     <button data-action="summary" type="button">内容总结</button>
     <button data-action="analysis" type="button">内容分析</button>
     <button data-action="inspire" type="button">启发</button>
-    <button data-action="save" type="button">保存到收件箱</button>`;
+    <button data-action="save" type="button">保存到收件箱</button>`);
 
   shadow.append(style, dock, panel, selectionMenu);
   (document.documentElement || document.body).appendChild(host);
@@ -203,17 +204,17 @@
   let chatPersistTimer;
   let pageChatLoaded = false;
   let currentPageUrl = location.href;
-  let currentPageTitle = document.title || "当前页面";
+  let currentPageTitle = document.title || ui("当前页面");
   let pendingPageUrl = "";
   let switchingPageConversation = false;
   let pageChatLoadPromise = Promise.resolve();
   let dragged = false;
 
   const prompts = {
-    translate: target => `请将${target}翻译成自然、准确的中文，保留原有段落、语气、数字和专有名词；只输出译文，不添加额外分析。`,
-    summary: target => `请总结${target}：先给一句话结论，再列出 3 到 6 个关键信息；忠于原文，不臆测。`,
-    analysis: target => `请深入分析${target}：说明核心观点、论证结构、关键依据、隐含假设、可能的局限和需要进一步核实之处。`,
-    inspire: target => `请基于${target}给出有价值的启发：提炼可迁移的方法、值得追问的问题、可行动建议和 2 到 3 个新的思考方向；不要脱离原文事实。`
+    translate: target => ui("请将{0}翻译成自然、准确的中文，保留原有段落、语气、数字和专有名词；只输出译文，不添加额外分析。", target),
+    summary: target => ui("请总结{0}：先给一句话结论，再列出 3 到 6 个关键信息；忠于原文，不臆测。", target),
+    analysis: target => ui("请深入分析{0}：说明核心观点、论证结构、关键依据、隐含假设、可能的局限和需要进一步核实之处。", target),
+    inspire: target => ui("请基于{0}给出有价值的启发：提炼可迁移的方法、值得追问的问题、可行动建议和 2 到 3 个新的思考方向；不要脱离原文事实。", target)
   };
 
   function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
@@ -265,7 +266,7 @@
     collapsed = nextCollapsed;
     dock.dataset.collapsed = String(collapsed);
     if (collapsed) panel.hidden = true;
-    launcherMain.setAttribute("aria-label", collapsed ? "展开 Codex 快捷入口" : "打开 Codex 快捷面板");
+    launcherMain.setAttribute("aria-label", collapsed ? ui("展开 Codex 快捷入口") : ui("打开 Codex 快捷面板"));
     requestAnimationFrame(() => {
       const width = dock.offsetWidth || (collapsed ? 48 : 250);
       applyPosition({ x: rightEdge - width, y: position.y });
@@ -291,7 +292,7 @@
     shadow.querySelectorAll(".quick-action").forEach(button => { button.disabled = busy || !ready; });
     const composeHint = element("composeHint");
     composeHint.hidden = !busy;
-    composeHint.textContent = busy ? (progressText || "Codex 正在处理…") : ready ? "本地 Codex 已自动连接" : "正在自动连接本地 Codex";
+    composeHint.textContent = busy ? (progressText || ui("Codex 正在处理…")) : ready ? ui("本地 Codex 已自动连接") : ui("正在自动连接本地 Codex");
   }
 
   function openPanel() {
@@ -312,16 +313,16 @@
   function setPanelExpanded(expanded) {
     const resize = element("resize");
     panel.dataset.expanded = String(Boolean(expanded));
-    resize.textContent = expanded ? "还原" : "放大";
-    resize.setAttribute("aria-label", expanded ? "还原窗口" : "放大窗口");
-    resize.title = expanded ? "还原窗口" : "放大窗口";
+    resize.textContent = expanded ? ui("还原") : ui("放大");
+    resize.setAttribute("aria-label", expanded ? ui("还原窗口") : ui("放大窗口"));
+    resize.title = expanded ? ui("还原窗口") : ui("放大窗口");
     positionPanel();
   }
 
   function setAttachedSelection(text = "") {
     attachedSelection = String(text || "").trim().slice(0, MAX_SELECTION_CHARS);
     composeContext.hidden = !attachedSelection;
-    composeContextLabel.textContent = attachedSelection ? `引用 · ${attachedSelection.length} 字` : "";
+    composeContextLabel.textContent = attachedSelection ? ui("引用 · {0} 字", attachedSelection.length) : "";
     updateControls();
   }
 
@@ -333,12 +334,12 @@
       preview.className = "compose-image";
       const thumbnail = document.createElement("img");
       thumbnail.src = image.dataUrl;
-      thumbnail.alt = image.name || `待发送图片 ${index + 1}`;
+      thumbnail.alt = image.name || ui("待发送图片 {0}", index + 1);
       const remove = document.createElement("button");
       remove.type = "button";
       remove.textContent = "×";
       remove.disabled = busy;
-      remove.setAttribute("aria-label", `移除图片 ${index + 1}`);
+      remove.setAttribute("aria-label", ui("移除图片 {0}", index + 1));
       remove.addEventListener("click", () => {
         attachedImages.splice(index, 1);
         renderAttachedImages();
@@ -353,7 +354,7 @@
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result || ""));
-      reader.onerror = () => reject(reader.error || new Error("图片读取失败"));
+      reader.onerror = () => reject(reader.error || new Error(ui("图片读取失败")));
       reader.readAsDataURL(file);
     });
   }
@@ -361,27 +362,27 @@
   async function attachImageFiles(files) {
     const supported = [...files].filter(file => /^image\/(png|jpe?g|webp)$/i.test(file.type));
     if (!supported.length) {
-      panelStatus.textContent = "仅支持 PNG、JPEG 或 WebP 图片";
+      panelStatus.textContent = ui("仅支持 PNG、JPEG 或 WebP 图片");
       return;
     }
     for (const file of supported) {
       if (attachedImages.length >= MAX_IMAGE_COUNT) {
-        panelStatus.textContent = `一次最多发送 ${MAX_IMAGE_COUNT} 张图片`;
+        panelStatus.textContent = ui("一次最多发送 {0} 张图片", MAX_IMAGE_COUNT);
         break;
       }
       if (file.size > MAX_IMAGE_BYTES) {
-        panelStatus.textContent = `单张图片不能超过 ${MAX_IMAGE_BYTES / 1024 / 1024} MB`;
+        panelStatus.textContent = ui("单张图片不能超过 {0} MB", MAX_IMAGE_BYTES / 1024 / 1024);
         continue;
       }
       if (attachedImages.reduce((total, image) => total + image.size, 0) + file.size > MAX_IMAGE_TOTAL_BYTES) {
-        panelStatus.textContent = "图片总大小不能超过 25 MB";
+        panelStatus.textContent = ui("图片总大小不能超过 25 MB");
         break;
       }
-      attachedImages.push({ dataUrl: await fileAsDataUrl(file), name: file.name || "剪贴板图片", size: file.size });
+      attachedImages.push({ dataUrl: await fileAsDataUrl(file), name: file.name || ui("剪贴板图片"), size: file.size });
     }
     renderAttachedImages();
     updateControls();
-    if (ready) panelStatus.textContent = attachedImages.length ? `已添加 ${attachedImages.length} 张图片` : "本地已连接";
+    if (ready) panelStatus.textContent = attachedImages.length ? ui("已添加 {0} 张图片", attachedImages.length) : ui("本地已连接");
   }
 
   function addMessage(role, text, quote = "", imageCount = 0) {
@@ -402,7 +403,7 @@
     if (!messages.length && !busy) {
       const empty = document.createElement("div");
       empty.className = "empty";
-      empty.innerHTML = "<strong>在当前网页直接问 Codex</strong><span>选中文字可翻译、总结、分析或继续发问。</span>";
+      empty.innerHTML = ui("<strong>在当前网页直接问 Codex</strong><span>选中文字可翻译、总结、分析或继续发问。</span>");
       messagesEl.appendChild(empty);
       return;
     }
@@ -411,7 +412,7 @@
       article.className = `message ${message.role}`;
       const label = document.createElement("span");
       label.className = "message-label";
-      label.textContent = message.role === "user" ? "你" : message.role === "error" ? "未完成" : "Codex";
+      label.textContent = message.role === "user" ? ui("你") : message.role === "error" ? ui("未完成") : "Codex";
       const body = document.createElement("div");
       body.className = "message-body";
       body.textContent = message.text;
@@ -425,7 +426,7 @@
       if (message.imageCount) {
         const images = document.createElement("span");
         images.className = "message-images";
-        images.textContent = `${message.imageCount} 张图片`;
+        images.textContent = ui("{0} 张图片", message.imageCount);
         article.appendChild(images);
       }
       article.appendChild(body);
@@ -434,7 +435,7 @@
     if (busy) {
       const progress = document.createElement("div");
       progress.className = "progress";
-      progress.textContent = progressText || "Codex 正在处理…";
+      progress.textContent = progressText || ui("Codex 正在处理…");
       messagesEl.appendChild(progress);
     }
     requestAnimationFrame(() => { messagesEl.scrollTop = messagesEl.scrollHeight; });
@@ -446,14 +447,15 @@
   }
 
   function conversationContext() {
-    return messages.slice(-8).map(message => `${message.role === "user" ? "用户" : "Codex"}：${message.text}${message.imageCount ? `\n[附带 ${message.imageCount} 张图片]` : ""}`).join("\n\n---\n\n").slice(-20_000);
+    return messages.slice(-8).map(message => `${message.role === "user" ? ui("用户") : "Codex"}：${message.text}${message.imageCount ? ui(`
+[附带 {0} 张图片]`, message.imageCount) : ""}`).join("\n\n---\n\n").slice(-20_000);
   }
 
   async function restorePageChat(url) {
     pageChatLoaded = false;
     try {
       const response = await chrome.runtime.sendMessage({ type: PAGE_CHAT_GET_REQUEST, url });
-      if (!response?.ok) throw new Error(response?.error || "页面会话读取失败");
+      if (!response?.ok) throw new Error(response?.error || ui("页面会话读取失败"));
       if (currentPageUrl !== url) return;
       messages = (Array.isArray(response.result?.messages) ? response.result.messages : []).map(message => ({
         role: ["user", "assistant", "error"].includes(message?.role) ? message.role : "assistant",
@@ -477,7 +479,7 @@
       title: currentPageTitle,
       messages
     });
-    if (!response?.ok) throw new Error(response?.error || "页面会话保存失败");
+    if (!response?.ok) throw new Error(response?.error || ui("页面会话保存失败"));
   }
 
   function schedulePageChatPersist() {
@@ -507,7 +509,7 @@
         console.warn("[shizuo-page-codex] previous page conversation save failed", { reason: error?.message || String(error) });
       });
       currentPageUrl = url;
-      currentPageTitle = document.title || "当前页面";
+      currentPageTitle = document.title || ui("当前页面");
       pendingPageUrl = "";
       messages = [];
       setAttachedSelection("");
@@ -524,22 +526,22 @@
 
   async function refreshStatus() {
     if (busy) return;
-    setConnection("loading", "自动连接中");
+    setConnection("loading", ui("自动连接中"));
     try {
       const response = await chrome.runtime.sendMessage({ type: CODEX_STATUS_REQUEST });
-      if (!response?.ok) throw new Error(response?.error || "本地桥接不可用");
-      if (!response.ready) throw new Error(response.health?.nativeHost ? "Codex CLI 不可用" : "本地桥接未连接");
-      setConnection("ready", "本地已连接");
+      if (!response?.ok) throw new Error(response?.error || ui("本地桥接不可用"));
+      if (!response.ready) throw new Error(response.health?.nativeHost ? ui("Codex CLI 不可用") : ui("本地桥接未连接"));
+      setConnection("ready", ui("本地已连接"));
     } catch (error) {
-      setConnection("error", "等待本地连接");
-      panelStatus.textContent = error?.message || "本地 Codex 未连接";
+      setConnection("error", ui("等待本地连接"));
+      panelStatus.textContent = error?.message || ui("本地 Codex 未连接");
     }
   }
 
   async function sendPrompt(prompt, selectedText = attachedSelection) {
     const pendingImages = attachedImages.map(image => ({ ...image }));
     const imageBatch = pendingImages.map(image => image.dataUrl);
-    const userPrompt = String(prompt || "").trim() || (imageBatch.length ? "请分析这些图片。" : "");
+    const userPrompt = String(prompt || "").trim() || (imageBatch.length ? ui("请分析这些图片。") : "");
     if (!userPrompt || busy) return;
     openPanel();
     if (location.href !== currentPageUrl) await switchPageConversation(location.href);
@@ -553,15 +555,17 @@
     input.value = "";
     attachedImages = [];
     renderAttachedImages();
-    panelStatus.textContent = "本地已连接";
-    progressText = "正在理解网页内容…";
+    panelStatus.textContent = ui("本地已连接");
+    progressText = ui("正在理解网页内容…");
     busy = true;
     taskId = `page-codex-${crypto.randomUUID()}`;
     renderMessages();
     updateControls();
     const context = selectionText
-      ? `选中文字：\n${selectionText}`
-      : `当前页面可见内容：\n${pageText() || "（当前页面没有可提取的正文）"}`;
+      ? ui(`选中文字：
+{0}`, selectionText)
+      : ui(`当前页面可见内容：
+{0}`, pageText() || ui("（当前页面没有可提取的正文）"));
     // 引用已经固化到本轮用户消息，输入区不再重复展示。
     if (selectionText) setAttachedSelection("");
     try {
@@ -572,13 +576,13 @@
         mode: "analysis",
         prompt: userPrompt,
         page: {
-          title: document.title || "当前网页",
+          title: document.title || ui("当前网页"),
           url: currentPageUrl,
           content: [context, conversationContext()].filter(Boolean).join("\n\n---\n\n").slice(0, MAX_CONTEXT_CHARS)
         },
         images: imageBatch
       });
-      if (!response?.ok) throw new Error(response?.error || "Codex 任务启动失败");
+      if (!response?.ok) throw new Error(response?.error || ui("Codex 任务启动失败"));
       reconcileTaskSnapshot(response);
     } catch (error) {
       busy = false;
@@ -587,7 +591,7 @@
         attachedImages = pendingImages;
         renderAttachedImages();
       }
-      addMessage("error", error?.message || "Codex 任务启动失败");
+      addMessage("error", error?.message || ui("Codex 任务启动失败"));
       progressText = "";
       updateControls();
     }
@@ -600,7 +604,7 @@
       return;
     }
     const text = String(selectionText || "").trim();
-    const prompt = prompts[action]?.(text ? "选中文字" : "当前页面正文");
+    const prompt = prompts[action]?.(text ? ui("选中文字") : ui("当前页面正文"));
     if (prompt) void sendPrompt(prompt, text);
   }
 
@@ -608,14 +612,14 @@
     const text = String(selectionText || "").trim();
     if (!text) return;
     button.disabled = true;
-    button.textContent = "保存中…";
+    button.textContent = ui("保存中…");
     try {
       const response = await chrome.runtime.sendMessage({ type: SAVE_SELECTION_TO_INBOX_REQUEST, text });
-      if (!response?.ok) throw new Error(response?.error || "保存失败");
-      button.textContent = "已保存";
+      if (!response?.ok) throw new Error(response?.error || ui("保存失败"));
+      button.textContent = ui("已保存");
       setTimeout(hideSelectionMenu, 900);
     } catch (error) {
-      button.textContent = "保存失败";
+      button.textContent = ui("保存失败");
       console.warn("[shizuo-page-codex] selection inbox save failed", {
         reason: error?.message || String(error)
       });
@@ -688,7 +692,7 @@
     renderAttachedImages();
     renderMessages();
     const response = await chrome.runtime.sendMessage({ type: PAGE_CHAT_DELETE_REQUEST, url: currentPageUrl }).catch(() => null);
-    if (!response?.ok) console.warn("[shizuo-page-codex] page conversation clear failed", { reason: response?.error || "消息通道不可用" });
+    if (!response?.ok) console.warn("[shizuo-page-codex] page conversation clear failed", { reason: response?.error || ui("消息通道不可用") });
   });
   element("removeContext").addEventListener("click", () => setAttachedSelection(""));
   send.addEventListener("click", () => void sendPrompt(input.value));
@@ -706,7 +710,7 @@
       .filter(Boolean);
     if (!images.length) return;
     event.preventDefault();
-    void attachImageFiles(images).catch(error => { panelStatus.textContent = error?.message || "图片读取失败"; });
+    void attachImageFiles(images).catch(error => { panelStatus.textContent = error?.message || ui("图片读取失败"); });
   });
   input.addEventListener("keydown", event => {
     if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
@@ -746,23 +750,23 @@
   addEventListener("pagehide", () => { void persistPageChat().catch(() => {}); });
   function applyTaskEvent(event) {
     if (!event || event.id !== taskId) return;
-    if (event.type === "started") progressText = "正在理解并组织回答…";
-    else if (event.type === "progress") progressText = String(event.label || event.stage || "正在处理…").slice(0, 120);
+    if (event.type === "started") progressText = ui("正在理解并组织回答…");
+    else if (event.type === "progress") progressText = String(event.label || event.stage || ui("正在处理…")).slice(0, 120);
     else if (event.type === "done") {
       busy = false;
       taskId = "";
       progressText = "";
-      addMessage("assistant", event.answer || "Codex 没有返回内容");
+      addMessage("assistant", event.answer || ui("Codex 没有返回内容"));
     } else if (event.type === "error") {
       busy = false;
       taskId = "";
       progressText = "";
-      addMessage("error", event.error || "Codex 任务失败");
+      addMessage("error", event.error || ui("Codex 任务失败"));
     } else if (event.type === "cancelled") {
       busy = false;
       taskId = "";
       progressText = "";
-      addMessage("error", "任务已停止");
+      addMessage("error", ui("任务已停止"));
     }
     renderMessages();
     updateControls();
@@ -782,7 +786,7 @@
       applyTaskEvent({
         type: "error",
         id: taskId,
-        error: "任务已结束，但没有收到结果。请重试。"
+        error: ui("任务已结束，但没有收到结果。请重试。")
       });
     }
   }
@@ -792,11 +796,11 @@
     if (!busy || !currentTaskId) return;
     try {
       const response = await chrome.runtime.sendMessage({ type: CODEX_STATUS_REQUEST, taskId: currentTaskId });
-      if (!response?.ok) throw new Error(response?.error || "无法确认任务状态");
+      if (!response?.ok) throw new Error(response?.error || ui("无法确认任务状态"));
       if (taskId === currentTaskId) reconcileTaskSnapshot(response);
     } catch (error) {
       if (taskId === currentTaskId) {
-        applyTaskEvent({ type: "error", id: currentTaskId, error: error?.message || "任务连接已中断，请重试" });
+        applyTaskEvent({ type: "error", id: currentTaskId, error: error?.message || ui("任务连接已中断，请重试") });
       }
     }
   }

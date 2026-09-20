@@ -4,7 +4,7 @@ async function migrateLegacyBoard() {
   if (!storage) return;
   const stored = (await storage.get(LEGACY_STORAGE_KEY))[LEGACY_STORAGE_KEY];
   if (!Array.isArray(stored?.items) || !stored.items.length) return;
-  const board = await db.createBoard("迁移白板");
+  const board = await db.createBoard(ui("迁移白板"));
   const baseBoard = clone(board);
   board.items = stored.items.map(item => ({
     ...item,
@@ -12,7 +12,7 @@ async function migrateLegacyBoard() {
     createdAt: stored.updatedAt || Date.now(),
     updatedAt: stored.updatedAt || Date.now()
   }));
-  await db.commitBoardSnapshot(board, { baseBoard, reason: "迁移旧白板" });
+  await db.commitBoardSnapshot(board, { baseBoard, reason: ui("迁移旧白板") });
   await storage.remove(LEGACY_STORAGE_KEY);
   console.info("[pagedock-db] migrated legacy whiteboard", {
     boardId: board.id,
@@ -73,9 +73,9 @@ function aiRuntimeCommand(runtime = aiRuntime) {
 function updateAiRuntimeCopy() {
   document.getElementById("heroAiName").textContent = "AI";
   document.getElementById("journeyAiName").textContent = "AI";
-  document.getElementById("askSelectionWithCodex").textContent = "交给 AI";
-  document.getElementById("codexLauncherRuntimeName").textContent = "AI 助手";
-  document.getElementById("codexChatRuntimeName").textContent = "AI 助手";
+  document.getElementById("askSelectionWithCodex").textContent = ui("交给 AI");
+  document.getElementById("codexLauncherRuntimeName").textContent = ui("AI 助手");
+  document.getElementById("codexChatRuntimeName").textContent = ui("AI 助手");
   updateAllTaskItemElements();
 }
 
@@ -97,16 +97,16 @@ function renderCodexLauncherConnectionStatus() {
   const connected = codexChatReady || externalCodexConnected;
   codexExternalStatusEl.dataset.connected = String(connected);
   if (codexChatReady) {
-    codexExternalStatusEl.textContent = "本地已连接";
-    codexExternalStatusEl.title = "拾作已自动连接本地 AI";
+    codexExternalStatusEl.textContent = ui("本地已连接");
+    codexExternalStatusEl.title = ui("拾作已自动连接本地 AI");
     return;
   }
   codexExternalStatusEl.textContent = externalCodexConnected
-    ? (externalCodexScope === "lan" ? "MCP 内网已接入" : "MCP 已接入")
-    : (externalCodexScope === "lan" ? "MCP 内网待接入" : (codexConnectionHint ? "需要重新加载拾作" : "正在连接本地 AI"));
+    ? (externalCodexScope === "lan" ? ui("MCP 内网已接入") : ui("MCP 已接入"))
+    : (externalCodexScope === "lan" ? ui("MCP 内网待接入") : (codexConnectionHint ? ui("需要重新加载拾作") : ui("正在连接本地 AI")));
   codexExternalStatusEl.title = externalCodexConnected
-    ? `外部 Codex 已通过${externalCodexScope === "lan" ? "内网" : "本机"} MCP 接入拾作`
-    : (externalCodexScope === "lan" ? "拾作已开启内网共享，正在等待同事的 Codex 接入" : (codexConnectionHint || "打开拾作后会自动连接本地 AI"));
+    ? ui("外部 Codex 已通过{0} MCP 接入拾作", externalCodexScope === "lan" ? ui("内网") : ui("本机"))
+    : (externalCodexScope === "lan" ? ui("拾作已开启内网共享，正在等待同事的 Codex 接入") : (codexConnectionHint || ui("打开拾作后会自动连接本地 AI")));
 }
 
 function updateExternalCodexStatus(snapshot = {}) {
@@ -157,18 +157,18 @@ function updateExternalCodexStatus(snapshot = {}) {
 }
 
 function localCodexSessionStateText(state) {
-  if (state === "running") return "正在运行";
-  if (state === "cancelled") return "已取消";
-  return "已完成";
+  if (state === "running") return ui("正在运行");
+  if (state === "cancelled") return ui("已取消");
+  return ui("已完成");
 }
 
 function renderLocalCodexSessionList() {
-  collaborationSessionCountEl.textContent = localCodexSessions.length ? `${localCodexSessions.length} 个` : "";
+  collaborationSessionCountEl.textContent = localCodexSessions.length ? ui("{0} 个", localCodexSessions.length) : "";
   codexSessionListEl.replaceChildren();
   if (!localCodexSessions.length) {
     const empty = document.createElement("div");
     empty.className = "codex-session-empty";
-    empty.textContent = localCodexSessionsAvailable ? "最近没有可预览的 Codex Session" : "本地桥接连接后可查看 Codex Sessions";
+    empty.textContent = localCodexSessionsAvailable ? ui("最近没有可预览的 Codex Session") : ui("本地桥接连接后可查看 Codex Sessions");
     codexSessionListEl.appendChild(empty);
     return;
   }
@@ -177,13 +177,13 @@ function renderLocalCodexSessionList() {
     row.type = "button";
     row.className = "codex-session-item";
     row.dataset.state = session.state || "completed";
-    row.title = `预览 ${session.title || "Codex Session"}`;
+    row.title = ui("预览 {0}", session.title || "Codex Session");
     const dot = document.createElement("span");
     dot.className = "codex-session-dot";
     const copy = document.createElement("span");
     copy.className = "codex-session-copy";
     const title = document.createElement("strong");
-    title.textContent = session.title || "未命名 Codex 会话";
+    title.textContent = session.title || ui("未命名 Codex 会话");
     const summary = document.createElement("span");
     summary.textContent = [localCodexSessionStateText(session.state), session.latestText].filter(Boolean).join(" · ");
     const time = document.createElement("time");
@@ -204,12 +204,12 @@ async function loadLocalCodexSessions(force = false) {
     codexSessionListEl.replaceChildren();
     const loading = document.createElement("div");
     loading.className = "codex-session-empty";
-    loading.textContent = "正在读取最近会话…";
+    loading.textContent = ui("正在读取最近会话…");
     codexSessionListEl.appendChild(loading);
   }
   localCodexSessionListPromise = chrome.runtime.sendMessage({ type: CODEX_SESSION_LIST_REQUEST, limit: 12 })
     .then(response => {
-      if (!response?.ok) throw new Error(response?.error || "Codex Session 列表读取失败");
+      if (!response?.ok) throw new Error(response?.error || ui("Codex Session 列表读取失败"));
       if (request !== localCodexSessionListRequest) return localCodexSessions;
       localCodexSessionsAvailable = true;
       localCodexSessions = Array.isArray(response.sessions) ? response.sessions : [];
@@ -222,7 +222,7 @@ async function loadLocalCodexSessions(force = false) {
       codexSessionListEl.replaceChildren();
       const failure = document.createElement("div");
       failure.className = "codex-session-empty";
-      failure.textContent = error?.message || "Codex Session 列表读取失败";
+      failure.textContent = error?.message || ui("Codex Session 列表读取失败");
       codexSessionListEl.appendChild(failure);
       return localCodexSessions;
     })
@@ -240,7 +240,7 @@ function closeLocalCodexSessionPreview() {
 }
 
 function renderLocalCodexSessionPreview(session) {
-  codexSessionPreviewTitleEl.textContent = session.title || "未命名 Codex 会话";
+  codexSessionPreviewTitleEl.textContent = session.title || ui("未命名 Codex 会话");
   codexSessionPreviewMetaEl.textContent = [
     localCodexSessionStateText(session.state),
     session.threadId ? `Session ${session.threadId.slice(0, 8)}` : "",
@@ -251,7 +251,7 @@ function renderLocalCodexSessionPreview(session) {
   if (!entries.length) {
     const empty = document.createElement("div");
     empty.className = "codex-session-empty";
-    empty.textContent = "这个 Session 暂无可公开预览的消息";
+    empty.textContent = ui("这个 Session 暂无可公开预览的消息");
     codexSessionMessagesEl.appendChild(empty);
     return;
   }
@@ -263,10 +263,10 @@ function renderLocalCodexSessionPreview(session) {
     const label = document.createElement("div");
     label.className = "codex-session-message-label";
     label.textContent = entry.role === "user"
-      ? "你"
+      ? ui("你")
       : entry.role === "assistant"
-        ? (entry.phase === "final_answer" ? "Codex · 最终回答" : "Codex")
-        : "状态";
+        ? (entry.phase === "final_answer" ? ui("Codex · 最终回答") : "Codex")
+        : ui("状态");
     const body = document.createElement("div");
     body.className = "codex-session-message-body";
     if (entry.role === "assistant") renderTaskMarkdown(body, String(entry.text || ""));
@@ -286,12 +286,12 @@ async function openLocalCodexSessionPreview(threadId, refresh = false) {
   const request = ++localCodexSessionPreviewRequest;
   if (!refresh) {
     codexSessionPreviewTitleEl.textContent = localCodexSessions.find(session => session.threadId === id)?.title || "Session Preview";
-    codexSessionPreviewMetaEl.textContent = "正在读取公开消息…";
+    codexSessionPreviewMetaEl.textContent = ui("正在读取公开消息…");
     codexSessionMessagesEl.replaceChildren();
   }
   try {
     const response = await chrome.runtime.sendMessage({ type: CODEX_SESSION_PREVIEW_REQUEST, threadId: id });
-    if (!response?.ok) throw new Error(response?.error || "Codex Session 预览读取失败");
+    if (!response?.ok) throw new Error(response?.error || ui("Codex Session 预览读取失败"));
     if (request !== localCodexSessionPreviewRequest || selectedLocalCodexSessionId !== id) return;
     renderLocalCodexSessionPreview(response.session || {});
   } catch (error) {
@@ -299,17 +299,17 @@ async function openLocalCodexSessionPreview(threadId, refresh = false) {
     codexSessionMessagesEl.replaceChildren();
     const failure = document.createElement("div");
     failure.className = "codex-session-empty";
-    failure.textContent = error?.message || "Codex Session 预览读取失败";
+    failure.textContent = error?.message || ui("Codex Session 预览读取失败");
     codexSessionMessagesEl.appendChild(failure);
   }
 }
 
 function externalActivityPhaseText(activity) {
-  if (activity.phase === "approval") return "等待你确认";
-  if (activity.phase === "running") return "正在执行";
-  if (activity.phase === "completed") return "已完成";
-  if (activity.error?.includes("拒绝")) return "已拒绝";
-  if (activity.phase === "error") return "执行失败";
+  if (activity.phase === "approval") return ui("等待你确认");
+  if (activity.phase === "running") return ui("正在执行");
+  if (activity.phase === "completed") return ui("已完成");
+  if (activity.error?.includes("拒绝")) return ui("已拒绝");
+  if (activity.phase === "error") return ui("执行失败");
   return "";
 }
 
@@ -317,12 +317,12 @@ const EXTERNAL_TASK_ACTIVE_PHASES = new Set(["started", "running", "waiting_appr
 
 function externalTaskPhaseText(task) {
   const connected = externalCodexClients.some(client => client.id === task.client?.id);
-  if (EXTERNAL_TASK_ACTIVE_PHASES.has(task.phase) && !connected) return "连接中断";
-  if (task.phase === "started" || task.phase === "running") return "正在执行";
-  if (task.phase === "waiting_approval") return "等待你确认";
-  if (task.phase === "completed") return "已完成";
-  if (task.phase === "failed") return "执行失败";
-  if (task.phase === "cancelled") return "已取消";
+  if (EXTERNAL_TASK_ACTIVE_PHASES.has(task.phase) && !connected) return ui("连接中断");
+  if (task.phase === "started" || task.phase === "running") return ui("正在执行");
+  if (task.phase === "waiting_approval") return ui("等待你确认");
+  if (task.phase === "completed") return ui("已完成");
+  if (task.phase === "failed") return ui("执行失败");
+  if (task.phase === "cancelled") return ui("已取消");
   return "";
 }
 
@@ -337,18 +337,18 @@ function externalTaskPetState(task) {
 }
 
 function externalPetStatusText(state, connected) {
-  if (state === "running") return "正在工作";
-  if (state === "waiting") return "需要你确认";
-  if (state === "review") return "完成啦";
-  if (state === "failed") return "遇到问题";
-  return connected ? "待命" : "休息中";
+  if (state === "running") return ui("正在工作");
+  if (state === "waiting") return ui("需要你确认");
+  if (state === "review") return ui("完成啦");
+  if (state === "failed") return ui("遇到问题");
+  return connected ? ui("待命") : ui("休息中");
 }
 
 function externalTaskSummary(task, connected) {
   const text = String(task?.message || (!EXTERNAL_TASK_ACTIVE_PHASES.has(task?.phase) ? task?.result : "") || "").trim();
   if (text) return text.length > 150 ? `${text.slice(0, 147)}…` : text;
-  if (task) return externalTaskPhaseText(task) || "任务状态已更新";
-  return connected ? "我会在这里告诉你正在做什么。" : "连接 Codex 后，工作状态会在这里呈现。";
+  if (task) return externalTaskPhaseText(task) || ui("任务状态已更新");
+  return connected ? ui("我会在这里告诉你正在做什么。") : ui("连接 Codex 后，工作状态会在这里呈现。");
 }
 
 function appendExternalTaskActions(container, task) {
@@ -357,17 +357,17 @@ function appendExternalTaskActions(container, task) {
   if (task.result) {
     const copy = document.createElement("button");
     copy.type = "button";
-    copy.textContent = "复制结果";
+    copy.textContent = ui("复制结果");
     copy.addEventListener("click", async () => {
       await copyTaskAnswer(task.result);
-      setStatus("已复制 Codex 结果");
+      setStatus(ui("已复制 Codex 结果"));
     });
     container.appendChild(copy);
   }
   if (task.boardId) cardIds.forEach((cardId, index) => {
     const locate = document.createElement("button");
     locate.type = "button";
-    locate.textContent = cardIds.length === 1 ? "定位产物" : `定位产物 ${index + 1}`;
+    locate.textContent = cardIds.length === 1 ? ui("定位产物") : ui("定位产物 {0}", index + 1);
     locate.addEventListener("click", () => focusExternalActivity({ boardId: task.boardId, cardId }));
     container.appendChild(locate);
   });
@@ -375,7 +375,7 @@ function appendExternalTaskActions(container, task) {
 
 function localPluginTaskTitle(task) {
   const prompt = String(task?.prompt || "").replace(/\s+/g, " ").trim();
-  return prompt ? (prompt.length > 80 ? `${prompt.slice(0, 77)}…` : prompt) : "Codex 会话";
+  return prompt ? (prompt.length > 80 ? `${prompt.slice(0, 77)}…` : prompt) : ui("Codex 会话");
 }
 
 function syncLocalPluginCodexTask(task, phase, details = {}) {
@@ -389,7 +389,7 @@ function syncLocalPluginCodexTask(task, phase, details = {}) {
     title: localPluginTaskTitle(task),
     message: String(details.message || previous.message || "").slice(0, 1_000),
     result: details.result === undefined ? (previous.result || "") : String(details.result || "").slice(0, 40_000),
-    client: { id: "plugin-local", name: "本地 Codex", scope: "local" },
+    client: { id: "plugin-local", name: ui("本地 Codex"), scope: "local" },
     createdAt: Number(previous.createdAt) || Number(task.startedAt) || Date.now(),
     updatedAt: Date.now(),
     completedAt: ["completed", "failed", "cancelled"].includes(phase) ? Date.now() : null

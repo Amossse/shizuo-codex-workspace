@@ -28,7 +28,7 @@ function wireEvents() {
     persistCodexChatMessages().catch(error => {
       console.warn("[pagedock-codex-chat] clear history failed", error);
     });
-    setCodexChatStatus(codexChatReady ? "新会话 · 已连接" : "新会话 · 未连接", codexChatReady ? "success" : "error");
+    setCodexChatStatus(codexChatReady ? ui("新会话 · 已连接") : ui("新会话 · 未连接"), codexChatReady ? "success" : "error");
     codexChatInputEl.focus();
   });
   codexChatSendEl.addEventListener("click", sendCodexChatMessage);
@@ -48,17 +48,17 @@ function wireEvents() {
     if (!task || task.cancelRequested) return;
     task.cancelRequested = true;
     task.progressBeforeCancel = task.progressText;
-    updateCodexChatProgress(task, "正在停止本地任务…");
+    updateCodexChatProgress(task, ui("正在停止本地任务…"));
     updateCodexChatControls();
     chrome.runtime.sendMessage({ type: CODEX_CANCEL_REQUEST, id: task.id })
       .then(response => {
-        if (!response?.ok) throw new Error(response?.error || "停止会话失败");
+        if (!response?.ok) throw new Error(response?.error || ui("停止会话失败"));
         if (codexChatTask?.id === task.id && response.activeTaskId !== task.id) {
           stopCodexChatProgress(task);
           codexChatTask = undefined;
-          syncLocalPluginCodexTask(task, "cancelled", { message: "任务已停止" });
+          syncLocalPluginCodexTask(task, "cancelled", { message: ui("任务已停止") });
           renderCodexChatMessages();
-          setCodexChatStatus("已停止 · 可继续提问");
+          setCodexChatStatus(ui("已停止 · 可继续提问"));
           updateCodexChatControls();
           updateSelectionUi();
         }
@@ -66,8 +66,8 @@ function wireEvents() {
       .catch(error => {
         if (codexChatTask?.id === task.id) {
           task.cancelRequested = false;
-          updateCodexChatProgress(task, task.progressBeforeCancel || "Codex 正在处理…");
-          setCodexChatStatus(error?.message || "停止会话失败", "error");
+          updateCodexChatProgress(task, task.progressBeforeCancel || ui("Codex 正在处理…"));
+          setCodexChatStatus(error?.message || ui("停止会话失败"), "error");
           updateCodexChatControls();
         }
       });
@@ -95,18 +95,18 @@ function wireEvents() {
     if (!shareBridgeTextEl.value) return;
     try {
       await copyTaskAnswer(shareBridgeTextEl.value);
-      setBridgeShareDialogStatus("协作链接已复制");
+      setBridgeShareDialogStatus(ui("协作链接已复制"));
     } catch (error) {
-      setBridgeShareDialogStatus(error?.message || "复制失败，请手动复制", "error");
+      setBridgeShareDialogStatus(error?.message || ui("复制失败，请手动复制"), "error");
     }
   });
   copyCodexShareEl.addEventListener("click", async () => {
     if (!shareCodexTextEl.value) return;
     try {
       await copyTaskAnswer(shareCodexTextEl.value);
-      setBridgeShareDialogStatus("Codex 接入指令已复制");
+      setBridgeShareDialogStatus(ui("Codex 接入指令已复制"));
     } catch (error) {
-      setBridgeShareDialogStatus(error?.message || "复制失败，请手动复制", "error");
+      setBridgeShareDialogStatus(error?.message || ui("复制失败，请手动复制"), "error");
     }
   });
   stopBridgeShareEl.addEventListener("click", stopBridgeShare);
@@ -126,9 +126,9 @@ function wireEvents() {
   document.getElementById("copyConnectionGuideCommand").addEventListener("click", async () => {
     try {
       await navigator.clipboard.writeText(connectionGuideCommandTextEl.textContent);
-      connectionGuideStatusEl.textContent = "安装命令已复制。";
+      connectionGuideStatusEl.textContent = ui("安装命令已复制。");
     } catch (_error) {
-      connectionGuideStatusEl.textContent = "复制失败，请手动复制上面的命令。";
+      connectionGuideStatusEl.textContent = ui("复制失败，请手动复制上面的命令。");
     }
   });
   document.getElementById("cancelTaskSchedule").addEventListener("click", () => taskScheduleDialogEl.close());
@@ -139,11 +139,11 @@ function wireEvents() {
     const nextRunAt = new Date(taskScheduleAtEl.value).getTime();
     const prompt = String(item?.text || [...(item?.taskMessages || [])].reverse().find(message => message.role === "user")?.text || "").trim();
     if (!prompt) {
-      setStatus("请先填写任务内容，再设置定时执行", true);
+      setStatus(ui("请先填写任务内容，再设置定时执行"), true);
       return;
     }
     if (!item || !Number.isFinite(nextRunAt) || nextRunAt <= Date.now()) {
-      setStatus("请选择未来的执行时间", true);
+      setStatus(ui("请选择未来的执行时间"), true);
       return;
     }
     const previous = PageDockBoardDomain.normalizeTaskSchedule(item.taskSchedule);
@@ -158,19 +158,19 @@ function wireEvents() {
       lastError: ""
     }).then(() => {
       taskScheduleDialogEl.close();
-      setStatus(`已设置${taskScheduleLabel(item.taskSchedule)}`);
-    }).catch(error => setStatus(error?.message || "定时设置失败", true));
+      setStatus(ui("已设置{0}", taskScheduleLabel(item.taskSchedule)));
+    }).catch(error => setStatus(error?.message || ui("定时设置失败"), true));
   });
   clearTaskScheduleEl.addEventListener("click", () => {
     const item = itemById(scheduledTaskItemId);
     if (!item) return;
     persistTaskSchedule(item, null).then(() => {
       taskScheduleDialogEl.close();
-      setStatus("已取消定时执行");
-    }).catch(error => setStatus(error?.message || "取消定时失败", true));
+      setStatus(ui("已取消定时执行"));
+    }).catch(error => setStatus(error?.message || ui("取消定时失败"), true));
   });
   document.getElementById("confirmSaveWorkflowTemplate").addEventListener("click", () => {
-    saveCurrentWorkflowTemplate().catch(error => setStatus(error?.message || "模板保存失败", true));
+    saveCurrentWorkflowTemplate().catch(error => setStatus(error?.message || ui("模板保存失败"), true));
   });
   document.getElementById("runWorkflow").addEventListener("click", runCurrentWorkflow);
   document.getElementById("rerunHealthCheck").addEventListener("click", runHealthCheck);
@@ -193,7 +193,7 @@ function wireEvents() {
     event.preventDefault();
     const name = newBoardNameEl.value.trim();
     if (!name) {
-      newBoardNameEl.setCustomValidity("请输入白板名称");
+      newBoardNameEl.setCustomValidity(ui("请输入白板名称"));
       newBoardNameEl.reportValidity();
       return;
     }
@@ -204,7 +204,7 @@ function wireEvents() {
       newBoardDialogEl.close();
       await openBoard(board.id);
     } catch (error) {
-      setStatus(error?.message || "白板创建失败", true);
+      setStatus(error?.message || ui("白板创建失败"), true);
     }
   });
   newBoardNameEl.addEventListener("input", () => newBoardNameEl.setCustomValidity(""));
@@ -216,7 +216,7 @@ function wireEvents() {
       pageUrlEl.setCustomValidity("");
       pageDialogEl.close();
     } catch (error) {
-      pageUrlEl.setCustomValidity(error.message || "网页地址无效");
+      pageUrlEl.setCustomValidity(error.message || ui("网页地址无效"));
       pageUrlEl.reportValidity();
     }
   });
@@ -230,17 +230,17 @@ function wireEvents() {
     const firstRun = document.body.dataset.onboarding === "first-run";
     button.disabled = true;
     button.dataset.state = "loading";
-    button.textContent = "保存中…";
+    button.textContent = ui("保存中…");
     try {
       const savedItem = await db.addItem(db.INBOX_ID, { type: /^https?:\/\/\S+$/i.test(text) ? "link" : "text", text, src: /^https?:\/\//i.test(text) ? text : "" });
       quickTextEl.value = "";
-      await finishHomeCapture([savedItem], firstRun, "已保存到收件箱");
+      await finishHomeCapture([savedItem], firstRun, ui("已保存到收件箱"));
     } catch (error) {
-      setStatus(error?.message || "内容未能保存到收件箱", true);
+      setStatus(error?.message || ui("内容未能保存到收件箱"), true);
     } finally {
       button.disabled = false;
       button.dataset.state = "default";
-      button.textContent = firstRun ? "开始收集" : "存入收件箱";
+      button.textContent = firstRun ? ui("开始收集") : ui("存入收件箱");
     }
   });
   quickTextEl.addEventListener("keydown", event => {
@@ -303,13 +303,13 @@ function wireEvents() {
   document.getElementById("addFile").addEventListener("click", async () => {
     addMenuEl.open = false;
     try { await chooseLocalCard("file"); } catch (error) {
-      if (error?.name !== "AbortError") setStatus(error?.message || "添加文件失败", true);
+      if (error?.name !== "AbortError") setStatus(error?.message || ui("添加文件失败"), true);
     }
   });
   document.getElementById("addFolder").addEventListener("click", async () => {
     addMenuEl.open = false;
     try { await chooseLocalCard("folder"); } catch (error) {
-      if (error?.name !== "AbortError") setStatus(error?.message || "添加文件夹失败", true);
+      if (error?.name !== "AbortError") setStatus(error?.message || ui("添加文件夹失败"), true);
     }
   });
   document.getElementById("addPage").addEventListener("click", () => {
@@ -349,7 +349,7 @@ function wireEvents() {
   localFolderInputEl.addEventListener("change", () => {
     const files = [...(localFolderInputEl.files || [])];
     if (!files.length) return;
-    const root = files[0].webkitRelativePath?.split("/")[0] || "文件夹";
+    const root = files[0].webkitRelativePath?.split("/")[0] || ui("文件夹");
     const draft = {
       type: "folder",
       localName: root,
@@ -407,7 +407,7 @@ function wireEvents() {
   });
   summarizeSelectionTextEl.addEventListener("click", () => {
     if (codexAttachedPage?.content) {
-      codexChatInputEl.value = "请总结当前网页：先给出一句话结论，再列出关键观点、重要数据和可执行事项。不要遗漏正文后半部分。";
+      codexChatInputEl.value = ui("请总结当前网页：先给出一句话结论，再列出关键观点、重要数据和可执行事项。不要遗漏正文后半部分。");
       resizeCodexChatInput();
       sendCodexChatMessage();
       return;
@@ -447,7 +447,7 @@ function wireEvents() {
   boardNameEl.addEventListener("input", scheduleSave);
   boardNameEl.addEventListener("change", async () => {
     if (!currentBoard) return;
-    document.title = `${boardNameEl.value || "未命名白板"} · 拾作`;
+    document.title = ui("{0} · 拾作", boardNameEl.value || ui("未命名白板"));
     await saveBoardNow();
     notifyDataChanged([currentBoard.id], "rename-board");
   });
@@ -541,7 +541,7 @@ function wireEvents() {
     }
     if (!message.boardIds?.includes(currentBoard.id)) return;
     if (saveTimer) {
-      setStatus("检测到外部更新，完成当前编辑后请重新打开白板");
+      setStatus(ui("检测到外部更新，完成当前编辑后请重新打开白板"));
       return;
     }
     openBoard(currentBoard.id, false);
@@ -587,7 +587,8 @@ function wireEvents() {
 }
 
 async function boot() {
-  if (!db) throw new Error("拾作数据库模块未载入");
+  await ShizuoI18n.ready;
+  if (!db) throw new Error(ui("拾作数据库模块未载入"));
   wireEvents();
   await loadAiRuntime();
   const params = new URLSearchParams(location.search);
@@ -611,5 +612,5 @@ async function boot() {
 
 boot().catch(error => {
   console.error("[pagedock] boot failed", error);
-  setStatus(error?.message || "拾作载入失败", true);
+  setStatus(error?.message || ui("拾作载入失败"), true);
 });

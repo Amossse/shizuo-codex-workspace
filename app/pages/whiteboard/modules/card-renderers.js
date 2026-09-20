@@ -9,7 +9,8 @@ function appendTerminalOutput(item, chunk) {
     item.terminalOutput = next;
     return;
   }
-  item.terminalOutput = `[前序输出已截断]\n${next.slice(-(MAX_TERMINAL_OUTPUT_CHARS - 10_000))}`;
+  item.terminalOutput = ui(`[前序输出已截断]
+{0}`, next.slice(-(MAX_TERMINAL_OUTPUT_CHARS - 10_000)));
 }
 
 function clearTerminalSaveTimer(itemId) {
@@ -42,14 +43,14 @@ function disposeTerminalRenderers() {
 }
 
 function terminalStatusLabel(item) {
-  if (item.terminalStatus === "connecting") return "正在连接";
-  if (item.terminalStatus === "connected") return "已连接";
-  if (item.terminalStatus === "closed") return "已关闭";
-  if (item.terminalStatus === "running") return "执行中";
-  if (item.terminalStatus === "done") return item.terminalExitCode === 0 ? "已完成" : `退出码 ${item.terminalExitCode}`;
-  if (item.terminalStatus === "error") return "执行失败";
-  if (item.terminalStatus === "cancelled") return "已停止";
-  return "就绪";
+  if (item.terminalStatus === "connecting") return ui("正在连接");
+  if (item.terminalStatus === "connected") return ui("已连接");
+  if (item.terminalStatus === "closed") return ui("已关闭");
+  if (item.terminalStatus === "running") return ui("执行中");
+  if (item.terminalStatus === "done") return item.terminalExitCode === 0 ? ui("已完成") : ui("退出码 {0}", item.terminalExitCode);
+  if (item.terminalStatus === "error") return ui("执行失败");
+  if (item.terminalStatus === "cancelled") return ui("已停止");
+  return ui("就绪");
 }
 
 function updateTerminalItemElement(item, scrollToEnd = true) {
@@ -59,12 +60,12 @@ function updateTerminalItemElement(item, scrollToEnd = true) {
   const connect = element.querySelector(".terminal-connect");
   if (!content || !connect) return;
   content.dataset.state = item.terminalStatus || "idle";
-  element.querySelector(".terminal-cwd").textContent = item.terminalCwd || "本地编码工作区";
-  element.querySelector(".terminal-cwd").title = item.terminalCwd || "执行目录由本地桥接配置";
+  element.querySelector(".terminal-cwd").textContent = item.terminalCwd || ui("本地编码工作区");
+  element.querySelector(".terminal-cwd").title = item.terminalCwd || ui("执行目录由本地桥接配置");
   element.querySelector(".terminal-state").textContent = terminalStatusLabel(item);
   const active = ["connected", "connecting"].includes(item.terminalStatus);
-  connect.textContent = active ? "关闭" : "连接";
-  connect.setAttribute("aria-label", active ? "关闭终端会话" : "连接终端会话");
+  connect.textContent = active ? ui("关闭") : ui("连接");
+  connect.setAttribute("aria-label", active ? ui("关闭终端会话") : ui("连接终端会话"));
   if (scrollToEnd) terminalSessions.get(item.terminalSessionId)?.terminal?.scrollToBottom();
   updatePermissionChip(item, element);
 }
@@ -99,7 +100,7 @@ async function openTerminalSession(item, element = itemElement(item.id), resumeE
       cols: session.terminal.cols,
       rows: session.terminal.rows
     });
-    if (!response?.ok) throw new Error(response?.error || "终端会话启动失败");
+    if (!response?.ok) throw new Error(response?.error || ui("终端会话启动失败"));
     updateCodexTaskSnapshot(response);
     if (response.terminalWorkspace) item.terminalCwd = response.terminalWorkspace;
     session.terminal.focus();
@@ -107,7 +108,8 @@ async function openTerminalSession(item, element = itemElement(item.id), resumeE
     console.info("[pagedock-terminal] PTY session requested", { id: item.terminalSessionId, itemId: item.id });
   } catch (error) {
     item.terminalStatus = "error";
-    session.terminal.writeln(`\r\n\x1b[31m[拾作] ${error?.message || "终端连接失败"}\x1b[0m`);
+    session.terminal.writeln(ui(`\r
+[31m[拾作] {0}[0m`, error?.message || ui("终端连接失败")));
     updateTerminalItemElement(item, false);
     scheduleSave();
   }
@@ -153,7 +155,7 @@ async function runTerminalItem(item) {
       id: taskId,
       command
     });
-    if (!response?.ok) throw new Error(response?.error || "控制台任务启动失败");
+    if (!response?.ok) throw new Error(response?.error || ui("控制台任务启动失败"));
     updateCodexTaskSnapshot(response);
     updateCodexChatControls();
     if (response.terminalWorkspace) {
@@ -167,7 +169,9 @@ async function runTerminalItem(item) {
     codexActiveTaskIds.delete(taskId);
     item.terminalStatus = "error";
     item.terminalTaskId = "";
-    appendTerminalOutput(item, `\n[错误] ${error?.message || "控制台任务启动失败"}\n`);
+    appendTerminalOutput(item, ui(`
+[错误] {0}
+`, error?.message || ui("控制台任务启动失败")));
     updateTerminalItemElement(item);
     scheduleSave();
   }
@@ -178,9 +182,11 @@ async function cancelTerminalItem(item) {
   const taskId = item.terminalTaskId;
   try {
     const response = await chrome.runtime.sendMessage({ type: TERMINAL_CANCEL_REQUEST, id: taskId });
-    if (!response?.ok) throw new Error(response?.error || "停止命令失败");
+    if (!response?.ok) throw new Error(response?.error || ui("停止命令失败"));
   } catch (error) {
-    appendTerminalOutput(item, `\n[错误] ${error?.message || "停止命令失败"}\n`);
+    appendTerminalOutput(item, ui(`
+[错误] {0}
+`, error?.message || ui("停止命令失败")));
     item.terminalStatus = "error";
     item.terminalTaskId = "";
     updateTerminalItemElement(item);
@@ -213,7 +219,8 @@ function handleTerminalEvent(event) {
       item.terminalExitCode = Number.isInteger(event.exitCode) ? event.exitCode : null;
     } else if (event.type === "terminal-session-error") {
       item.terminalStatus = "error";
-      session?.terminal?.writeln(`\r\n\x1b[31m[拾作] ${event.error || "终端会话失败"}\x1b[0m`);
+      session?.terminal?.writeln(ui(`\r
+[31m[拾作] {0}[0m`, event.error || ui("终端会话失败")));
     }
     clearTerminalSaveTimer(item.id);
     item.updatedAt = Date.now();
@@ -238,15 +245,21 @@ function handleTerminalEvent(event) {
     item.terminalExitCode = Number.isInteger(event.exitCode) ? event.exitCode : null;
     item.terminalStatus = item.terminalExitCode === 0 ? "done" : "error";
     item.terminalTaskId = "";
-    appendTerminalOutput(item, `\n[退出码 ${item.terminalExitCode ?? "未知"}]\n`);
+    appendTerminalOutput(item, ui(`
+[退出码 {0}]
+`, item.terminalExitCode ?? ui("未知")));
   } else if (event.type === "terminal-cancelled") {
     item.terminalStatus = "cancelled";
     item.terminalTaskId = "";
-    appendTerminalOutput(item, "\n[已停止]\n");
+    appendTerminalOutput(item, ui(`
+[已停止]
+`));
   } else if (event.type === "terminal-error") {
     item.terminalStatus = "error";
     item.terminalTaskId = "";
-    appendTerminalOutput(item, `\n[错误] ${event.error || "命令执行失败"}\n`);
+    appendTerminalOutput(item, ui(`
+[错误] {0}
+`, event.error || ui("命令执行失败")));
   }
   item.updatedAt = Date.now();
   const itemIsVisible = currentBoard?.id === terminalTask?.boardId || boardItems.includes(item);
@@ -283,7 +296,7 @@ async function persistTerminalItem(boardId, item) {
   await db.commitBoardSnapshot(board, {
     baseBoard,
     preserveArchived: boardId === db.INBOX_ID,
-    reason: "保存终端结果"
+    reason: ui("保存终端结果")
   });
   notifyDataChanged([boardId], "terminal-result");
 }
@@ -300,7 +313,7 @@ function createTerminalContent(item, element) {
   const clear = document.createElement("button");
   clear.className = "terminal-clear";
   clear.type = "button";
-  clear.textContent = "清空";
+  clear.textContent = ui("清空");
   clear.addEventListener("click", () => {
     item.terminalOutput = "";
     item.updatedAt = Date.now();
@@ -311,7 +324,7 @@ function createTerminalContent(item, element) {
   const connect = document.createElement("button");
   connect.className = "terminal-connect";
   connect.type = "button";
-  connect.textContent = ["connected", "connecting"].includes(item.terminalStatus) ? "关闭" : "连接";
+  connect.textContent = ["connected", "connecting"].includes(item.terminalStatus) ? ui("关闭") : ui("连接");
   connect.addEventListener("click", () => {
     initializeTerminalRenderer();
     if (["connected", "connecting"].includes(item.terminalStatus)) closeTerminalSession(item);
@@ -320,7 +333,7 @@ function createTerminalContent(item, element) {
   meta.append(cwd, state, clear, connect);
   const mount = document.createElement("div");
   mount.className = "terminal-mount";
-  mount.setAttribute("aria-label", "交互式本地终端");
+  mount.setAttribute("aria-label", ui("交互式本地终端"));
   content.append(meta, mount);
   content.addEventListener("pointerdown", event => event.stopPropagation());
   element.appendChild(content);
@@ -376,7 +389,7 @@ function createTerminalContent(item, element) {
       type: TERMINAL_SESSION_INPUT_REQUEST,
       id: item.terminalSessionId,
       data: bytesToBase64(bytes)
-    }).catch(error => setStatus(error?.message || "终端输入发送失败", true));
+    }).catch(error => setStatus(error?.message || ui("终端输入发送失败"), true));
   });
   terminal.onResize(({ cols, rows }) => {
     if (!item.terminalSessionId || !["connected", "connecting"].includes(item.terminalStatus)) return;
@@ -420,7 +433,7 @@ function createDocumentContent(item, element, codeMode = false) {
     loading.className = "knowledge-card-loading";
     loading.dataset.state = item.knowledgeState;
     const status = document.createElement("span");
-    status.textContent = item.text || "正在提炼知识卡…";
+    status.textContent = item.text || ui("正在提炼知识卡…");
     loading.appendChild(status);
     content.appendChild(loading);
     element.appendChild(content);
@@ -432,8 +445,8 @@ function createDocumentContent(item, element, codeMode = false) {
   editor.className = codeMode ? "code-editor" : "document-editor";
   editor.value = item.text || "";
   editor.spellcheck = !codeMode;
-  editor.placeholder = codeMode ? "输入代码…" : "使用 Markdown 编写文档…";
-  editor.setAttribute("aria-label", codeMode ? "代码内容" : "Markdown 文档内容");
+  editor.placeholder = codeMode ? ui("输入代码…") : ui("使用 Markdown 编写文档…");
+  editor.setAttribute("aria-label", codeMode ? ui("代码内容") : ui("Markdown 文档内容"));
   editor.addEventListener("input", () => {
     item.text = editor.value;
     item.updatedAt = Date.now();
@@ -451,7 +464,7 @@ function createDocumentContent(item, element, codeMode = false) {
       language.appendChild(option);
     }
     language.value = item.documentLanguage || "plaintext";
-    language.setAttribute("aria-label", "代码语言");
+    language.setAttribute("aria-label", ui("代码语言"));
     language.addEventListener("change", () => {
       item.documentLanguage = language.value;
       item.updatedAt = Date.now();
@@ -461,11 +474,11 @@ function createDocumentContent(item, element, codeMode = false) {
   } else {
     const edit = document.createElement("button");
     edit.type = "button";
-    edit.textContent = "编辑";
+    edit.textContent = ui("编辑");
     edit.setAttribute("aria-pressed", "true");
     const previewButton = document.createElement("button");
     previewButton.type = "button";
-    previewButton.textContent = "预览";
+    previewButton.textContent = ui("预览");
     previewButton.setAttribute("aria-pressed", "false");
     const preview = document.createElement("div");
     preview.className = `document-preview${isKnowledgeCard ? " knowledge-card-preview" : ""}`;
@@ -508,11 +521,11 @@ function localTextFileCanPreview(file) {
 async function localEntryHandle(item, path, kind) {
   const record = await db.getLocalHandle(item.localHandleId);
   const root = record?.handle;
-  if (!root) throw new Error("此卡片只有目录快照，请点击“重新关联”后再打开内容");
+  if (!root) throw new Error(ui("此卡片只有目录快照，请点击“重新关联”后再打开内容"));
   const state = await permissionForHandle(root, true);
   item.localPermissionState = state;
   updatePermissionChip(item);
-  if (state !== "granted") throw new Error("需要允许读取此文件夹后才能打开内容");
+  if (state !== "granted") throw new Error(ui("需要允许读取此文件夹后才能打开内容"));
   cardProtocol.grant(item, "local-folder-read");
   let handle = root;
   for (let index = 0; index < path.length; index += 1) {
@@ -554,7 +567,7 @@ async function showLocalFilePreview(item, element, path) {
   entries.hidden = true;
   view.hidden = false;
   fileName.textContent = path.join(" / ");
-  body.textContent = "正在读取文件…";
+  body.textContent = ui("正在读取文件…");
   try {
     const handle = await localEntryHandle(item, path, "file");
     const file = await handle.getFile();
@@ -573,13 +586,13 @@ async function showLocalFilePreview(item, element, path) {
     } else {
       const note = document.createElement("p");
       note.className = "local-card-file-note";
-      note.textContent = `${file.type || "未知格式"} · ${formatBytes(file.size)}。当前仅支持直接预览文本和图片文件。`;
+      note.textContent = ui("{0} · {1}。当前仅支持直接预览文本和图片文件。", file.type || ui("未知格式"), formatBytes(file.size));
       body.appendChild(note);
     }
     console.info("[pagedock-local-card] entry opened", { itemId: item.id, path: path.join("/"), kind: "file", size: file.size });
   } catch (error) {
-    body.textContent = error?.message || "文件读取失败";
-    setStatus(error?.message || "文件读取失败", true);
+    body.textContent = error?.message || ui("文件读取失败");
+    setStatus(error?.message || ui("文件读取失败"), true);
   }
 }
 
@@ -588,7 +601,7 @@ function renderLocalFolderEntries(item, element, list, entries, parentPath = [])
   if (!entries.length) {
     const empty = document.createElement("li");
     empty.className = "local-card-file-note";
-    empty.textContent = "此文件夹为空";
+    empty.textContent = ui("此文件夹为空");
     list.replaceChildren(empty);
     return;
   }
@@ -598,7 +611,7 @@ function renderLocalFolderEntries(item, element, list, entries, parentPath = [])
     const button = document.createElement("button");
     button.type = "button";
     button.className = "local-card-entry-button";
-    button.title = entry.kind === "directory" ? `展开 ${entry.name}` : `预览 ${entry.name}`;
+    button.title = entry.kind === "directory" ? ui("展开 {0}", entry.name) : ui("预览 {0}", entry.name);
     const marker = document.createElement("span");
     marker.className = "local-card-entry-marker";
     marker.textContent = entry.kind === "directory" ? "▸" : "·";
@@ -616,7 +629,7 @@ function renderLocalFolderEntries(item, element, list, entries, parentPath = [])
         const expanded = button.getAttribute("aria-expanded") === "true";
         if (expanded) {
           button.setAttribute("aria-expanded", "false");
-          button.title = `展开 ${entry.name}`;
+          button.title = ui("展开 {0}", entry.name);
           marker.textContent = "▸";
           children.hidden = true;
           return;
@@ -631,14 +644,14 @@ function renderLocalFolderEntries(item, element, list, entries, parentPath = [])
             console.info("[pagedock-local-card] entry opened", { itemId: item.id, path: path.join("/"), kind: "directory" });
           } catch (error) {
             marker.textContent = "▸";
-            setStatus(error?.message || "文件夹读取失败", true);
+            setStatus(error?.message || ui("文件夹读取失败"), true);
             return;
           } finally {
             button.disabled = false;
           }
         }
         button.setAttribute("aria-expanded", "true");
-        button.title = `收起 ${entry.name}`;
+        button.title = ui("收起 {0}", entry.name);
         marker.textContent = "▾";
         children.hidden = false;
       });
@@ -694,7 +707,7 @@ function updatePermissionChip(item, element = itemElement(item.id)) {
   if (!chip || !permission) return;
   chip.dataset.state = permission.state;
   chip.dataset.risk = permission.risk;
-  chip.textContent = permission.state === "granted" ? `已允许 · ${permission.label}` : `需允许 · ${permission.label}`;
+  chip.textContent = permission.state === "granted" ? ui("已允许 · {0}", permission.label) : ui("需允许 · {0}", permission.label);
 }
 
 function updateLocalCardElement(item, element = itemElement(item.id)) {
@@ -703,14 +716,14 @@ function updateLocalCardElement(item, element = itemElement(item.id)) {
   const details = element.querySelector(".local-card-details");
   const preview = element.querySelector(".local-card-preview");
   const entries = element.querySelector(".local-card-entries");
-  if (name) name.textContent = item.localName || (item.type === "folder" ? "未关联文件夹" : "未关联文件");
+  if (name) name.textContent = item.localName || (item.type === "folder" ? ui("未关联文件夹") : ui("未关联文件"));
   if (details) {
-    const permission = item.localPermissionState === "granted" ? "已授权" : item.localHandleId ? "需要授权" : "本地快照";
+    const permission = item.localPermissionState === "granted" ? ui("已授权") : item.localHandleId ? ui("需要授权") : ui("本地快照");
     details.textContent = item.type === "folder"
-      ? `${permission} · ${(item.localEntries || []).length} 项预览`
+      ? ui("{0} · {1} 项预览", permission, (item.localEntries || []).length)
       : `${permission}${item.localSize ? ` · ${formatBytes(item.localSize)}` : ""}${item.localMime ? ` · ${item.localMime}` : ""}`;
   }
-  if (preview) preview.textContent = item.localPreview || "此文件没有可展示的文本预览。";
+  if (preview) preview.textContent = item.localPreview || ui("此文件没有可展示的文本预览。");
   if (entries) {
     closeLocalFilePreview(element);
     renderLocalFolderEntries(item, element, entries, item.localEntries || []);
@@ -725,7 +738,7 @@ function createLocalCardContent(item, element) {
   toolbar.className = "local-card-toolbar";
   const refresh = document.createElement("button");
   refresh.type = "button";
-  refresh.textContent = item.localHandleId ? "刷新" : "重新关联";
+  refresh.textContent = item.localHandleId ? ui("刷新") : ui("重新关联");
   refresh.addEventListener("click", async () => {
     try {
       if (!item.localHandleId) {
@@ -734,7 +747,7 @@ function createLocalCardContent(item, element) {
         await refreshLocalCard(item, element, true);
       }
     } catch (error) {
-      setStatus(error?.message || "读取本地内容失败", true);
+      setStatus(error?.message || ui("读取本地内容失败"), true);
     }
   });
   toolbar.appendChild(refresh);
@@ -763,7 +776,7 @@ function createLocalCardContent(item, element) {
     const back = document.createElement("button");
     back.type = "button";
     back.className = "local-card-file-back";
-    back.textContent = "← 文件列表";
+    back.textContent = ui("← 文件列表");
     back.addEventListener("click", () => closeLocalFilePreview(element));
     const fileName = document.createElement("strong");
     fileName.className = "local-card-file-name";

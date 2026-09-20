@@ -18,6 +18,8 @@ Board data stays in your browser by default. Content is sent to your local AI CL
 
 ## Quick start
 
+New installations use English. Change **Language** in the extension popup or **More → AI and connections** to English or 简体中文. Existing installations keep Chinese. Reopen pages after switching; active tasks and collected content are left unchanged. AI answers follow your question's language, not the interface language.
+
 ### 1. Install the extension
 
 1. Download and unzip the [latest release](https://github.com/Amossse/shizuo-codex-workspace/releases/latest).

@@ -1,5 +1,6 @@
 (function initPageDockDatabase(global) {
   "use strict";
+  const ui = (text, ...values) => globalThis.ShizuoI18n ? globalThis.ShizuoI18n.t(text, ...values) : text.replace(/\{(\d+)\}/g, (match, i) => i < values.length ? String(values[i]) : match);
   const DB_NAME = "pagedock";
   const DB_VERSION = 6;
   const BOARD_STORE = "boards";
@@ -20,20 +21,20 @@
   function requestResult(request) {
     return new Promise((resolve, reject) => {
       request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error || new Error("IndexedDB 请求失败"));
+      request.onerror = () => reject(request.error || new Error(ui("IndexedDB 请求失败")));
     });
   }
   function transactionDone(transaction) {
     return new Promise((resolve, reject) => {
       transaction.oncomplete = () => resolve();
-      transaction.onerror = () => reject(transaction.error || new Error("IndexedDB 事务失败"));
-      transaction.onabort = () => reject(transaction.error || new Error("IndexedDB 事务已取消"));
+      transaction.onerror = () => reject(transaction.error || new Error(ui("IndexedDB 事务失败")));
+      transaction.onabort = () => reject(transaction.error || new Error(ui("IndexedDB 事务已取消")));
     });
   }
   function cursorResults(request, limit, predicate = () => true) {
     return new Promise((resolve, reject) => {
       const results = [];
-      request.onerror = () => reject(request.error || new Error("IndexedDB 游标读取失败"));
+      request.onerror = () => reject(request.error || new Error(ui("IndexedDB 游标读取失败")));
       request.onsuccess = () => {
         const cursor = request.result;
         if (!cursor || results.length >= limit) {
@@ -46,6 +47,9 @@
     });
   }
   function openDatabase() {
+    return global.ShizuoI18n ? global.ShizuoI18n.ready.then(openDatabaseReady) : openDatabaseReady();
+  }
+  function openDatabaseReady() {
     if (databasePromise) return databasePromise;
     databasePromise = new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -88,14 +92,14 @@
         if (!pageChatStore.indexNames.contains("updatedAt")) pageChatStore.createIndex("updatedAt", "updatedAt");
       };
       request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error || new Error("无法打开拾作数据库"));
-      request.onblocked = () => reject(new Error("拾作数据库升级被其他页面阻塞"));
+      request.onerror = () => reject(request.error || new Error(ui("无法打开拾作数据库")));
+      request.onblocked = () => reject(new Error(ui("拾作数据库升级被其他页面阻塞")));
     });
     return databasePromise;
   }
   function boardPreview(items) {
     const first = items.find(item => item.text || item.alt || item.source?.title);
-    return String(first?.text || first?.alt || first?.source?.title || "暂无内容")
+    return String(first?.text || first?.alt || first?.source?.title || ui("暂无内容"))
       .replace(/\s+/g, " ")
       .trim()
       .slice(0, 90);
@@ -136,7 +140,7 @@
   }
   async function savePageChat(input = {}) {
     const normalizedUrl = normalizePageChatUrl(input.url);
-    if (!normalizedUrl) throw new Error("页面会话缺少 URL");
+    if (!normalizedUrl) throw new Error(ui("页面会话缺少 URL"));
     const database = await openDatabase();
     const transaction = database.transaction(PAGE_CHAT_STORE, "readwrite");
     const store = transaction.objectStore(PAGE_CHAT_STORE);
@@ -146,7 +150,7 @@
       id: existing?.id || makeId("page-chat"),
       normalizedUrl,
       url: String(input.url || normalizedUrl).slice(0, 4_000),
-      title: String(input.title || existing?.title || "当前页面").trim().slice(0, 240),
+      title: String(input.title || existing?.title || ui("当前页面")).trim().slice(0, 240),
       messages: normalizedPageChatMessages(input.messages),
       createdAt: Number(existing?.createdAt) || now,
       updatedAt: now
@@ -179,7 +183,7 @@
     const activeItems = items.filter(item => !item.archivedAt);
     return {
       id: String(board.id || makeId("board")),
-      name: String(board.name || "未命名白板").trim().slice(0, 80) || "未命名白板",
+      name: String(board.name || ui("未命名白板")).trim().slice(0, 80) || ui("未命名白板"),
       createdAt: Number(board.createdAt) || now,
       updatedAt: Number(board.updatedAt) || now,
       revision: Math.max(0, Number(board.revision) || 0),
@@ -339,7 +343,7 @@
         .map(event => ({
           id: String(event?.id || makeId("task-event")),
           stage: String(event?.stage || "working").slice(0, 80),
-          label: String(event?.label || "正在处理任务").slice(0, 300),
+          label: String(event?.label || ui("正在处理任务")).slice(0, 300),
           detail: String(event?.detail || "").slice(0, 1_500),
           status: ["running", "success", "error", "cancelled"].includes(event?.status) ? event.status : "running",
           createdAt: Number(event?.createdAt) || now
@@ -398,11 +402,11 @@
     const now = Date.now();
     writeTransaction.objectStore(BOARD_STORE).put({
       id: INBOX_ID,
-      name: "收件箱",
+      name: ui("收件箱"),
       createdAt: now,
       updatedAt: now,
       itemCount: 0,
-      preview: "右键或粘贴内容到这里",
+      preview: ui("右键或粘贴内容到这里"),
       viewport: { zoom: 1, scrollLeft: 0, scrollTop: 0 }
     });
     await writeDone;
@@ -438,9 +442,9 @@
     visibleItems.sort((left, right) => left.z - right.z || left.createdAt - right.createdAt);
     return { ...board, items: visibleItems };
   }
-  async function createBoard(name = "新白板") {
+  async function createBoard(name = ui("新白板")) {
     const board = normalizedBoard({ id: makeId("board"), name }, []);
-    return commitBoardSnapshot({ ...board, items: [] }, { force: true, reason: "创建白板" });
+    return commitBoardSnapshot({ ...board, items: [] }, { force: true, reason: ui("创建白板") });
   }
   function comparableBoard(board) {
     if (!board) return null;
@@ -457,9 +461,9 @@
     return copy;
   }
   async function commitBoardSnapshot(board, options = {}) {
-    if (!board?.id) throw new Error("白板缺少 id");
+    if (!board?.id) throw new Error(ui("白板缺少 id"));
     const domain = global.PageDockBoardDomain;
-    if (!domain) throw new Error("白板领域模块未加载");
+    if (!domain) throw new Error(ui("白板领域模块未加载"));
     const database = await openDatabase();
     const transaction = database.transaction([BOARD_STORE, ITEM_STORE, REVISION_STORE, SEARCH_STORE], "readwrite");
     const done = transactionDone(transaction);
@@ -484,7 +488,7 @@
       const merged = domain.mergeBoard(options.baseBoard, current, requested);
       if (merged.conflicts.length) {
         await done;
-        const error = new Error("白板已被其他协作者更新，请重新打开后合并修改");
+        const error = new Error(ui("白板已被其他协作者更新，请重新打开后合并修改"));
         error.code = "BOARD_CONFLICT";
         error.conflicts = merged.conflicts;
         throw error;
@@ -509,8 +513,8 @@
     }
     const revision = domain.createRevision(current || { id: board.id, items: [] }, after, {
       revision: nextRevision,
-      actor: options.actor || { id: "owner", name: "白板用户" },
-      reason: options.reason || "更新白板",
+      actor: options.actor || { id: "owner", name: ui("白板用户") },
+      reason: options.reason || ui("更新白板"),
       createdAt: now
     });
     const nextIds = new Set(items.map(item => String(item.id)));
@@ -538,7 +542,7 @@
     return after;
   }
   async function deleteBoard(boardId) {
-    if (boardId === INBOX_ID) throw new Error("收件箱不能删除");
+    if (boardId === INBOX_ID) throw new Error(ui("收件箱不能删除"));
     const database = await openDatabase();
     const readTransaction = database.transaction([ITEM_STORE, HANDLE_STORE, REVISION_STORE, SEARCH_STORE], "readonly");
     const readDone = transactionDone(readTransaction);
@@ -565,7 +569,7 @@
   async function addItem(boardId, item) {
     if (boardId === INBOX_ID) await ensureInbox();
     const board = await getBoard(boardId, { includeArchived: true });
-    if (!board) throw new Error("目标白板不存在");
+    if (!board) throw new Error(ui("目标白板不存在"));
     const baseBoard = global.structuredClone ? structuredClone(board) : JSON.parse(JSON.stringify(board));
     const count = board.items.filter(item => !item.archivedAt).length;
     const next = normalizedItem({
@@ -575,7 +579,7 @@
       ...item
     }, boardId);
     board.items.push(next);
-    const saved = await commitBoardSnapshot({ ...board, id: boardId }, { baseBoard, reason: "添加卡片" });
+    const saved = await commitBoardSnapshot({ ...board, id: boardId }, { baseBoard, reason: ui("添加卡片") });
     return saved.items.find(item => item.id === next.id) || next;
   }
   async function listBoardItems(boardId, options = {}) {
@@ -600,7 +604,7 @@
     const ids = new Set(itemIds.map(String));
     if (!ids.size) return 0;
     const inbox = await getBoard(INBOX_ID, { includeArchived: true });
-    if (!inbox) throw new Error("收件箱不存在");
+    if (!inbox) throw new Error(ui("收件箱不存在"));
     const baseBoard = global.structuredClone ? global.structuredClone(inbox) : JSON.parse(JSON.stringify(inbox));
     const now = Date.now();
     let changed = 0;
@@ -609,7 +613,7 @@
       changed += 1;
       return { ...item, archivedAt: archived ? now : 0, updatedAt: now };
     });
-    if (changed) await commitBoardSnapshot(inbox, { baseBoard, reason: archived ? "归档卡片" : "恢复卡片" });
+    if (changed) await commitBoardSnapshot(inbox, { baseBoard, reason: archived ? ui("归档卡片") : ui("恢复卡片") });
     console.info("[pagedock-db] inbox archive state updated", { changed, archived });
     return changed;
   }
@@ -617,12 +621,12 @@
     const ids = new Set(itemIds.map(String));
     if (!ids.size) return 0;
     const board = await getBoard(boardId, { includeArchived: true });
-    if (!board) throw new Error("白板不存在");
+    if (!board) throw new Error(ui("白板不存在"));
     const baseBoard = global.structuredClone ? global.structuredClone(board) : JSON.parse(JSON.stringify(board));
     const before = board.items.length;
     board.items = board.items.filter(item => !ids.has(item.id));
     const changed = before - board.items.length;
-    if (changed) await commitBoardSnapshot(board, { baseBoard, reason: "删除卡片" });
+    if (changed) await commitBoardSnapshot(board, { baseBoard, reason: ui("删除卡片") });
     console.info("[pagedock-db] items deleted", { boardId, changed });
     return changed;
   }
@@ -642,8 +646,8 @@
       getBoard(INBOX_ID, { includeArchived: true }),
       getBoard(targetBoardId, { includeArchived: true })
     ]);
-    if (!inbox) throw new Error("收件箱不存在");
-    if (!target) throw new Error("目标白板不存在");
+    if (!inbox) throw new Error(ui("收件箱不存在"));
+    if (!target) throw new Error(ui("目标白板不存在"));
     const inboxBase = global.structuredClone ? global.structuredClone(inbox) : JSON.parse(JSON.stringify(inbox));
     const targetBase = global.structuredClone ? global.structuredClone(target) : JSON.parse(JSON.stringify(target));
     const moving = inbox.items.filter(item => ids.has(item.id));
@@ -661,8 +665,8 @@
     })));
     inbox.items = inbox.items.filter(item => !ids.has(item.id));
     // 先写目标白板；若第二步失败，卡片仍已安全落到目标白板，不会从两边同时丢失。
-    await commitBoardSnapshot(target, { baseBoard: targetBase, reason: "从收件箱移入卡片" });
-    await commitBoardSnapshot(inbox, { baseBoard: inboxBase, reason: "移出收件箱卡片" });
+    await commitBoardSnapshot(target, { baseBoard: targetBase, reason: ui("从收件箱移入卡片") });
+    await commitBoardSnapshot(inbox, { baseBoard: inboxBase, reason: ui("移出收件箱卡片") });
     console.info("[pagedock-db] inbox items moved", {
       targetBoardId,
       changed: moving.length
@@ -682,7 +686,7 @@
     return items;
   }
   async function saveLocalHandle(boardId, handle, kind = handle?.kind) {
-    if (!handle || !["file", "directory"].includes(kind)) throw new Error("本地文件授权无效");
+    if (!handle || !["file", "directory"].includes(kind)) throw new Error(ui("本地文件授权无效"));
     const database = await openDatabase();
     const transaction = database.transaction(HANDLE_STORE, "readwrite");
     const done = transactionDone(transaction);
@@ -784,7 +788,7 @@
   }
   async function restoreBoardRevision(boardId, targetRevision, options = {}) {
     const current = await getBoard(String(boardId), { includeArchived: true });
-    if (!current) throw new Error("白板不存在");
+    if (!current) throw new Error(ui("白板不存在"));
     const target = Math.max(0, Number(targetRevision) || 0);
     if (target >= Number(current.revision)) return current;
     const database = await openDatabase();
@@ -796,19 +800,19 @@
       .filter(revision => Number(revision.revision) > target && Number(revision.revision) <= Number(current.revision))
       .sort((left, right) => Number(right.revision) - Number(left.revision));
     if (!applicable.length || Number(applicable.at(-1).revision) !== target + 1) {
-      throw new Error("目标版本已超出本地保留范围");
+      throw new Error(ui("目标版本已超出本地保留范围"));
     }
     let restored = current;
     for (const revision of applicable) restored = global.PageDockBoardDomain.applyRevision(restored, revision, "backward");
     return commitBoardSnapshot(restored, {
       baseBoard: current,
-      actor: options.actor || { id: "owner", name: "白板用户" },
-      reason: `恢复到版本 ${target}`
+      actor: options.actor || { id: "owner", name: ui("白板用户") },
+      reason: ui("恢复到版本 {0}", target)
     });
   }
   async function saveTemplateFromBoard(boardId, options = {}) {
     const board = await getBoard(String(boardId), { includeArchived: false });
-    if (!board) throw new Error("白板不存在");
+    if (!board) throw new Error(ui("白板不存在"));
     const template = global.PageDockBoardDomain.createTemplate(board, options);
     const database = await openDatabase();
     const transaction = database.transaction(TEMPLATE_STORE, "readwrite");
@@ -832,13 +836,13 @@
     const done = transactionDone(transaction);
     const template = await requestResult(transaction.objectStore(TEMPLATE_STORE).get(String(templateId)));
     await done;
-    if (!template) throw new Error("工作流模板不存在");
+    if (!template) throw new Error(ui("工作流模板不存在"));
     const board = global.PageDockBoardDomain.instantiateTemplate(template, {
       ...options,
       makeId,
       now: Date.now()
     });
-    return commitBoardSnapshot(board, { reason: `从模板“${template.name}”创建` });
+    return commitBoardSnapshot(board, { reason: ui("从模板“{0}”创建", template.name) });
   }
   async function deleteTemplate(templateId) {
     const database = await openDatabase();
@@ -874,11 +878,11 @@
   }
   async function importData(payload) {
     if (!payload || !["pagedock-board", "pagedock-backup"].includes(payload.kind)) {
-      throw new Error("不是有效的拾作备份文件");
+      throw new Error(ui("不是有效的拾作备份文件"));
     }
     if (payload.kind === "pagedock-board") {
       const source = payload.board;
-      if (!source) throw new Error("拾作备份文件缺少白板数据");
+      if (!source) throw new Error(ui("拾作备份文件缺少白板数据"));
       const id = makeId("board");
       const idMap = new Map((source.items || []).map(item => [String(item.id), makeId()]));
       const items = (source.items || []).map(item => {
@@ -894,7 +898,7 @@
           taskRunId: "",
           taskProgress: "",
           taskStatus: item.type === "task" && item.taskStatus === "running" ? "error" : item.taskStatus,
-          taskError: item.type === "task" && item.taskStatus === "running" ? "导入后需要重新执行此任务" : item.taskError,
+          taskError: item.type === "task" && item.taskStatus === "running" ? ui("导入后需要重新执行此任务") : item.taskError,
           taskSourceIds: (item.taskSourceIds || []).map(sourceId => idMap.get(String(sourceId)) || String(sourceId)),
           relationSourceIds: (item.relationSourceIds || []).map(sourceId => idMap.get(String(sourceId)) || String(sourceId)),
           card: card ? {
@@ -911,11 +915,11 @@
       const imported = await commitBoardSnapshot({
         ...source,
         id,
-        name: `${source.name || "导入白板"}（导入）`,
+        name: ui("{0}（导入）", source.name || ui("导入白板")),
         createdAt: Date.now(),
         updatedAt: Date.now(),
         items
-      }, { reason: `导入白板“${source.name || "未命名白板"}”` });
+      }, { reason: ui("导入白板“{0}”", source.name || ui("未命名白板")) });
       return [imported];
     }
     const imported = [];
@@ -932,13 +936,13 @@
           taskRunId: "",
           taskProgress: "",
           taskStatus: item.type === "task" && item.taskStatus === "running" ? "error" : item.taskStatus,
-          taskError: item.type === "task" && item.taskStatus === "running" ? "导入后需要重新执行此任务" : item.taskError,
+          taskError: item.type === "task" && item.taskStatus === "running" ? ui("导入后需要重新执行此任务") : item.taskError,
           card: importedCard(item) || undefined
         }))
       }, {
         // 全量备份沿用原白板 id；显式覆盖保留既有“恢复备份”语义，不让普通调用意外继承强制写入。
         force: true,
-        reason: `恢复备份白板“${source.name || "未命名白板"}”`
+        reason: ui("恢复备份白板“{0}”", source.name || ui("未命名白板"))
       }));
     }
     await ensureInbox();

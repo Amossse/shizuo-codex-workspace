@@ -8,26 +8,26 @@ function managementEmpty(text) {
 
 function updateWorkflowTemplateEntry(count) {
   const total = Math.max(0, Number(count) || 0);
-  homeTemplatesEl.textContent = `模板库 · ${total}`;
-  homeTemplatesEl.title = total ? `查看 ${total} 个工作流模板` : "暂无模板，可先新建或打开白板后保存";
-  homeTemplatesEl.setAttribute("aria-label", total ? `模板库，${total} 个模板` : "模板库，暂无模板");
+  homeTemplatesEl.textContent = ui("模板库 · {0}", total);
+  homeTemplatesEl.title = total ? ui("查看 {0} 个工作流模板", total) : ui("暂无模板，可先新建或打开白板后保存");
+  homeTemplatesEl.setAttribute("aria-label", total ? ui("模板库，{0} 个模板", total) : ui("模板库，暂无模板"));
 }
 
 function createWorkflowTemplateEmpty() {
   const empty = managementEmpty("");
   empty.classList.add("template-empty");
   const title = document.createElement("strong");
-  title.textContent = "暂无工作流模板";
+  title.textContent = ui("暂无工作流模板");
   const detail = document.createElement("span");
   detail.textContent = currentBoard
-    ? "填写上方名称，将当前白板保存为可复用模板。"
-    : "新建或打开一块白板后，可从右上角“更多”中保存为模板。";
+    ? ui("填写上方名称，将当前白板保存为可复用模板。")
+    : ui("新建或打开一块白板后，可从右上角“更多”中保存为模板。");
   empty.append(title, detail);
   if (!currentBoard) {
     const create = document.createElement("button");
     create.type = "button";
     create.className = "button primary";
-    create.textContent = "新建白板";
+    create.textContent = ui("新建白板");
     create.addEventListener("click", () => {
       workflowTemplateDialogEl.close();
       openCreateBoardDialog();
@@ -39,7 +39,7 @@ function createWorkflowTemplateEmpty() {
 
 async function renderWorkflowTemplates() {
   const templates = await db.listTemplates();
-  workflowTemplateCountEl.textContent = `${templates.length} 个`;
+  workflowTemplateCountEl.textContent = ui("{0} 个", templates.length);
   updateWorkflowTemplateEntry(templates.length);
   workflowTemplateListEl.replaceChildren();
   if (!templates.length) {
@@ -52,15 +52,15 @@ async function renderWorkflowTemplates() {
     const copy = document.createElement("div");
     copy.className = "management-row-copy";
     const name = document.createElement("strong");
-    name.textContent = template.name || "未命名工作流";
+    name.textContent = template.name || ui("未命名工作流");
     const detail = document.createElement("span");
-    detail.textContent = `${(template.cards || []).length} 张卡片 · ${formatTime(template.updatedAt || template.createdAt)}`;
+    detail.textContent = ui("{0} 张卡片 · {1}", (template.cards || []).length, formatTime(template.updatedAt || template.createdAt));
     copy.append(name, detail);
     const actions = document.createElement("div");
     actions.className = "management-row-actions";
     const create = document.createElement("button");
     create.type = "button";
-    create.textContent = "新建白板";
+    create.textContent = ui("新建白板");
     create.addEventListener("click", async () => {
       create.disabled = true;
       try {
@@ -69,16 +69,16 @@ async function renderWorkflowTemplates() {
         notifyDataChanged([board.id], "template-instantiate");
         await openBoard(board.id);
       } catch (error) {
-        setStatus(error?.message || "从模板创建失败", true);
+        setStatus(error?.message || ui("从模板创建失败"), true);
         create.disabled = false;
       }
     });
     const remove = document.createElement("button");
     remove.type = "button";
     remove.className = "danger";
-    remove.textContent = "删除";
+    remove.textContent = ui("删除");
     remove.addEventListener("click", async () => {
-      if (!confirm(`删除工作流模板“${template.name}”吗？`)) return;
+      if (!confirm(ui("删除工作流模板“{0}”吗？", template.name))) return;
       await db.deleteTemplate(template.id);
       await renderWorkflowTemplates();
     });
@@ -90,39 +90,39 @@ async function renderWorkflowTemplates() {
 
 async function openWorkflowTemplates() {
   templateSaveSectionEl.hidden = !currentBoard;
-  workflowTemplateNameEl.value = currentBoard ? `${currentBoard.name} 工作流` : "";
+  workflowTemplateNameEl.value = currentBoard ? ui("{0} 工作流", currentBoard.name) : "";
   if (!workflowTemplateDialogEl.open) workflowTemplateDialogEl.showModal();
   try {
     await renderWorkflowTemplates();
   } catch (error) {
-    workflowTemplateListEl.replaceChildren(managementEmpty(error?.message || "模板库读取失败"));
+    workflowTemplateListEl.replaceChildren(managementEmpty(error?.message || ui("模板库读取失败")));
   }
 }
 
 async function saveCurrentWorkflowTemplate() {
   if (!currentBoard) return;
   await flushSave();
-  const name = workflowTemplateNameEl.value.trim() || `${currentBoard.name} 工作流`;
+  const name = workflowTemplateNameEl.value.trim() || ui("{0} 工作流", currentBoard.name);
   const cardIds = selectedIds.size ? [...selectedIds] : undefined;
   const template = await db.saveTemplateFromBoard(currentBoard.id, {
     name,
     cardIds,
-    description: selectedIds.size ? `来自 ${currentBoard.name} 的所选卡片` : `来自 ${currentBoard.name}`
+    description: selectedIds.size ? ui("来自 {0} 的所选卡片", currentBoard.name) : ui("来自 {0}", currentBoard.name)
   });
-  setStatus(`已保存工作流模板“${template.name}”`);
+  setStatus(ui("已保存工作流模板“{0}”", template.name));
   await renderWorkflowTemplates();
 }
 
 async function openVersionHistory() {
   if (!currentBoard) return;
   await flushSave();
-  versionHistoryListEl.replaceChildren(managementEmpty("正在读取版本…"));
+  versionHistoryListEl.replaceChildren(managementEmpty(ui("正在读取版本…")));
   if (!versionHistoryDialogEl.open) versionHistoryDialogEl.showModal();
   try {
     const revisions = await db.listBoardRevisions(currentBoard.id, { limit: 100 });
     versionHistoryListEl.replaceChildren();
     if (!revisions.length) {
-      versionHistoryListEl.appendChild(managementEmpty("当前白板还没有可恢复版本。"));
+      versionHistoryListEl.appendChild(managementEmpty(ui("当前白板还没有可恢复版本。")));
       return;
     }
     for (const revision of revisions) {
@@ -131,27 +131,27 @@ async function openVersionHistory() {
       const copy = document.createElement("div");
       copy.className = "management-row-copy";
       const title = document.createElement("strong");
-      title.textContent = `版本 ${revision.revision} · ${revision.reason || "更新白板"}`;
+      title.textContent = ui("版本 {0} · {1}", revision.revision, revision.reason || ui("更新白板"));
       const detail = document.createElement("span");
-      detail.textContent = `${revision.actor?.name || "白板用户"} · ${revision.changedCardCount} 张卡片 · ${new Date(revision.createdAt).toLocaleString()}`;
+      detail.textContent = ui("{0} · {1} 张卡片 · {2}", revision.actor?.name || ui("白板用户"), revision.changedCardCount, new Date(revision.createdAt).toLocaleString());
       copy.append(title, detail);
       const actions = document.createElement("div");
       actions.className = "management-row-actions";
       if (revision.revision < Number(currentBoard.revision || 0)) {
         const restore = document.createElement("button");
         restore.type = "button";
-        restore.textContent = "恢复到此版本";
+        restore.textContent = ui("恢复到此版本");
         restore.addEventListener("click", async () => {
-          if (!confirm(`恢复到版本 ${revision.revision}？当前状态也会作为新版本保留。`)) return;
+          if (!confirm(ui("恢复到版本 {0}？当前状态也会作为新版本保留。", revision.revision))) return;
           restore.disabled = true;
           try {
             await db.restoreBoardRevision(currentBoard.id, revision.revision);
             versionHistoryDialogEl.close();
             notifyDataChanged([currentBoard.id], "revision-restore");
             await openBoard(currentBoard.id, false);
-            setStatus(`已恢复到版本 ${revision.revision}`);
+            setStatus(ui("已恢复到版本 {0}", revision.revision));
           } catch (error) {
-            setStatus(error?.message || "版本恢复失败", true);
+            setStatus(error?.message || ui("版本恢复失败"), true);
             restore.disabled = false;
           }
         });
@@ -161,25 +161,25 @@ async function openVersionHistory() {
       versionHistoryListEl.appendChild(row);
     }
   } catch (error) {
-    versionHistoryListEl.replaceChildren(managementEmpty(error?.message || "版本历史读取失败"));
+    versionHistoryListEl.replaceChildren(managementEmpty(error?.message || ui("版本历史读取失败")));
   }
 }
 
 async function runHealthCheck() {
-  healthCheckListEl.replaceChildren(managementEmpty("正在检查本地连接…"));
+  healthCheckListEl.replaceChildren(managementEmpty(ui("正在检查本地连接…")));
   try {
     const snapshot = await chrome.runtime.sendMessage({ type: CODEX_STATUS_REQUEST, runtime: aiRuntime });
     const health = snapshot?.health || {};
     const videoEngines = [health.hyperframes ? "HyperFrames" : "", health.remotion ? "Remotion" : ""].filter(Boolean);
     const checks = [
-      ["扩展页面", true, "当前页面运行正常", true],
-      ["Native Host", health.nativeHost, health.nativeHost ? `版本 ${health.nativeHostVersion || "unknown"}` : "未连接；请运行 ./install.sh --core", true],
-      ["Codex CLI", health.codex, health.codex ? "已就绪" : "未找到或未登录", aiRuntime === "codex"],
-      ["AGY CLI", health.agy, health.agy ? "已就绪" : "未找到或未登录", aiRuntime === "agy"],
-      ["Claude Code CLI", health.claude, health.claude ? "已就绪" : "未找到或未登录", aiRuntime === "claude"],
-      ["交互终端", health.terminal, health.terminal ? "已就绪" : "可选；运行 ./install.sh --terminal", false],
-      ["视频创作", videoEngines.length > 0, videoEngines.length ? `${videoEngines.join("、")} 已就绪` : "可选；运行 ./install.sh --video", false],
-      ["MCP 桥接", health.bridge, health.bridge ? `${health.bridgeScope || "local"} · ${health.bridgePort || ""}` : "未启用", false]
+      [ui("扩展页面"), true, ui("当前页面运行正常"), true],
+      ["Native Host", health.nativeHost, health.nativeHost ? ui("版本 {0}", health.nativeHostVersion || "unknown") : ui("未连接；请运行 ./install.sh --core"), true],
+      ["Codex CLI", health.codex, health.codex ? ui("已就绪") : ui("未找到或未登录"), aiRuntime === "codex"],
+      ["AGY CLI", health.agy, health.agy ? ui("已就绪") : ui("未找到或未登录"), aiRuntime === "agy"],
+      ["Claude Code CLI", health.claude, health.claude ? ui("已就绪") : ui("未找到或未登录"), aiRuntime === "claude"],
+      [ui("交互终端"), health.terminal, health.terminal ? ui("已就绪") : ui("可选；运行 ./install.sh --terminal"), false],
+      [ui("视频创作"), videoEngines.length > 0, videoEngines.length ? ui("{0} 已就绪", videoEngines.join("、")) : ui("可选；运行 ./install.sh --video"), false],
+      [ui("MCP 桥接"), health.bridge, health.bridge ? `${health.bridgeScope || "local"} · ${health.bridgePort || ""}` : ui("未启用"), false]
     ];
     healthCheckListEl.replaceChildren();
     for (const [label, passed, detail, required] of checks) {
@@ -200,7 +200,7 @@ async function runHealthCheck() {
       healthCheckListEl.appendChild(row);
     }
   } catch (error) {
-    healthCheckListEl.replaceChildren(managementEmpty(`健康检查失败：${error?.message || "无法连接扩展后台"}`));
+    healthCheckListEl.replaceChildren(managementEmpty(ui("健康检查失败：{0}", error?.message || ui("无法连接扩展后台"))));
   }
 }
 
@@ -232,26 +232,26 @@ function openConnectionGuide({ snapshot = lastCodexStatusSnapshot, resume } = {}
   const installCommand = `PAGEDOCK_EXTENSION_ID=${extensionId} ./install.sh --core`;
   connectionGuideStepsEl.replaceChildren();
   if (!bridgeInstalled) {
-    connectionGuideTitleEl.textContent = `先连接本地 ${runtimeName}`;
-    connectionGuideIntroEl.textContent = "只需完成一次设置。完成后会自动继续刚才的任务。";
+    connectionGuideTitleEl.textContent = ui("先连接本地 {0}", runtimeName);
+    connectionGuideIntroEl.textContent = ui("只需完成一次设置。完成后会自动继续刚才的任务。");
     connectionGuideStepsEl.append(
-      connectionGuideStep("加载拾作扩展", "打开 chrome://extensions，开启开发者模式并加载解压后的拾作文件夹。"),
-      connectionGuideStep("运行安装命令", "复制下方命令，在该文件夹的终端中运行。命令已包含当前扩展 ID。"),
-      connectionGuideStep("重新加载扩展", "回到 chrome://extensions 点击拾作的重新加载，再回来检查连接。")
+      connectionGuideStep(ui("加载拾作扩展"), ui("打开 chrome://extensions，开启开发者模式并加载解压后的拾作文件夹。")),
+      connectionGuideStep(ui("运行安装命令"), ui("复制下方命令，在该文件夹的终端中运行。命令已包含当前扩展 ID。")),
+      connectionGuideStep(ui("重新加载扩展"), ui("回到 chrome://extensions 点击拾作的重新加载，再回来检查连接。"))
     );
     connectionGuideCommandEl.hidden = false;
     connectionGuideCommandTextEl.textContent = installCommand;
   } else if (!runtimeReady) {
-    connectionGuideTitleEl.textContent = `完成 ${runtimeName} 登录`;
-    connectionGuideIntroEl.textContent = "本地桥接已就绪，只差命令行登录。完成后会自动继续刚才的任务。";
+    connectionGuideTitleEl.textContent = ui("完成 {0} 登录", runtimeName);
+    connectionGuideIntroEl.textContent = ui("本地桥接已就绪，只差命令行登录。完成后会自动继续刚才的任务。");
     connectionGuideStepsEl.append(
-      connectionGuideStep(`打开 ${runtimeName} CLI`, `在终端运行 ${aiRuntimeCommand()} 并按提示完成登录。`),
-      connectionGuideStep("回到拾作检查连接", "登录完成后无需重新创建任务。")
+      connectionGuideStep(ui("打开 {0} CLI", runtimeName), ui("在终端运行 {0} 并按提示完成登录。", aiRuntimeCommand())),
+      connectionGuideStep(ui("回到拾作检查连接"), ui("登录完成后无需重新创建任务。"))
     );
     connectionGuideCommandEl.hidden = true;
   } else {
-    connectionGuideTitleEl.textContent = `${runtimeName} 正在连接`;
-    connectionGuideIntroEl.textContent = "请稍候，然后检查连接。";
+    connectionGuideTitleEl.textContent = ui("{0} 正在连接", runtimeName);
+    connectionGuideIntroEl.textContent = ui("请稍候，然后检查连接。");
     connectionGuideCommandEl.hidden = true;
   }
   connectionGuideStatusEl.textContent = "";
@@ -259,11 +259,11 @@ function openConnectionGuide({ snapshot = lastCodexStatusSnapshot, resume } = {}
 }
 
 async function checkConnectionGuide() {
-  connectionGuideStatusEl.textContent = "正在检查本地连接…";
+  connectionGuideStatusEl.textContent = ui("正在检查本地连接…");
   await connectCodexChat();
   if (!codexChatReady) {
     openConnectionGuide({ snapshot: lastCodexStatusSnapshot });
-    connectionGuideStatusEl.textContent = codexConnectionHint || "暂时还未连接，请完成上面的步骤后重试。";
+    connectionGuideStatusEl.textContent = codexConnectionHint || ui("暂时还未连接，请完成上面的步骤后重试。");
     return;
   }
   connectionGuideDialogEl.close();
@@ -271,21 +271,21 @@ async function checkConnectionGuide() {
   const resume = pendingConnectionAction;
   pendingConnectionAction = null;
   if (resume) {
-    setStatus("本地 Codex 已连接，正在继续刚才的任务。");
+    setStatus(ui("本地 Codex 已连接，正在继续刚才的任务。"));
     await resume();
   } else {
-    setStatus("本地 Codex 已连接，可以开始执行任务。");
+    setStatus(ui("本地 Codex 已连接，可以开始执行任务。"));
   }
 }
 
 function openProvenance(item) {
   const provenance = item?.provenance || {};
-  provenanceSummaryEl.textContent = `卡片版本 ${item?.revision || 1} · ${provenance.operation || "manual"}`;
+  provenanceSummaryEl.textContent = ui("卡片版本 {0} · {1}", item?.revision || 1, provenance.operation || "manual");
   provenanceChainEl.replaceChildren();
   if (provenance.template?.id) {
     const row = document.createElement("div");
     row.className = "management-row";
-    row.textContent = `工作流模板 · ${provenance.template.name || provenance.template.id}`;
+    row.textContent = ui("工作流模板 · {0}", provenance.template.name || provenance.template.id);
     provenanceChainEl.appendChild(row);
   }
   for (const parent of provenance.parents || []) {
@@ -294,15 +294,15 @@ function openProvenance(item) {
     const copy = document.createElement("div");
     copy.className = "management-row-copy";
     const title = document.createElement("strong");
-    title.textContent = parent.kind === "external" ? (parent.title || "网页来源") : `上游卡片 · ${parent.cardId}`;
+    title.textContent = parent.kind === "external" ? (parent.title || ui("网页来源")) : ui("上游卡片 · {0}", parent.cardId);
     const detail = document.createElement("span");
-    detail.textContent = parent.kind === "external" ? parent.url : `${parent.boardId || currentBoard?.id} · 版本 ${parent.cardRevision || "未知"}`;
+    detail.textContent = parent.kind === "external" ? parent.url : ui("{0} · 版本 {1}", parent.boardId || currentBoard?.id, parent.cardRevision || ui("未知"));
     copy.append(title, detail);
     const actions = document.createElement("div");
     actions.className = "management-row-actions";
     const open = document.createElement("button");
     open.type = "button";
-    open.textContent = "打开";
+    open.textContent = ui("打开");
     open.addEventListener("click", () => {
       provenanceDialogEl.close();
       if (parent.kind === "external") window.open(parent.url, "_blank", "noopener,noreferrer");
@@ -312,6 +312,6 @@ function openProvenance(item) {
     row.append(copy, actions);
     provenanceChainEl.appendChild(row);
   }
-  if (!provenanceChainEl.children.length) provenanceChainEl.appendChild(managementEmpty("此卡片由用户直接创建，没有上游来源。"));
+  if (!provenanceChainEl.children.length) provenanceChainEl.appendChild(managementEmpty(ui("此卡片由用户直接创建，没有上游来源。")));
   provenanceDialogEl.showModal();
 }

@@ -1,12 +1,12 @@
 // Module: Codex and terminal request adapters.
 async function requestNativeControl(type, payload = {}) {
   await connectCodexNative();
-  if (!codexNativePort || !nativeHostReady) throw new Error("本地桥接未连接");
+  if (!codexNativePort || !nativeHostReady) throw new Error(ui("本地桥接未连接"));
   const id = crypto.randomUUID();
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
       nativeControlRequests.delete(id);
-      reject(new Error("本地请求超时，请重试"));
+      reject(new Error(ui("本地请求超时，请重试")));
     }, 15_000);
     nativeControlRequests.set(id, { resolve, reject, timer });
     try {
@@ -30,18 +30,18 @@ async function handleCodexBridgeRequest(message) {
   }
   if (message.type === CODEX_SESSION_PREVIEW_REQUEST) {
     const threadId = String(message.threadId || "");
-    if (!threadId) throw new Error("缺少 Codex Session ID");
+    if (!threadId) throw new Error(ui("缺少 Codex Session ID"));
     return requestNativeControl("codex-session-preview", { threadId });
   }
   if (message.type === CODEX_RUN_REQUEST) {
     await connectCodexNative();
     const runtime = normalizeAiRuntime(message.runtime || aiRuntime);
-    if (message.mode !== "video-post" && !runtimeReady(runtime)) throw new Error(`本机未找到 ${aiRuntimeName(runtime)} CLI`);
+    if (message.mode !== "video-post" && !runtimeReady(runtime)) throw new Error(ui("本机未找到 {0} CLI", aiRuntimeName(runtime)));
     const taskId = String(message.id || "");
-    if (!taskId) throw new Error("Codex 任务缺少 id");
+    if (!taskId) throw new Error(ui("Codex 任务缺少 id"));
     const activeTaskCount = codexActiveTaskIds.size + terminalActiveTaskIds.size;
     if (!codexActiveTaskIds.has(taskId) && activeTaskCount >= CODEX_MAX_CONCURRENT_TASKS) {
-      throw new Error(`最多可同时执行 ${CODEX_MAX_CONCURRENT_TASKS} 个本地任务`);
+      throw new Error(ui("最多可同时执行 {0} 个本地任务", CODEX_MAX_CONCURRENT_TASKS));
     }
     codexActiveTaskIds.add(taskId);
     codexRecentTerminalEvents.delete(taskId);
@@ -73,7 +73,7 @@ async function handleCodexBridgeRequest(message) {
   }
   if (message.type === CODEX_CANCEL_REQUEST) {
     const taskId = String(message.id || "");
-    if (!taskId) throw new Error("停止任务缺少 id");
+    if (!taskId) throw new Error(ui("停止任务缺少 id"));
     const controllerId = String(message.controllerId || "");
     const workflowState = controllerId ? scheduledWorkflowControllers.get(controllerId) : null;
     if (workflowState) workflowState.cancelRequested = true;
@@ -124,16 +124,16 @@ async function handleCodexBridgeRequest(message) {
     broadcastExternalCodexStatus();
     return result;
   }
-  throw new Error("不支持的 Codex 桥接请求");
+  throw new Error(ui("不支持的 Codex 桥接请求"));
 }
 
 async function handleTerminalBridgeRequest(message) {
   await connectCodexNative();
-  if (!terminalAvailable) throw new Error("本地桥接未找到可用 Shell");
+  if (!terminalAvailable) throw new Error(ui("本地桥接未找到可用 Shell"));
   const taskId = String(message.id || "");
-  if (!taskId) throw new Error("控制台任务缺少 id");
+  if (!taskId) throw new Error(ui("控制台任务缺少 id"));
   if ([TERMINAL_SESSION_OPEN_REQUEST, TERMINAL_SESSION_INPUT_REQUEST, TERMINAL_SESSION_RESIZE_REQUEST, TERMINAL_SESSION_CLOSE_REQUEST].includes(message.type)) {
-    if (!terminalPtyAvailable) throw new Error("本地桥接缺少交互终端组件，请重新安装");
+    if (!terminalPtyAvailable) throw new Error(ui("本地桥接缺少交互终端组件，请重新安装"));
     const nativeType = {
       [TERMINAL_SESSION_OPEN_REQUEST]: "terminal-session-open",
       [TERMINAL_SESSION_INPUT_REQUEST]: "terminal-session-input",
@@ -156,7 +156,7 @@ async function handleTerminalBridgeRequest(message) {
   if (message.type === TERMINAL_RUN_REQUEST) {
     const activeTaskCount = codexActiveTaskIds.size + terminalActiveTaskIds.size;
     if (!terminalActiveTaskIds.has(taskId) && activeTaskCount >= CODEX_MAX_CONCURRENT_TASKS) {
-      throw new Error(`最多可同时执行 ${CODEX_MAX_CONCURRENT_TASKS} 个本地任务`);
+      throw new Error(ui("最多可同时执行 {0} 个本地任务", CODEX_MAX_CONCURRENT_TASKS));
     }
     terminalActiveTaskIds.add(taskId);
     try {
@@ -185,7 +185,7 @@ async function handleTerminalBridgeRequest(message) {
     broadcastTerminalEvent(event);
     return codexSnapshot();
   }
-  throw new Error("不支持的控制台桥接请求");
+  throw new Error(ui("不支持的控制台桥接请求"));
 }
 
 // 每种网页内容都展开为“收件箱 + 最近白板”，同时保留原网页来源便于回溯。

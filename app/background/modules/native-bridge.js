@@ -49,7 +49,7 @@ function connectCodexNative() {
           if (!pending) return;
           nativeControlRequests.delete(requestId);
           clearTimeout(pending.timer);
-          if (message.type === "codex-session-error") pending.reject(new Error(String(message.error || "Codex Session 读取失败")));
+          if (message.type === "codex-session-error") pending.reject(new Error(String(message.error || ui("Codex Session 读取失败"))));
           else pending.resolve(message);
           return;
         }
@@ -59,7 +59,7 @@ function connectCodexNative() {
           if (pending) {
             nativeControlRequests.delete(requestId);
             clearTimeout(pending.timer);
-            if (message.type === "bridge-share-error" || message.type === "bridge-client-error") pending.reject(new Error(String(message.error || "共享设置失败")));
+            if (message.type === "bridge-share-error" || message.type === "bridge-client-error") pending.reject(new Error(String(message.error || ui("共享设置失败"))));
             else pending.resolve(message);
           }
           if (message.type === "bridge-share-created") {
@@ -79,7 +79,7 @@ function connectCodexNative() {
             externalSessionGrants.clear();
             for (const pending of externalApprovalRequests.values()) {
               clearTimeout(pending.timer);
-              pending.reject(new Error("内网共享已停止"));
+              pending.reject(new Error(ui("内网共享已停止")));
             }
             externalApprovalRequests.clear();
             broadcastExternalCodexStatus();
@@ -147,7 +147,7 @@ function connectCodexNative() {
         });
       });
       port.onDisconnect.addListener(() => {
-        const reason = chrome.runtime.lastError?.message || "本地桥接已断开";
+        const reason = chrome.runtime.lastError?.message || ui("本地桥接已断开");
         if (codexNativePort !== port) return;
         const interruptedTaskIds = [...codexActiveTaskIds];
         const interruptedTerminalIds = [...terminalActiveTaskIds];
@@ -191,7 +191,7 @@ function connectCodexNative() {
             type: "error",
             id: interruptedTaskId,
             code: "bridge-disconnected",
-            error: `本地桥接已断开：${reason}`
+            error: ui("本地桥接已断开：{0}", reason)
           };
           rememberCodexTerminalEvent(interruptedEvent);
           const scheduledRun = scheduledCodexRuns.get(interruptedTaskId);
@@ -208,14 +208,14 @@ function connectCodexNative() {
           broadcastTerminalEvent({
             type: "terminal-error",
             id: interruptedTaskId,
-            error: `本地桥接已断开：${reason}`
+            error: ui("本地桥接已断开：{0}", reason)
           });
         }
         for (const interruptedSessionId of interruptedTerminalSessionIds) {
           broadcastTerminalEvent({
             type: "terminal-session-error",
             id: interruptedSessionId,
-            error: `本地桥接已断开：${reason}`
+            error: ui("本地桥接已断开：{0}", reason)
           });
         }
         scheduleCodexReconnect(reason);
@@ -230,7 +230,7 @@ function connectCodexNative() {
           claudeReady = false;
         }
         port.disconnect();
-        settle(new Error("连接本地桥接超时"));
+        settle(new Error(ui("连接本地桥接超时")));
       }, 5000);
       port.postMessage({ type: "ping", id: `ping-${Date.now()}` });
     } catch (error) {

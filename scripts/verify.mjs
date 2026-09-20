@@ -20,6 +20,10 @@ function verifyJavaScript() {
     "app/content/content-capture.js",
     "app/content/content-codex.js",
     "app/core/card-protocol.js",
+    "app/core/i18n.js",
+    "app/core/i18n-page.js",
+    "app/core/i18n-en.js",
+    "app/core/i18n-en-extended.js",
     "app/core/board-domain.js",
     "app/core/pagedock-db.js",
     "app/pages/editor/editor.js",
@@ -148,7 +152,7 @@ check(/className = "message-quote"/.test(pageCodexSource) && !/contextQuote|cont
 check(/class="compose-quick-actions"/.test(pageCodexSource) && /title="翻译中文">翻译</.test(pageCodexSource) && /<button class="send"/.test(pageCodexSource), "弱化快捷操作没有与发送按钮放在同一排");
 check(/\.send\s*\{[^}]*margin-left:\s*auto/.test(pageCodexSource), "网页快捷操作栏的主发送按钮没有靠右对齐");
 check(/composeQuickActions\.hidden = busy/.test(pageCodexSource) && !/composeQuickActions\.hidden = !attachedSelection/.test(pageCodexSource), "快捷操作在没有待发送引用时被错误隐藏");
-check(/text \? "选中文字" : "当前页面正文"/.test(pageCodexSource), "快捷操作没有在引用与当前页面之间自动选择上下文");
+check(/text \? ui\("选中文字"\) : ui\("当前页面正文"\)/.test(pageCodexSource), "快捷操作没有在引用与当前页面之间自动选择上下文");
 check(/if \(selectionText\) setAttachedSelection\(""\)/.test(pageCodexSource), "引用发送后仍残留在输入区");
 check(/PAGE_CHAT_GET_REQUEST/.test(pageCodexSource) && /PAGE_CHAT_PUT_REQUEST/.test(pageCodexSource) && /restorePageChat/.test(pageCodexSource), "网页 Codex 对话没有按页面恢复和保存");
 check(/PAGE_CHAT_GET_REQUEST/.test(backgroundSource) && /PageDockDB\.savePageChat/.test(backgroundSource), "页面会话没有通过扩展后台写入 IndexedDB");
@@ -173,8 +177,8 @@ check(/collaboration\.task/.test(backgroundSource) && /external-codex-task/.test
 check(/id="collaborationPetResult"/.test(whiteboardHtml) && /shizuo_report_task/.test(mcpAdapterSource), "画布缺少当前 Codex 任务结果界面或 MCP 工具");
 check(/collaboration-pet-stage/.test(whiteboardHtml) && /externalTaskPetState/.test(whiteboardSource), "本地 Codex 状态没有采用桌面宠物式呈现");
 check(/function syncLocalPluginCodexTask/.test(whiteboardSource) && /const primaryTask = pluginTask \|\| automaticTask/.test(whiteboardSource), "插件内 Codex 任务状态没有优先同步到工作伙伴宠物卡");
-check(/syncLocalPluginCodexTask\(task, "completed", \{ message: "回答已生成", result: answer \}\)/.test(whiteboardSource), "独立 Codex 会话结果没有同步到工作伙伴宠物卡");
-check(/collaborationLiveEl\.textContent = primaryClientIsLocal \? "本机"/.test(whiteboardSource), "本地插件任务仍被错误标记为内网任务");
+check(/syncLocalPluginCodexTask\(task, "completed", \{ message: ui\("回答已生成"\), result: answer \}\)/.test(whiteboardSource), "独立 Codex 会话结果没有同步到工作伙伴宠物卡");
+check(/collaborationLiveEl\.textContent = primaryClientIsLocal \? ui\("本机"\)/.test(whiteboardSource), "本地插件任务仍被错误标记为内网任务");
 check(/collaboration-scroll/.test(whiteboardHtml) && /collaboration-activity/.test(whiteboardHtml), "协作面板缺少单滚动区或最近活动");
 check(!/id="collaborationTasks"/.test(whiteboardHtml) && !/任务记录/.test(whiteboardSource), "协作面板仍显示冗余任务记录");
 check(!/collaborationMessageInput/.test(whiteboardHtml) && !/collaboration-compose/.test(whiteboardHtml) && !/BRIDGE_MESSAGE_SEND_REQUEST/.test(whiteboardSource), "协作面板仍保留容易误解的评论输入区");

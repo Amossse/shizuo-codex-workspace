@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en" data-language-loading>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -56,6 +56,7 @@
     .empty { padding: 22px 12px; border: 1px dashed var(--line); border-radius: 8px; color: var(--muted); text-align: center; }
   </style>
   <link rel="stylesheet" href="../../styles/paper-theme.css" />
+  <style>html[data-language-loading] body { visibility: hidden; }</style>
 </head>
 <body data-surface="sidepanel">
   <header>
@@ -86,6 +87,10 @@
       <div class="list" id="inboxList"></div>
     </section>
   </main>
+  <script src="../../core/i18n-en.js"></script>
+  <script src="../../core/i18n-en-extended.js"></script>
+  <script src="../../core/i18n.js"></script>
+  <script src="../../core/i18n-page.js"></script>
   <script src="../../core/card-protocol.js"></script>
   <script src="../../core/pagedock-db.js"></script>
   <script src="sidepanel.js"></script>
