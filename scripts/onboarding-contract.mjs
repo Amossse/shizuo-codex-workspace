@@ -7,17 +7,19 @@ const html = `${read("app/pages/whiteboard/index.html")}\n${readWhiteboardStyles
 const board = readWhiteboardSource();
 
 assert.match(html, /id="homeMoreMenu"[\s\S]{0,900}AI 与连接[\s\S]{0,400}实验能力[\s\S]{0,300}协作与会话/, "主页高级能力必须渐进披露");
-assert.match(html, /id="homeJourney"[\s\S]{0,1800}先放入一条内容[\s\S]{0,500}整理到白板[\s\S]{0,500}journeyAiName/, "首次进入必须解释收集、整理和创作主路径");
+assert.match(html, /id="homeJourney"[\s\S]{0,1800}收集材料[\s\S]{0,500}journeyAiName[\s\S]{0,500}留下答案，继续追问/, "首次进入必须解释收集、提问和继续使用的主路径");
 assert.match(board, /const isFirstRun = homeBoards\.every[\s\S]{0,300}homeJourneyEl\.hidden = !isFirstRun/, "首次引导必须由真实白板数据决定，而不是永久打扰老用户");
-assert.match(html, /从一条内容，得到一个结果/, "首页必须先表达用户可得到的结果，而不是罗列功能");
-assert.match(html, /把网页和本地资料放进画布[\s\S]{0,180}留下可追溯的过程与结果/, "首页必须明确浏览器到画布再到 Agent 结果的核心承诺");
+assert.match(html, /把网页资料，整理成有依据的答案/, "首页必须先表达用户可得到的结果，而不是罗列功能");
+assert.match(html, /材料和回答保存在一起，随时回来继续问/, "首页必须说明保留资料与回答的价值");
 assert.doesNotMatch(html, /class="hero"[\s\S]{0,400}回答、图片、视频或知识卡/, "首页核心承诺不能再罗列实验性产物");
 assert.doesNotMatch(html, /id="aiRuntimeMenu"/, "技术型运行时选择不能常驻顶栏");
 assert.match(html, /id="healthCheckDialog"[\s\S]{0,900}id="aiRuntimeSelect"[\s\S]{0,500}id="selectionVideoEngine"/, "运行时与视频引擎必须收进 AI 与连接设置");
 assert.match(html, /id="exportMenu"[\s\S]{0,1800}画布[\s\S]{0,500}工作流[\s\S]{0,700}数据与恢复[\s\S]{0,500}设置[\s\S]{0,400}实验能力/, "白板更多菜单必须按用户任务分组并弱化实验能力");
 assert.doesNotMatch(html, /id="toggleCollaboration"/, "协作面板不能占用常驻顶栏入口");
 assert.match(html, /id="askSelectionWithCodex"[^>]*>交给 AI</, "画布主动作不应暴露底层运行时");
-assert.match(html, /id="quickAdd"[^>]*>开始整理</, "首次体验必须只有一个结果导向的主操作");
+assert.match(html, /id="quickAdd"[^>]*>开始收集</, "首次体验必须只有一个收集主操作");
+assert.match(board, /button\.hidden = button\.dataset\.mode !== "text" && !settingsExpanded/, "图片快捷动作只能在高级设置展开时出现");
+assert.match(html, /body\[data-view="home"\]\[data-onboarding="first-run"\] #codexChatLauncher \{ display: none; \}/, "首次收集前不应展示第二个 AI 入口或连接状态");
 assert.match(html, /id="connectionGuideDialog"[\s\S]{0,2600}id="checkConnectionGuide"/, "首次执行未连接时必须有可操作的连接向导");
 assert.match(board, /ensureCodexReadyForTask\(\(\) => runBoardCardTask/, "任务创建前必须先检查本地连接，避免产生可避免的失败卡");
 ["emptyAddTask", "emptyAddText", "emptyAddImage"].forEach(id => assert.match(html, new RegExp(`id="${id}"`), `空白画布必须提供 ${id} 起步动作`));

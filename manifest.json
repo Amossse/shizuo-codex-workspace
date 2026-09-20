@@ -4,12 +4,12 @@
   "short_name": "拾作",
   "version": "2.24.5",
   "minimum_chrome_version": "116",
-  "description": "收集、理解、创作。把网页与本地素材放进白板，与 Codex 一起整理和创作。",
+  "description": "收集网页资料，交给 Codex 总结和对比。材料与回答保存在一起，方便核查来源、继续追问。",
   "author": "拾作 Contributors",
   "permissions": ["activeTab", "scripting", "storage", "downloads", "offscreen", "contextMenus", "sidePanel", "nativeMessaging", "alarms"],
   "optional_host_permissions": ["http://*/*", "https://*/*"],
   "action": {
-    "default_title": "拾作 — 收集、理解、创作",
+    "default_title": "拾作 — 带着资料问 AI",
     "default_popup": "app/pages/popup/popup.html",
     "default_icon": {
       "16": "icons/icon16.png",

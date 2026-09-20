@@ -91,10 +91,11 @@ details.menu.start .menu-panel { right: auto; left: 0; }
 body[data-onboarding="first-run"] #homeToolbar,
 body[data-onboarding="first-run"] .hero-actions,
 body[data-onboarding="first-run"] .home-content-library { display: none; }
+body[data-view="home"][data-onboarding="first-run"] #codexChatLauncher { display: none; }
 body[data-onboarding="first-run"] .home-shell { width: min(1440px, calc(100% - 80px)); padding-top: clamp(54px, 9vh, 100px); }
 body[data-onboarding="first-run"] .hero { display: block; padding-bottom: 28px; text-align: center; }
 body[data-onboarding="first-run"] .hero h1 { font-size: clamp(38px, 6vw, 58px); }
-body[data-onboarding="first-run"] .hero p { max-width: none; margin: 16px auto 0; white-space: nowrap; }
+body[data-onboarding="first-run"] .hero p { max-width: 640px; margin: 16px auto 0; }
 body[data-onboarding="first-run"] .search-row { grid-template-columns: 1fr; margin-bottom: 26px; }
 body[data-onboarding="first-run"] .search-box { display: none; }
 body[data-onboarding="first-run"] .quick-capture-wrap { padding: 18px; border: 1px solid var(--color-rule); border-radius: 16px; background: var(--color-surface-raised); box-shadow: var(--shadow-md); }

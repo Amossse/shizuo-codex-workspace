@@ -200,8 +200,8 @@ async function renderHome(updateUrl = true) {
     && !homeRecent.length;
   homeJourneyEl.hidden = !isFirstRun;
   document.body.dataset.onboarding = isFirstRun ? "first-run" : "established";
-  document.getElementById("quickAdd").textContent = isFirstRun ? "开始整理" : "存入收件箱";
-  quickTextEl.placeholder = isFirstRun ? "粘贴文字或链接…" : "快速收集文字或链接…";
+  document.getElementById("quickAdd").textContent = isFirstRun ? "开始收集" : "存入收件箱";
+  quickTextEl.placeholder = isFirstRun ? "粘贴一段资料，或保存网页链接…" : "快速收集文字或链接…";
   boardCountEl.textContent = `${homeBoards.filter(board => board.id !== db.INBOX_ID).length} 个白板`;
   inboxCountEl.textContent = `${inbox?.itemCount || 0} 项`;
   updateWorkflowTemplateEntry(templates.length);
@@ -241,7 +241,7 @@ async function captureHomeImages(files) {
     delete quickCaptureWrapEl.dataset.loading;
     delete quickCaptureWrapEl.dataset.dragging;
     button.disabled = false;
-    button.textContent = firstRun ? "开始整理" : "存入收件箱";
+    button.textContent = firstRun ? "开始收集" : "存入收件箱";
   }
   return true;
 }
