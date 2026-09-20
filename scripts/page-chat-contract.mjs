@@ -36,5 +36,9 @@ assert.match(content, /taskEvent/, "页面 Codex 必须能按任务 ID 找回错
 assert.match(content, /reconcileActiveTask/, "页面 Codex 忙碌时必须主动对账，不能无限停留在处理中");
 assert.match(content, /SAVE_SELECTION_TO_INBOX_REQUEST/, "选区快捷菜单必须支持保存到收件箱");
 assert.match(content, /saveSelectionToInbox\(text, button\)/, "选区保存必须展示明确的成功或失败反馈");
+assert.match(content, /id="resize"[\s\S]{0,120}>放大<\//, "页面 Codex 必须提供放大窗口入口");
+assert.match(content, /function setPanelExpanded\(expanded\)[\s\S]{0,500}还原窗口/, "页面 Codex 必须支持还原窗口");
+assert.match(content, /\.panel\[data-expanded="true"\]\s*\{[^}]*width:\s*calc\(100vw - 16px\)[^}]*height:\s*calc\(100dvh - 16px\)/, "放大窗口必须按视口显式计算尺寸");
+assert.doesNotMatch(content, /\.panel\[data-expanded="true"\]\s*\{[^}]*\b(?:right|bottom):/, "放大窗口不能依赖零尺寸 Shadow Host 的边界定位");
 
 console.log("页面 Codex URL 会话索引契约验证通过");
